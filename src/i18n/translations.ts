@@ -125,4 +125,22 @@ export const t: Record<string, TranslationValue> = {
   yes: { HU: "Igen", EN: "Yes", DE: "Ja" },
   no: { HU: "Nem", EN: "No", DE: "Nein" },
   powered_by: { HU: "Powered by EV DIAG", EN: "Powered by EV DIAG", DE: "Powered by EV DIAG" },
+
+  // Auth
+  sign_in: { HU: "Bejelentkezés", EN: "Sign In", DE: "Anmelden" },
+  sign_up: { HU: "Regisztráció", EN: "Sign Up", DE: "Registrieren" },
+  sign_out: { HU: "Kijelentkezés", EN: "Sign Out", DE: "Abmelden" },
+  email: { HU: "E-mail", EN: "Email", DE: "E-Mail" },
+  password: { HU: "Jelszó", EN: "Password", DE: "Passwort" },
+  full_name: { HU: "Teljes név", EN: "Full Name", DE: "Vollständiger Name" },
+  forgot_pw: { HU: "Elfelejtett jelszó?", EN: "Forgot password?", DE: "Passwort vergessen?" },
+  confirm_email: { HU: "Erősítsd meg az e-mail címed.", EN: "Please confirm your email address.", DE: "Bitte bestätige deine E-Mail-Adresse." },
+  settings: { HU: "Beállítások", EN: "Settings", DE: "Einstellungen" },
+  profile: { HU: "Profil", EN: "Profile", DE: "Profil" },
+  save: { HU: "Mentés", EN: "Save", DE: "Speichern" },
+  language_setting: { HU: "Nyelvi beállítás", EN: "Language Setting", DE: "Spracheinstellung" },
+  saved_success: { HU: "Sikeresen mentve!", EN: "Saved successfully!", DE: "Erfolgreich gespeichert!" },
+  reset_pw_sent: { HU: "Jelszó-visszaállító e-mail elküldve.", EN: "Password reset email sent.", DE: "E-Mail zum Zurücksetzen des Passworts gesendet." },
+  login_required: { HU: "Bejelentkezés szükséges", EN: "Login required", DE: "Anmeldung erforderlich" },
+  nav_account: { HU: "Fiókom", EN: "My Account", DE: "Mein Konto" },
 };
