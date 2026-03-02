@@ -1,0 +1,4 @@
+project_id = "tfjgccatdkhpyyqeygff"
+
+[functions.run-auto-value-analysis]
+verify_jwt = false
