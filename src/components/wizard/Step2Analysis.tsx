@@ -3,6 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { VehicleData } from '@/pages/AutoValuePage';
 import { Check, Loader2, Circle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 const AGENTS = [
@@ -25,6 +26,7 @@ const Step2Analysis = ({
   onComplete: (result: any) => void;
 }) => {
   const { tr } = useLanguage();
+  const { user } = useAuth();
   const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>(
     AGENTS.map(() => 'pending')
   );
@@ -68,6 +70,7 @@ const Step2Analysis = ({
       const { data: session, error: sessionErr } = await supabase
         .from('auto_value_sessions')
         .insert({
+          user_id: user?.id,
           vehicle_make: vehicleData.vehicle_make,
           vehicle_model: vehicleData.vehicle_model,
           vehicle_year: vehicleData.vehicle_year,
