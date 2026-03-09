@@ -49,6 +49,10 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
   const [country, setCountry] = useState('HU');
   const [linkedResultId, setLinkedResultId] = useState('');
   const [linkOpen, setLinkOpen] = useState(false);
+  const [optionalOpen, setOptionalOpen] = useState(false);
+  const [engine, setEngine] = useState('');
+  const [transmission, setTransmission] = useState('');
+  const [equipment, setEquipment] = useState('');
 
   const models = make ? MAKES_MODELS[make] || [] : [];
   const years = Array.from({ length: 12 }, (_, i) => 2026 - i);
