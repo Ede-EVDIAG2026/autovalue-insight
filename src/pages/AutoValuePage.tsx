@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import Step1Vehicle from '@/components/wizard/Step1Vehicle';
 import Step2Analysis from '@/components/wizard/Step2Analysis';
-import Step3Results from '@/components/wizard/Step3Results';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export type VehicleData = {
@@ -21,11 +21,11 @@ export type VehicleData = {
 
 const AutoValuePage = () => {
   const { tr } = useLanguage();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
-  const [resultData, setResultData] = useState<any>(null);
 
-  const stepLabels = [tr('step1_title'), tr('step2_title'), tr('step3_title')];
+  const stepLabels = [tr('step1_title'), tr('step2_title')];
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +46,7 @@ const AutoValuePage = () => {
                 <span>{i + 1}</span>
                 <span className="hidden sm:inline">{label}</span>
               </div>
-              {i < 2 && <div className="w-8 h-px bg-border" />}
+              {i < stepLabels.length - 1 && <div className="w-8 h-px bg-border" />}
             </div>
           ))}
         </div>
@@ -63,19 +63,7 @@ const AutoValuePage = () => {
           <Step2Analysis
             vehicleData={vehicleData}
             onComplete={(result) => {
-              setResultData(result);
-              setStep(3);
-            }}
-          />
-        )}
-        {step === 3 && resultData && (
-          <Step3Results
-            result={resultData}
-            vehicleData={vehicleData!}
-            onNewValuation={() => {
-              setStep(1);
-              setVehicleData(null);
-              setResultData(null);
+              navigate('/result', { state: { result, vehicleData } });
             }}
           />
         )}
