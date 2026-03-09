@@ -21,11 +21,11 @@ export type VehicleData = {
 
 const AutoValuePage = () => {
   const { tr } = useLanguage();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
-  const [resultData, setResultData] = useState<any>(null);
 
-  const stepLabels = [tr('step1_title'), tr('step2_title'), tr('step3_title')];
+  const stepLabels = [tr('step1_title'), tr('step2_title')];
 
   return (
     <div className="min-h-screen bg-background">
