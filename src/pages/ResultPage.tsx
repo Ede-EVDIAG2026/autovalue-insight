@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   TrendingUp, TrendingDown, Minus, Shield, Gauge, Clock, 
   BarChart3, Handshake, Store, Droplets, CalendarClock, 
-  Camera, Share2, ArrowRight, RefreshCw, Upload
+  Camera, Share2, ArrowRight, RefreshCw, Upload, Info, FileText, Percent
 } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
+import { calculateConfidence } from '@/utils/confidenceScoring';
 
 const formatHuf = (v: number) => v ? `${Math.round(v).toLocaleString('hu-HU')} Ft` : '–';
 const formatEur = (v: number) => v ? `€${Math.round(v).toLocaleString('de-DE')}` : '–';
@@ -24,8 +26,9 @@ const ResultPage = () => {
   const [photos, setPhotos] = useState<Record<string, File | null>>({
     front: null, rear: null, side: null, interior: null, damage: null,
   });
-  const [boostedConfidence, setBoostedConfidence] = useState(0);
+  const [photoCount, setPhotoCount] = useState(0);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const valuationTime = useMemo(() => new Date().toLocaleString('hu-HU'), []);
 
   if (!result || !vehicleData) {
     return (
@@ -53,11 +56,25 @@ const ResultPage = () => {
   const recommendedAsk = bayesian.recommended_ask_huf || p50;
   const negotiationFloor = bayesian.negotiation_floor_huf || p10;
   const dealerPrice = dealer.recommended_listing_price_huf || Math.round(p50 * 1.08);
-  const confidence = Math.min(100, (bayesian.confidence_score || 65) + boostedConfidence);
   const velocityDays = velocity.velocity_at_recommended_ask_days || 28;
   const liquidityLevel = market.market_depth || 'normal';
   const resale3y = Math.round(p50 * 0.72);
+  const depreciation3y = 28; // placeholder: ~28% over 3 years
   const negotiationMargin = recommendedAsk - negotiationFloor;
+
+  // Confidence scoring via utility
+  const confidenceResult = useMemo(() => calculateConfidence(
+    vehicleData,
+    {
+      backendConfidenceScore: bayesian.confidence_score || null,
+      hasComparableMarketData: (market.market_depth === 'high' || market.market_depth === 'normal'),
+      marketSampleCount: market.sample_count,
+      photoCount,
+    }
+  ), [vehicleData, bayesian.confidence_score, market, photoCount]);
+
+  const confidence = confidenceResult.confidenceScore;
+  const confidenceLabel = tr(confidenceResult.confidenceLabelKey) || confidenceResult.confidenceLabel;
 
   const handlePhotoUpload = (slot: string) => {
     fileRefs.current[slot]?.click();
@@ -65,9 +82,11 @@ const ResultPage = () => {
 
   const handleFileChange = (slot: string, file: File | null) => {
     if (!file) return;
-    setPhotos(prev => ({ ...prev, [slot]: file }));
-    const currentUploaded = Object.values({ ...photos, [slot]: file }).filter(Boolean).length;
-    setBoostedConfidence(currentUploaded * 3);
+    setPhotos(prev => {
+      const next = { ...prev, [slot]: file };
+      setPhotoCount(Object.values(next).filter(Boolean).length);
+      return next;
+    });
     toast.success(`${slot} fotó feltöltve (+3% confidence)`);
   };
 
@@ -79,7 +98,7 @@ ${vehicleData.vehicle_make} ${vehicleData.vehicle_model} (${vehicleData.vehicle_
 ${vehicleData.vehicle_mileage_km.toLocaleString()} km
 
 📊 Piaci érték: ${formatHuf(p50)} (${formatEur(p50Eur)})
-🎯 Confidence: ${confidence}%
+🎯 Confidence: ${confidence}% — ${confidenceLabel}
 📉 Alacsony ár: ${formatHuf(p10)}
 📈 Magas ár: ${formatHuf(p90)}
 
@@ -90,6 +109,9 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
 ⏱ Becsült eladási idő: ${velocityDays} nap
 📊 Likviditás: ${liquidityLevel}
 📅 3 éves viszonteladási érték: ${formatHuf(resale3y)}
+📉 Várható értékvesztés: ${depreciation3y}%
+
+${valuationTime}
     `.trim();
 
     navigator.clipboard.writeText(report);
@@ -108,16 +130,21 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
     <div className="min-h-screen bg-background">
       <AppHeader />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Vehicle header */}
+        {/* Header area */}
         <div className="mb-8 animate-slide-up">
           <h1 className="text-3xl font-display font-bold text-foreground">
             {vehicleData.vehicle_make} {vehicleData.vehicle_model} ({vehicleData.vehicle_year})
           </h1>
-          <p className="text-muted-foreground">{vehicleData.vehicle_mileage_km.toLocaleString()} km · {vehicleData.target_country}</p>
+          <p className="text-muted-foreground">
+            {vehicleData.vehicle_mileage_km.toLocaleString()} km · {vehicleData.target_country}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {tr('result_summary')} · {valuationTime}
+          </p>
         </div>
 
         <div className="grid gap-6 animate-slide-up">
-          {/* 1. EV DIAG Market Value + Confidence */}
+          {/* ROW 1: Main Valuation + Confidence + Price Range */}
           <Card className="glass-card overflow-hidden">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -131,16 +158,27 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
                 <p className="text-muted-foreground text-sm mt-1">{formatEur(p50Eur)}</p>
               </div>
 
-              {/* Confidence */}
+              {/* Confidence with label + tooltip */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="flex items-center gap-1.5 font-medium text-foreground">
                     <Shield className="h-4 w-4 text-primary" />
                     {tr('confidence_score')}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs text-sm">
+                        {tr('confidence_explanation')}
+                      </TooltipContent>
+                    </Tooltip>
                   </span>
-                  <Badge variant={confidence >= 75 ? 'default' : confidence >= 50 ? 'secondary' : 'outline'}>
-                    {confidence}%
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={confidence >= 75 ? 'default' : confidence >= 50 ? 'secondary' : 'outline'}>
+                      {confidence}%
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{confidenceLabel}</span>
+                  </div>
                 </div>
                 <Progress value={confidence} className="h-2" />
               </div>
@@ -169,16 +207,16 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
             </CardContent>
           </Card>
 
-          {/* 2. Negotiation Intelligence */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Handshake className="h-5 w-5 text-primary" />
-                {tr('negotiation_intelligence')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
+          {/* ROW 2: Decision Support — Negotiation + Dealer */}
+          <div className="grid sm:grid-cols-2 gap-6">
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Handshake className="h-5 w-5 text-primary" />
+                  {tr('negotiation_intelligence')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="p-4 rounded-lg bg-secondary/5 border border-secondary/10">
                   <p className="text-xs text-muted-foreground mb-1">{tr('recommended_offer')}</p>
                   <p className="text-xl font-display font-bold text-foreground">{formatHuf(negotiationFloor)}</p>
@@ -187,37 +225,36 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
                   <p className="text-xs text-muted-foreground mb-1">{tr('negotiation_margin')}</p>
                   <p className="text-xl font-display font-bold text-foreground">{formatHuf(negotiationMargin)}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* 3. Dealer Typical Price */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Store className="h-5 w-5 text-primary" />
-                {tr('dealer_typical_price')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <span className="text-muted-foreground text-sm">{tr('dealer_typical_price')}</span>
-                <span className="text-2xl font-display font-bold text-foreground">{formatHuf(dealerPrice)}</span>
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Store className="h-5 w-5 text-primary" />
+                  {tr('dealer_typical_price')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                  <span className="text-muted-foreground text-sm">{tr('dealer_typical_price')}</span>
+                  <span className="text-2xl font-display font-bold text-foreground">{formatHuf(dealerPrice)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* 4. Market Liquidity */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Droplets className="h-5 w-5 text-primary" />
-                {tr('market_liquidity')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-muted/50">
+          {/* ROW 3: Market Insight — Liquidity + Resale + Depreciation */}
+          <div className="grid sm:grid-cols-3 gap-6">
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Droplets className="h-5 w-5 text-primary" />
+                  {tr('market_liquidity')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2 mb-1">
                     <Gauge className="h-4 w-4 text-primary" />
                     <span className="text-xs text-muted-foreground">{tr('liquidity_level')}</span>
@@ -226,34 +263,46 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
                     {liquidityLevel}
                   </Badge>
                 </div>
-                <div className="p-4 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="h-4 w-4 text-primary" />
                     <span className="text-xs text-muted-foreground">{tr('est_selling_time')}</span>
                   </div>
                   <p className="font-display font-bold text-foreground">{velocityDays} {tr('days')}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* 5. Expected Resale Value */}
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarClock className="h-5 w-5 text-primary" />
-                {tr('expected_resale')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <span className="text-muted-foreground text-sm">{tr('expected_resale')}</span>
-                <span className="text-2xl font-display font-bold text-foreground">{formatHuf(resale3y)}</span>
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CalendarClock className="h-5 w-5 text-primary" />
+                  {tr('expected_resale')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-lg bg-muted/50 text-center">
+                  <p className="text-2xl font-display font-bold text-foreground">{formatHuf(resale3y)}</p>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* 6. Photo Upgrade Module */}
+            <Card className="glass-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Percent className="h-5 w-5 text-primary" />
+                  {tr('depreciation_3y')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/10 text-center">
+                  <p className="text-2xl font-display font-bold text-destructive">-{depreciation3y}%</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Photo Upgrade Module */}
           <Card className="glass-card">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -262,6 +311,7 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">{tr('photo_upgrade_helper')}</p>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {photoSlots.map(slot => (
                   <button
@@ -293,11 +343,15 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
             </CardContent>
           </Card>
 
-          {/* 7. Share Report */}
+          {/* Share / Report */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button className="flex-1 hero-gradient" onClick={handleShareReport}>
               <Share2 className="mr-2 h-4 w-4" />
               {tr('send_to_seller')}
+            </Button>
+            <Button variant="outline" className="flex-1" disabled>
+              <FileText className="mr-2 h-4 w-4" />
+              {tr('pdf_report')}
             </Button>
             <Button variant="outline" className="flex-1" onClick={() => navigate('/valuation')}>
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -305,7 +359,7 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
             </Button>
           </div>
 
-          {/* 8. Dealer Funnel */}
+          {/* Dealer Funnel */}
           <Card className="glass-card border-primary/20">
             <CardContent className="flex flex-col sm:flex-row items-center gap-6 p-6">
               <div className="text-4xl">🏪</div>
@@ -314,7 +368,7 @@ ${vehicleData.vehicle_mileage_km.toLocaleString()} km
                 <p className="text-muted-foreground text-sm mt-1">{tr('dealer_cta_desc')}</p>
               </div>
               <Button variant="outline" className="shrink-0 border-primary/20 text-primary hover:bg-primary/5" onClick={() => navigate('/portal')}>
-                Portal
+                {tr('dealer_platform_open')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardContent>
