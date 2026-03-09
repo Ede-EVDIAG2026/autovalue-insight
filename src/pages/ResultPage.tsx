@@ -30,6 +30,27 @@ const ResultPage = () => {
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const valuationTime = useMemo(() => new Date().toLocaleString('hu-HU'), []);
 
+  // Extract values (safe even if null — defaults to empty objects)
+  const bayesian = result?.bayesian || result || {};
+  const negotiation = result?.negotiation || {};
+  const dealer = result?.dealer || {};
+  const velocity = result?.velocity || {};
+  const market = result?.market || {};
+
+  // Confidence scoring via utility — must be before any early return
+  const confidenceResult = useMemo(() => calculateConfidence(
+    vehicleData || {},
+    {
+      backendConfidenceScore: bayesian.confidence_score || null,
+      hasComparableMarketData: (market.market_depth === 'high' || market.market_depth === 'normal'),
+      marketSampleCount: market.sample_count,
+      photoCount,
+    }
+  ), [vehicleData, bayesian.confidence_score, market, photoCount]);
+
+  const confidence = confidenceResult.confidenceScore;
+  const confidenceLabel = tr(confidenceResult.confidenceLabelKey) || confidenceResult.confidenceLabel;
+
   if (!result || !vehicleData) {
     return (
       <div className="min-h-screen bg-background">
@@ -42,13 +63,6 @@ const ResultPage = () => {
     );
   }
 
-  // Extract values
-  const bayesian = result?.bayesian || result || {};
-  const negotiation = result?.negotiation || {};
-  const dealer = result?.dealer || {};
-  const velocity = result?.velocity || {};
-  const market = result?.market || {};
-
   const p10 = bayesian.final_p10_huf || bayesian.p10_huf || 0;
   const p50 = bayesian.final_p50_huf || bayesian.p50_huf || 0;
   const p90 = bayesian.final_p90_huf || bayesian.p90_huf || 0;
@@ -59,22 +73,8 @@ const ResultPage = () => {
   const velocityDays = velocity.velocity_at_recommended_ask_days || 28;
   const liquidityLevel = market.market_depth || 'normal';
   const resale3y = Math.round(p50 * 0.72);
-  const depreciation3y = 28; // placeholder: ~28% over 3 years
+  const depreciation3y = 28;
   const negotiationMargin = recommendedAsk - negotiationFloor;
-
-  // Confidence scoring via utility
-  const confidenceResult = useMemo(() => calculateConfidence(
-    vehicleData,
-    {
-      backendConfidenceScore: bayesian.confidence_score || null,
-      hasComparableMarketData: (market.market_depth === 'high' || market.market_depth === 'normal'),
-      marketSampleCount: market.sample_count,
-      photoCount,
-    }
-  ), [vehicleData, bayesian.confidence_score, market, photoCount]);
-
-  const confidence = confidenceResult.confidenceScore;
-  const confidenceLabel = tr(confidenceResult.confidenceLabelKey) || confidenceResult.confidenceLabel;
 
   const handlePhotoUpload = (slot: string) => {
     fileRefs.current[slot]?.click();
