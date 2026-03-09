@@ -258,19 +258,25 @@ const ResultPage = () => {
           </div>
 
           {/* ─── Dealer funnel ─── */}
-          <Card className="glass-card border-primary/20">
-            <CardContent className="flex flex-col sm:flex-row items-center gap-6 p-6">
-              <div className="text-4xl">🏪</div>
-              <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-display font-bold text-foreground text-lg">{tr('dealer_cta_title')}</h3>
-                <p className="text-muted-foreground text-sm mt-1">{tr('dealer_cta_desc')}</p>
+          <div className="relative mt-4 rounded-2xl overflow-hidden border border-primary/15">
+            <div className="absolute inset-0 hero-gradient opacity-[0.04]" />
+            <div className="relative flex flex-col sm:flex-row items-center gap-8 p-8 sm:p-10">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 shrink-0">
+                <Store className="h-8 w-8 text-primary" />
               </div>
-              <Button variant="outline" className="shrink-0 border-primary/20 text-primary hover:bg-primary/5" onClick={() => navigate('/portal')}>
-                {tr('dealer_platform_open')}
+              <div className="flex-1 text-center sm:text-left space-y-2">
+                <h3 className="font-display font-bold text-foreground text-xl">Kereskedő vagy?</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
+                  Próbáld ki az EV DIAG Dealer Platform bétát 50 ingyenes audit kredittel, és teszteld a rendszert valós piaci környezetben.
+                </p>
+                <p className="text-xs text-muted-foreground/70 italic">Béta hozzáférés, limitált induló időszak.</p>
+              </div>
+              <Button className="shrink-0 hero-gradient px-6 py-5 text-base shadow-md hover:shadow-lg transition-shadow" onClick={() => navigate('/portal')}>
+                Dealer Platform megnyitása
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
