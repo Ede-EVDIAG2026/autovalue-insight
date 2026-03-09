@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import LandingPage from "./pages/LandingPage";
 import AutoValuePage from "./pages/AutoValuePage";
+import ResultPage from "./pages/ResultPage";
 import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
 import DashboardPage from "./pages/DashboardPage";
