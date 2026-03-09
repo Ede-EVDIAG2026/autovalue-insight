@@ -1,7 +1,17 @@
 /**
- * EV DIAG Confidence Scoring Engine
+ * EV DIAG Confidence Scoring Engine v2
  * Frontend-safe interim scoring function.
  * Structured for easy replacement by backend logic later.
+ *
+ * Design principles:
+ *  - Base score starts moderate (35) so empty forms read as uncertain
+ *  - Core vehicle fields give the largest lift but are individually small (+3 each)
+ *  - Optional / condition fields give diminishing additions (+1–2 each)
+ *  - Mileage plausibility is a gentle adjustment (±2)
+ *  - Photos give a small, capped bonus (max +5 total)
+ *  - Market-data signals give the strongest single boost (up to +12)
+ *  - Total theoretical max ≈ 96 without backend override
+ *  - No single field change moves the needle more than ~4 points
  */
 
 export interface ConfidenceResult {
@@ -37,56 +47,64 @@ export function calculateConfidence(
   inputs: VehicleInputs,
   signals: DataQualitySignals = {}
 ): ConfidenceResult {
-  // If backend already provided a score, use it as base
+  // If backend already provided a score, blend in a small photo bonus (max +5)
   if (signals.backendConfidenceScore && signals.backendConfidenceScore > 0) {
-    const boosted = Math.min(100, signals.backendConfidenceScore + (signals.photoCount || 0) * 3);
-    return { confidenceScore: boosted, ...getLabel(boosted) };
+    const photoBump = Math.min((signals.photoCount || 0) * 1, 5);
+    const final = Math.min(100, signals.backendConfidenceScore + photoBump);
+    return { confidenceScore: final, ...getLabel(final) };
   }
 
-  let score = 40; // base
+  // ---------- Frontend interim scoring ----------
+  let score = 35; // base — "we know nothing yet"
 
-  // Core fields completeness (+5 each, max +25)
-  if (inputs.vehicle_make) score += 5;
-  if (inputs.vehicle_model) score += 5;
-  if (inputs.vehicle_year) score += 5;
-  if (inputs.vehicle_mileage_km) score += 5;
-  if (inputs.target_country) score += 5;
+  // 1. Core fields completeness (+3 each, max +15)
+  if (inputs.vehicle_make) score += 3;
+  if (inputs.vehicle_model) score += 3;
+  if (inputs.vehicle_year) score += 3;
+  if (inputs.vehicle_mileage_km) score += 3;
+  if (inputs.target_country) score += 3;
 
-  // Optional fields (+3 each, max +9)
-  if (inputs.vehicle_fuel_type) score += 3;
-  if (inputs.engine) score += 3;
-  if (inputs.transmission) score += 3;
+  // 2. Optional enrichment fields (+2 each, max +6)
+  if (inputs.vehicle_fuel_type) score += 2;
+  if (inputs.engine) score += 2;
+  if (inputs.transmission) score += 2;
 
-  // Condition signals (+3 each)
-  if (inputs.service_book) score += 3;
-  if (inputs.accident_free) score += 3;
-  if (inputs.owners_count && inputs.owners_count <= 2) score += 2;
+  // 3. Condition / provenance signals (+1–2 each, max +6)
+  if (inputs.service_book) score += 2;
+  if (inputs.accident_free) score += 2;
+  if (inputs.owners_count != null && inputs.owners_count > 0 && inputs.owners_count <= 3) score += 1;
+  if (inputs.vehicle_color) score += 1;
 
-  // Mileage plausibility
+  // 4. Mileage plausibility (gentle ±2)
   if (inputs.vehicle_year && inputs.vehicle_mileage_km) {
-    const age = new Date().getFullYear() - inputs.vehicle_year;
-    const avgKmPerYear = inputs.vehicle_mileage_km / Math.max(age, 1);
-    if (avgKmPerYear >= 5000 && avgKmPerYear <= 30000) {
-      score += 4; // plausible mileage
-    } else {
-      score -= 3; // unusual mileage
+    const age = Math.max(new Date().getFullYear() - inputs.vehicle_year, 1);
+    const avgKmPerYear = inputs.vehicle_mileage_km / age;
+    if (avgKmPerYear >= 5000 && avgKmPerYear <= 25000) {
+      score += 2; // plausible
+    } else if (avgKmPerYear > 40000 || avgKmPerYear < 1000) {
+      score -= 2; // very unusual
     }
+    // else: slightly unusual — no change
   }
 
-  // Vehicle age penalty
+  // 5. Vehicle age adjustment (gentle, max ±2)
   if (inputs.vehicle_year) {
     const age = new Date().getFullYear() - inputs.vehicle_year;
-    if (age > 15) score -= 5;
-    else if (age > 10) score -= 2;
+    if (age > 20) score -= 2;
+    else if (age > 12) score -= 1;
   }
 
-  // Market data signals
-  if (signals.hasComparableMarketData) score += 5;
-  if (signals.marketSampleCount && signals.marketSampleCount >= 10) score += 5;
-  else if (signals.marketSampleCount && signals.marketSampleCount >= 5) score += 2;
+  // 6. Market data signals (strongest factor, max +12)
+  if (signals.hasComparableMarketData) score += 4;
+  if (signals.marketSampleCount != null) {
+    if (signals.marketSampleCount >= 20) score += 8;
+    else if (signals.marketSampleCount >= 10) score += 6;
+    else if (signals.marketSampleCount >= 5) score += 3;
+    else if (signals.marketSampleCount >= 1) score += 1;
+  }
 
-  // Photo boost
-  score += (signals.photoCount || 0) * 3;
+  // 7. Photo bonus — capped at +5 total (+1 per photo, max 5)
+  score += Math.min((signals.photoCount || 0) * 1, 5);
 
   const final = Math.max(0, Math.min(100, Math.round(score)));
   return { confidenceScore: final, ...getLabel(final) };
