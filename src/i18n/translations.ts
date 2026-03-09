@@ -4,8 +4,8 @@ type TranslationValue = Record<Lang, string>;
 
 export const t: Record<string, TranslationValue> = {
   app_name: { HU: "EU AutoValue Intelligence", EN: "EU AutoValue Intelligence", DE: "EU AutoValue Intelligence" },
-  tagline: { HU: "Tudd meg pontosan, mennyit ér az autód.", EN: "Know exactly what your car is worth.", DE: "Erfahren Sie genau, was Ihr Auto wert ist." },
-  subtitle: { HU: "AI-alapú piaci értékbecslés 60 másodperc alatt. Kereskedői szintű analízis, mindenki számára.", EN: "AI-powered market valuation in 60 seconds. Dealer-grade analysis, for everyone.", DE: "KI-gestützte Marktbewertung in 60 Sekunden. Händleranalyse für alle." },
+  tagline: { HU: "Tudd meg pontosabban, mennyit ér az autód.", EN: "Know more precisely what your car is worth.", DE: "Erfahren Sie genauer, was Ihr Auto wert ist." },
+  subtitle: { HU: "AI-alapú piaci értékbecslés, Price Confidence és kereskedői árszint elemzés.", EN: "AI-powered market valuation, Price Confidence and dealer price level analysis.", DE: "KI-gestützte Marktbewertung, Price Confidence und Händlerpreisanalyse." },
   start_valuation: { HU: "Ingyenes értékbecslés →", EN: "Free Valuation →", DE: "Kostenlose Bewertung →" },
   no_registration: { HU: "Nincs regisztráció szükséges az első becsléshez", EN: "No registration required for your first estimate", DE: "Keine Registrierung für die erste Schätzung erforderlich" },
 

@@ -63,19 +63,7 @@ const AutoValuePage = () => {
           <Step2Analysis
             vehicleData={vehicleData}
             onComplete={(result) => {
-              setResultData(result);
-              setStep(3);
-            }}
-          />
-        )}
-        {step === 3 && resultData && (
-          <Step3Results
-            result={resultData}
-            vehicleData={vehicleData!}
-            onNewValuation={() => {
-              setStep(1);
-              setVehicleData(null);
-              setResultData(null);
+              navigate('/result', { state: { result, vehicleData } });
             }}
           />
         )}

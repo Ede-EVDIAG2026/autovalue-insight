@@ -127,54 +127,9 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
           />
         </div>
 
-        {/* Color */}
+        {/* Country */}
         <div className="space-y-2">
-          <Label className="text-foreground">{tr('color')}</Label>
-          <Input placeholder="Fehér" value={color} onChange={e => setColor(e.target.value)} />
-        </div>
-
-        {/* Fuel Type */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('fuel_type')}</Label>
-          <Select value={fuelType} onValueChange={setFuelType}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="BEV">BEV</SelectItem>
-              <SelectItem value="PHEV">PHEV</SelectItem>
-              <SelectItem value="HEV">HEV</SelectItem>
-              <SelectItem value="MHEV">MHEV</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Service Book */}
-        <div className="flex items-center justify-between sm:col-span-2 py-2">
-          <Label className="text-foreground">{tr('service_book')}</Label>
-          <Switch checked={serviceBook} onCheckedChange={setServiceBook} />
-        </div>
-
-        {/* Accident Free */}
-        <div className="flex items-center justify-between sm:col-span-2 py-2">
-          <Label className="text-foreground">{tr('accident_free')}</Label>
-          <Switch checked={accidentFree} onCheckedChange={setAccidentFree} />
-        </div>
-
-        {/* Owners */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('owners')}</Label>
-          <Select value={owners} onValueChange={setOwners}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map(n => (
-                <SelectItem key={n} value={String(n)}>{n}{n === 5 ? '+' : ''}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Target Market */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('target_market')}</Label>
+          <Label className="text-foreground">{tr('target_market')} *</Label>
           <Select value={country} onValueChange={setCountry}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -183,6 +138,75 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
           </Select>
         </div>
       </div>
+
+      {/* Optional fields */}
+      <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen} className="mt-6">
+        <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
+          <Settings2 className="h-4 w-4" />
+          {tr('optional_fields')}
+          <ChevronDown className={`h-4 w-4 transition-transform ${optionalOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-4">
+          <div className="grid sm:grid-cols-2 gap-6 p-4 rounded-lg bg-muted/50">
+            <div className="space-y-2">
+              <Label className="text-foreground">{tr('engine')}</Label>
+              <Input placeholder="1.6 TSI" value={engine} onChange={e => setEngine(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">{tr('transmission')}</Label>
+              <Select value={transmission} onValueChange={setTransmission}>
+                <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manuális</SelectItem>
+                  <SelectItem value="automatic">Automata</SelectItem>
+                  <SelectItem value="dsg">DSG</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label className="text-foreground">{tr('equipment')}</Label>
+              <Input placeholder="LED, navi, bőr ülés..." value={equipment} onChange={e => setEquipment(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">{tr('color')}</Label>
+              <Input placeholder="Fehér" value={color} onChange={e => setColor(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">{tr('fuel_type')}</Label>
+              <Select value={fuelType} onValueChange={setFuelType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BEV">BEV</SelectItem>
+                  <SelectItem value="PHEV">PHEV</SelectItem>
+                  <SelectItem value="HEV">HEV</SelectItem>
+                  <SelectItem value="MHEV">MHEV</SelectItem>
+                  <SelectItem value="Benzin">Benzin</SelectItem>
+                  <SelectItem value="Dízel">Dízel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between sm:col-span-2 py-2">
+              <Label className="text-foreground">{tr('service_book')}</Label>
+              <Switch checked={serviceBook} onCheckedChange={setServiceBook} />
+            </div>
+            <div className="flex items-center justify-between sm:col-span-2 py-2">
+              <Label className="text-foreground">{tr('accident_free')}</Label>
+              <Switch checked={accidentFree} onCheckedChange={setAccidentFree} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">{tr('owners')}</Label>
+              <Select value={owners} onValueChange={setOwners}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <SelectItem key={n} value={String(n)}>{n}{n === 5 ? '+' : ''}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Audit Suite Link */}
       <Collapsible open={linkOpen} onOpenChange={setLinkOpen} className="mt-6">
