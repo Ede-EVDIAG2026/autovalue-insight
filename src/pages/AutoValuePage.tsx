@@ -46,7 +46,7 @@ const AutoValuePage = () => {
                 <span>{i + 1}</span>
                 <span className="hidden sm:inline">{label}</span>
               </div>
-              {i < 2 && <div className="w-8 h-px bg-border" />}
+              {i < stepLabels.length - 1 && <div className="w-8 h-px bg-border" />}
             </div>
           ))}
         </div>
