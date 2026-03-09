@@ -198,10 +198,10 @@ const ResultPage = () => {
               </CardContent>
             </Card>
             {/* Dealer price */}
-            <Card className="glass-card border-l-4 border-l-amber-500">
+            <Card className="glass-card border-l-4 border-l-muted-foreground">
               <CardContent className="pt-5 pb-4 space-y-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Store className="h-4 w-4 text-amber-500" />
+                  <Store className="h-4 w-4 text-muted-foreground" />
                   {tr('dealer_typical_price')}
                 </div>
                 <p className="text-2xl font-display font-bold text-foreground">{formatHuf(dealerPrice)}</p>
