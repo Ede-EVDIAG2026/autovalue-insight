@@ -157,6 +157,17 @@ export const t: Record<string, TranslationValue> = {
   share_report: { HU: "Jelentés megosztása", EN: "Share Report", DE: "Bericht teilen" },
   report_copied: { HU: "Jelentés vágólapra másolva!", EN: "Report copied to clipboard!", DE: "Bericht in die Zwischenablage kopiert!" },
   days: { HU: "nap", EN: "days", DE: "Tage" },
+  confidence_high: { HU: "Magas pontosság", EN: "High accuracy", DE: "Hohe Genauigkeit" },
+  confidence_good: { HU: "Jó becslés", EN: "Good estimate", DE: "Gute Schätzung" },
+  confidence_limited: { HU: "Korlátozott adat", EN: "Limited data", DE: "Begrenzte Daten" },
+  confidence_uncertain: { HU: "Bizonytalan becslés", EN: "Uncertain estimate", DE: "Unsichere Schätzung" },
+  confidence_explanation: { HU: "A Confidence azt mutatja, mennyire erős a piaci adatbázis és a becslési bizonyíték az adott érték mögött.", EN: "Confidence shows how strong the market database and estimation evidence is behind the given value.", DE: "Confidence zeigt, wie stark die Marktdatenbank und die Schätzevidenz hinter dem gegebenen Wert sind." },
+  depreciation_3y: { HU: "Várható értékvesztés (3 év)", EN: "Expected depreciation (3 years)", DE: "Erwartete Wertminderung (3 Jahre)" },
+  valuation_timestamp: { HU: "Értékbecslés időpontja", EN: "Valuation timestamp", DE: "Bewertungszeitpunkt" },
+  result_summary: { HU: "EV DIAG AutoValue Intelligence elemzés eredménye", EN: "EV DIAG AutoValue Intelligence analysis result", DE: "EV DIAG AutoValue Intelligence Analyseergebnis" },
+  pdf_report: { HU: "PDF riport", EN: "PDF Report", DE: "PDF-Bericht" },
+  dealer_platform_open: { HU: "Dealer Platform megnyitása", EN: "Open Dealer Platform", DE: "Dealer Platform öffnen" },
+  photo_upgrade_helper: { HU: "A fotók feltöltése javítja a Confidence pontszámot és pontosítja a becslést.", EN: "Uploading photos improves Confidence score and refines the estimate.", DE: "Das Hochladen von Fotos verbessert den Confidence-Score und verfeinert die Schätzung." },
 
   // Auth
   sign_in: { HU: "Bejelentkezés", EN: "Sign In", DE: "Anmelden" },
