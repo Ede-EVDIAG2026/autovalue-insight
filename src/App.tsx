@@ -11,6 +11,7 @@ import LandingPage from "./pages/LandingPage";
 import AutoValuePage from "./pages/AutoValuePage";
 import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
+import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
