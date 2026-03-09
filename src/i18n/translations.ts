@@ -161,7 +161,7 @@ export const t: Record<string, TranslationValue> = {
   confidence_good: { HU: "Jó becslés", EN: "Good estimate", DE: "Gute Schätzung" },
   confidence_limited: { HU: "Korlátozott adat", EN: "Limited data", DE: "Begrenzte Daten" },
   confidence_uncertain: { HU: "Bizonytalan becslés", EN: "Uncertain estimate", DE: "Unsichere Schätzung" },
-  confidence_explanation: { HU: "A Confidence azt mutatja, mennyire erős a piaci adatbázis és a becslési bizonyíték az adott érték mögött.", EN: "Confidence shows how strong the market database and estimation evidence is behind the given value.", DE: "Confidence zeigt, wie stark die Marktdatenbank und die Schätzevidenz hinter dem gegebenen Wert sind." },
+  confidence_explanation: { HU: "A Confidence nem garancia, hanem annak jelzése, hogy mennyire erős és konzisztens piaci adat támasztja alá a becslést.", EN: "Confidence is not a guarantee, but an indication of how strong and consistent the market data supporting the estimate is.", DE: "Confidence ist keine Garantie, sondern ein Hinweis darauf, wie stark und konsistent die Marktdaten hinter der Schätzung sind." },
   depreciation_3y: { HU: "Várható értékvesztés (3 év)", EN: "Expected depreciation (3 years)", DE: "Erwartete Wertminderung (3 Jahre)" },
   valuation_timestamp: { HU: "Értékbecslés időpontja", EN: "Valuation timestamp", DE: "Bewertungszeitpunkt" },
   result_summary: { HU: "EV DIAG AutoValue Intelligence elemzés eredménye", EN: "EV DIAG AutoValue Intelligence analysis result", DE: "EV DIAG AutoValue Intelligence Analyseergebnis" },
