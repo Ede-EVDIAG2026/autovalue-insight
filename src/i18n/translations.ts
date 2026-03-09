@@ -167,6 +167,11 @@ export const t: Record<string, TranslationValue> = {
   result_summary: { HU: "EV DIAG AutoValue Intelligence elemzés eredménye", EN: "EV DIAG AutoValue Intelligence analysis result", DE: "EV DIAG AutoValue Intelligence Analyseergebnis" },
   pdf_report: { HU: "PDF riport", EN: "PDF Report", DE: "PDF-Bericht" },
   dealer_platform_open: { HU: "Dealer Platform megnyitása", EN: "Open Dealer Platform", DE: "Dealer Platform öffnen" },
+  zone_core_valuation: { HU: "Alapértékelés", EN: "Core Valuation", DE: "Kernbewertung" },
+  zone_negotiation: { HU: "Tárgyalási Intelligencia", EN: "Negotiation Intelligence", DE: "Verhandlungsintelligenz" },
+  zone_market: { HU: "Piaci Intelligencia", EN: "Market Intelligence", DE: "Marktintelligenz" },
+  negotiation_helper: { HU: "Adatalapú tárgyalási pozíció az optimális üzlethez.", EN: "Data-driven negotiation position for the optimal deal.", DE: "Datengestützte Verhandlungsposition für das optimale Geschäft." },
+  market_helper: { HU: "Valós idejű piaci kontextus és előrejelzés.", EN: "Real-time market context and forecast.", DE: "Echtzeit-Marktkontext und Prognose." },
   photo_upgrade_helper: { HU: "A fotók feltöltése javítja a Confidence pontszámot és pontosítja a becslést.", EN: "Uploading photos improves Confidence score and refines the estimate.", DE: "Das Hochladen von Fotos verbessert den Confidence-Score und verfeinert die Schätzung." },
 
   // Auth

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Handshake, Store, Camera, Share2, ArrowRight,
-  RefreshCw, Upload, FileText
+  RefreshCw, Upload, FileText, Target, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import { useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -18,6 +18,20 @@ import MarketInsightRow from '@/components/results/MarketInsightRow';
 
 const formatHuf = (v: number) => v ? `${Math.round(v).toLocaleString('hu-HU')} Ft` : '–';
 const formatEur = (v: number) => v ? `€${Math.round(v).toLocaleString('de-DE')}` : '–';
+
+/* ─── Zone divider ─── */
+const ZoneHeader = ({ icon: Icon, label, helper }: { icon: any; label: string; helper?: string }) => (
+  <div className="flex items-center gap-3 pt-4 pb-1">
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+      <Icon className="h-4 w-4 text-primary" />
+    </div>
+    <div>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-primary">{label}</h2>
+      {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
+    </div>
+    <div className="flex-1 h-px bg-border ml-2" />
+  </div>
+);
 
 const ResultPage = () => {
   const { tr } = useLanguage();
@@ -104,7 +118,7 @@ const ResultPage = () => {
       <AppHeader />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* ─── Header ─── */}
-        <div className="mb-10 animate-slide-up">
+        <div className="mb-8 animate-slide-up">
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-2">
             EV DIAG AutoValue Intelligence
           </p>
@@ -119,8 +133,12 @@ const ResultPage = () => {
           </p>
         </div>
 
+        {/* ═══════════════════════════════════════════════════
+            ZONE 1 — Core Valuation
+        ═══════════════════════════════════════════════════ */}
         <div className="space-y-6 animate-slide-up">
-          {/* ─── ROW 1: Hero value ─── */}
+          <ZoneHeader icon={ShieldCheck} label={tr('zone_core_valuation')} />
+
           <MarketValueHero
             p50={p50}
             p50Eur={p50Eur}
@@ -129,7 +147,6 @@ const ResultPage = () => {
             title={tr('ev_diag_market_value')}
           />
 
-          {/* ─── ROW 2: Confidence + Price Range side by side ─── */}
           <div className="grid lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2">
               <ConfidenceCard
@@ -152,41 +169,52 @@ const ResultPage = () => {
             </div>
           </div>
 
-          {/* ─── ROW 3: Decision support — 3 equal cards ─── */}
+          {/* ═══════════════════════════════════════════════════
+              ZONE 2 — Negotiation Intelligence
+          ═══════════════════════════════════════════════════ */}
+          <ZoneHeader icon={Target} label={tr('zone_negotiation')} helper={tr('negotiation_helper')} />
+
           <div className="grid sm:grid-cols-3 gap-6">
             {/* Recommended offer */}
-            <Card className="glass-card">
+            <Card className="glass-card border-l-4 border-l-secondary">
               <CardContent className="pt-5 pb-4 space-y-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Handshake className="h-4 w-4 text-secondary" />
                   {tr('recommended_offer')}
                 </div>
                 <p className="text-2xl font-display font-bold text-foreground">{formatHuf(negotiationFloor)}</p>
+                <p className="text-[11px] text-muted-foreground">Nyitóajánlat szintje vásárlóként</p>
               </CardContent>
             </Card>
             {/* Negotiation margin */}
-            <Card className="glass-card">
+            <Card className="glass-card border-l-4 border-l-primary">
               <CardContent className="pt-5 pb-4 space-y-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Handshake className="h-4 w-4 text-primary" />
                   {tr('negotiation_margin')}
                 </div>
                 <p className="text-2xl font-display font-bold text-foreground">{formatHuf(negotiationMargin)}</p>
+                <p className="text-[11px] text-muted-foreground">Mozgástér az ajánlott és a piaci ár között</p>
               </CardContent>
             </Card>
             {/* Dealer price */}
-            <Card className="glass-card">
+            <Card className="glass-card border-l-4 border-l-muted-foreground">
               <CardContent className="pt-5 pb-4 space-y-1">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Store className="h-4 w-4 text-primary" />
+                  <Store className="h-4 w-4 text-muted-foreground" />
                   {tr('dealer_typical_price')}
                 </div>
                 <p className="text-2xl font-display font-bold text-foreground">{formatHuf(dealerPrice)}</p>
+                <p className="text-[11px] text-muted-foreground">Kereskedői szintű hirdetési ár</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* ─── ROW 4: Market insight metrics ─── */}
+          {/* ═══════════════════════════════════════════════════
+              ZONE 3 — Market Intelligence
+          ═══════════════════════════════════════════════════ */}
+          <ZoneHeader icon={TrendingUp} label={tr('zone_market')} helper={tr('market_helper')} />
+
           <MarketInsightRow
             liquidityLevel={liquidityLevel}
             velocityDays={velocityDays}
