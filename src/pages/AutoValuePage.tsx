@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import Step1Vehicle from '@/components/wizard/Step1Vehicle';
 import Step2Analysis from '@/components/wizard/Step2Analysis';
-import Step3Results from '@/components/wizard/Step3Results';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export type VehicleData = {
