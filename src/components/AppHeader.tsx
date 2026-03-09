@@ -22,6 +22,7 @@ const AppHeader = () => {
     { path: '/', label: tr('nav_home') },
     { path: '/valuation', label: tr('nav_valuation') },
     { path: '/portal', label: tr('nav_portal') },
+    { path: '/dashboard', label: 'Dashboard' },
   ];
 
   return (

@@ -11,6 +11,7 @@ import LandingPage from "./pages/LandingPage";
 import AutoValuePage from "./pages/AutoValuePage";
 import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
+import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/valuation" element={<ProtectedRoute><AutoValuePage /></ProtectedRoute>} />
             <Route path="/portal" element={<ProtectedRoute><PortalPage /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
