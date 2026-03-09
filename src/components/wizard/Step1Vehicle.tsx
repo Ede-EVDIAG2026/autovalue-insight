@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Link2, Settings2 } from 'lucide-react';
+import { ChevronDown, Settings2, Zap } from 'lucide-react';
 import { VehicleData } from '@/pages/AutoValuePage';
 
 const MAKES_MODELS: Record<string, string[]> = {
@@ -41,18 +40,13 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [mileage, setMileage] = useState('');
-  const [color, setColor] = useState('');
-  const [fuelType, setFuelType] = useState('BEV');
-  const [serviceBook, setServiceBook] = useState(false);
-  const [owners, setOwners] = useState('1');
-  const [accidentFree, setAccidentFree] = useState(true);
   const [country, setCountry] = useState('HU');
-  const [linkedResultId, setLinkedResultId] = useState('');
-  const [linkOpen, setLinkOpen] = useState(false);
+
+  // Optional
   const [optionalOpen, setOptionalOpen] = useState(false);
   const [engine, setEngine] = useState('');
-  const [transmission, setTransmission] = useState('');
-  const [equipment, setEquipment] = useState('');
+  const [trimLevel, setTrimLevel] = useState('');
+  const [condition, setCondition] = useState('');
 
   const models = make ? MAKES_MODELS[make] || [] : [];
   const years = Array.from({ length: 12 }, (_, i) => 2026 - i);
@@ -66,26 +60,28 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
       vehicle_model: model,
       vehicle_year: parseInt(year),
       vehicle_mileage_km: parseInt(mileage),
-      vehicle_color: color,
-      vehicle_fuel_type: fuelType,
-      service_book: serviceBook,
-      owners_count: parseInt(owners),
-      accident_free: accidentFree,
+      vehicle_color: '',
+      vehicle_fuel_type: 'BEV',
+      service_book: false,
+      owners_count: 1,
+      accident_free: true,
       target_country: country,
-      linked_result_id: linkedResultId || undefined,
     });
   };
 
   return (
     <div className="glass-card p-8 animate-slide-up">
-      <h2 className="text-2xl font-display font-bold text-foreground mb-8">{tr('step1_title')}</h2>
-      
-      <div className="grid sm:grid-cols-2 gap-6">
+      <h2 className="text-2xl font-display font-bold text-foreground mb-2">{tr('step1_title')}</h2>
+      <p className="text-sm text-muted-foreground mb-8">
+        Gyors becslés – 5 mező, 10 másodperc.
+      </p>
+
+      <div className="grid sm:grid-cols-2 gap-5">
         {/* Make */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('make')} *</Label>
+        <div className="space-y-1.5">
+          <Label className="text-foreground text-sm">{tr('make')} *</Label>
           <Select value={make} onValueChange={v => { setMake(v); setModel(''); }}>
-            <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Válassz gyártót..." /></SelectTrigger>
             <SelectContent>
               {Object.keys(MAKES_MODELS).map(m => (
                 <SelectItem key={m} value={m}>{m}</SelectItem>
@@ -95,10 +91,10 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
         </div>
 
         {/* Model */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('model')} *</Label>
+        <div className="space-y-1.5">
+          <Label className="text-foreground text-sm">{tr('model')} *</Label>
           <Select value={model} onValueChange={setModel} disabled={!make}>
-            <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Válassz modellt..." /></SelectTrigger>
             <SelectContent>
               {models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
             </SelectContent>
@@ -106,10 +102,10 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
         </div>
 
         {/* Year */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('year')} *</Label>
+        <div className="space-y-1.5">
+          <Label className="text-foreground text-sm">{tr('year')} *</Label>
           <Select value={year} onValueChange={setYear}>
-            <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Évjárat..." /></SelectTrigger>
             <SelectContent>
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
@@ -117,19 +113,19 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
         </div>
 
         {/* Mileage */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('mileage')} *</Label>
-          <Input 
-            type="number" 
-            placeholder="45000" 
-            value={mileage} 
-            onChange={e => setMileage(e.target.value)} 
+        <div className="space-y-1.5">
+          <Label className="text-foreground text-sm">{tr('mileage')} *</Label>
+          <Input
+            type="number"
+            placeholder="pl. 45000"
+            value={mileage}
+            onChange={e => setMileage(e.target.value)}
           />
         </div>
 
         {/* Country */}
-        <div className="space-y-2">
-          <Label className="text-foreground">{tr('target_market')} *</Label>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label className="text-foreground text-sm">{tr('target_market')}</Label>
           <Select value={country} onValueChange={setCountry}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -140,101 +136,52 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
       </div>
 
       {/* Optional fields */}
-      <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen} className="mt-6">
+      <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen} className="mt-5">
         <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
           <Settings2 className="h-4 w-4" />
-          {tr('optional_fields')}
+          Pontosítás (opcionális)
           <ChevronDown className={`h-4 w-4 transition-transform ${optionalOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="grid sm:grid-cols-2 gap-6 p-4 rounded-lg bg-muted/50">
-            <div className="space-y-2">
-              <Label className="text-foreground">{tr('engine')}</Label>
-              <Input placeholder="1.6 TSI" value={engine} onChange={e => setEngine(e.target.value)} />
+        <CollapsibleContent className="mt-3">
+          <div className="grid sm:grid-cols-3 gap-4 p-4 rounded-lg bg-muted/50">
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-sm">{tr('engine')}</Label>
+              <Input placeholder="pl. 60 kWh" value={engine} onChange={e => setEngine(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <Label className="text-foreground">{tr('transmission')}</Label>
-              <Select value={transmission} onValueChange={setTransmission}>
-                <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-sm">Felszereltség</Label>
+              <Input placeholder="pl. Premium, Sport" value={trimLevel} onChange={e => setTrimLevel(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-foreground text-sm">Állapot</Label>
+              <Select value={condition} onValueChange={setCondition}>
+                <SelectTrigger><SelectValue placeholder="Válassz..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual">Manuális</SelectItem>
-                  <SelectItem value="automatic">Automata</SelectItem>
-                  <SelectItem value="dsg">DSG</SelectItem>
+                  <SelectItem value="excellent">Kiváló</SelectItem>
+                  <SelectItem value="good">Jó</SelectItem>
+                  <SelectItem value="fair">Elfogadható</SelectItem>
+                  <SelectItem value="poor">Gyenge</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label className="text-foreground">{tr('equipment')}</Label>
-              <Input placeholder="LED, navi, bőr ülés..." value={equipment} onChange={e => setEquipment(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-foreground">{tr('color')}</Label>
-              <Input placeholder="Fehér" value={color} onChange={e => setColor(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-foreground">{tr('fuel_type')}</Label>
-              <Select value={fuelType} onValueChange={setFuelType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BEV">BEV</SelectItem>
-                  <SelectItem value="PHEV">PHEV</SelectItem>
-                  <SelectItem value="HEV">HEV</SelectItem>
-                  <SelectItem value="MHEV">MHEV</SelectItem>
-                  <SelectItem value="Benzin">Benzin</SelectItem>
-                  <SelectItem value="Dízel">Dízel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between sm:col-span-2 py-2">
-              <Label className="text-foreground">{tr('service_book')}</Label>
-              <Switch checked={serviceBook} onCheckedChange={setServiceBook} />
-            </div>
-            <div className="flex items-center justify-between sm:col-span-2 py-2">
-              <Label className="text-foreground">{tr('accident_free')}</Label>
-              <Switch checked={accidentFree} onCheckedChange={setAccidentFree} />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-foreground">{tr('owners')}</Label>
-              <Select value={owners} onValueChange={setOwners}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <SelectItem key={n} value={String(n)}>{n}{n === 5 ? '+' : ''}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* Audit Suite Link */}
-      <Collapsible open={linkOpen} onOpenChange={setLinkOpen} className="mt-6">
-        <CollapsibleTrigger className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer">
-          <Link2 className="h-4 w-4" />
-          {tr('link_audit')}
-          <ChevronDown className={`h-4 w-4 transition-transform ${linkOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="space-y-2 p-4 rounded-lg bg-muted/50">
-            <Label className="text-foreground text-sm">Result ID</Label>
-            <Input 
-              placeholder="Paste result ID here..."
-              value={linkedResultId}
-              onChange={e => setLinkedResultId(e.target.value)}
-            />
           </div>
         </CollapsibleContent>
       </Collapsible>
 
       {/* Submit */}
-      <Button 
-        className="w-full mt-8 hero-gradient text-lg py-6"
+      <Button
+        className="w-full mt-7 hero-gradient text-lg py-6"
         disabled={!canSubmit}
         onClick={handleSubmit}
       >
+        <Zap className="h-5 w-5 mr-1" />
         {tr('start_valuation')}
       </Button>
+
+      {/* Microcopy */}
+      <p className="text-xs text-muted-foreground text-center mt-3">
+        Az EV DIAG gyors becslést készít néhány alapadat alapján. A részletesebb elemzés később opcionálisan elérhető.
+      </p>
     </div>
   );
 };
