@@ -52,6 +52,7 @@ const App = () => (
             <Route path="/valuation" element={<ProtectedRoute><AutoValuePage /></ProtectedRoute>} />
             <Route path="/portal" element={<ProtectedRoute><PortalPage /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
