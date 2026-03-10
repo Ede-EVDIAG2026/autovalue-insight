@@ -15,6 +15,7 @@ import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
+import ChatWidget from "./components/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <ChatWidget />
         </TooltipProvider>
       </LanguageProvider>
     </AuthProvider>
