@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+const MARKET_API = 'https://market.evdiag.hu';
+
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
 type FormState = { brand: string; model: string; year: string; fuel: string; km: string; country: string };
@@ -10,9 +12,11 @@ type Result = {
   trendData: number[];
   regional: { code: string; price: number; velocity: number }[];
   marketDepth: number; similarListings: number; demandIndex: number;
+  isFallback?: boolean; dataPoints?: number;
 };
 
-const MODELS: Record<string, string[]> = {
+// Hardcoded fallback lists
+const FALLBACK_MODELS: Record<string, string[]> = {
   "Audi": ["A3","A4","A6","Q3","Q5","e-tron","Q4 e-tron"],
   "BMW": ["116i","318i","520d","X1","X3","iX3","i4"],
   "Mercedes-Benz": ["A180","C220","E300","GLC","EQA","EQB","EQC"],
@@ -35,11 +39,10 @@ const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹
 
 const YEARS = Array.from({ length: 12 }, (_, i) => String(2024 - i));
 const FUELS = [
-  { value: 'BEV', label: 'Elektromos (BEV)' },
-  { value: 'PHEV', label: 'Plug-in Hibrid (PHEV)' },
-  { value: 'HEV', label: 'Hibrid (HEV)' },
-  { value: 'benzin', label: 'Benzin' },
-  { value: 'dizel', label: 'Dízel' },
+  { value: 'BEV', label: 'BEV – Elektromos' },
+  { value: 'PHEV', label: 'PHEV – Plug-in hibrid' },
+  { value: 'HEV', label: 'HEV – Hibrid' },
+  { value: 'MHEV', label: 'MHEV – Enyhe hibrid' },
 ];
 
 function generateResult(form: FormState): Result {
@@ -63,6 +66,123 @@ function generateResult(form: FormState): Result {
     marketDepth: Math.round(340 + Math.random() * 280),
     similarListings: Math.round(48 + Math.random() * 90),
     demandIndex: Math.round(62 + Math.random() * 30),
+    isFallback: true,
+  };
+}
+
+// ── API helpers ──
+async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      mode: 'cors',
+      headers: { 'Accept': 'application/json' },
+    });
+    clearTimeout(timeout);
+    return res;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+async function fetchValuation(formData: FormState): Promise<any | null> {
+  try {
+    const params = new URLSearchParams({
+      make: formData.brand,
+      model: formData.model,
+      year: formData.year,
+      powertrain: formData.fuel,
+      mileage_km: formData.km,
+      ...(formData.country && { country: formData.country }),
+    });
+    const res = await fetchWithTimeout(`${MARKET_API}/market/valuation?${params}`);
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('Valuation API error, falling back to mock:', e);
+    return null;
+  }
+}
+
+function mapApiToResult(api: any, form: FormState): Result {
+  const ps = api.price_stats || {};
+  const p50 = ps.median || ps.p50 || 0;
+  const p10 = ps.p10 || Math.round(p50 * 0.74);
+  const p25 = ps.p25 || Math.round(p50 * 0.87);
+  const p75 = ps.p75 || Math.round(p50 * 1.13);
+  const p90 = ps.p90 || Math.round(p50 * 1.26);
+
+  // Risk score from price_position
+  let riskScore = 50;
+  if (api.price_position?.label === 'ALULERTEKELT') riskScore = 25;
+  else if (api.price_position?.label === 'TULARAZOTT') riskScore = 75;
+
+  // Velocity from year_distribution
+  const yearDist: { year: string; count: number }[] = api.year_distribution || [];
+  const currentYear = new Date().getFullYear();
+  const recentYears = yearDist
+    .filter(y => parseInt(y.year) >= currentYear - 2)
+    .reduce((s, y) => s + y.count, 0);
+  const totalListings = api.data_points || 1;
+  const velocityScore = Math.min(99, Math.round((recentYears / totalListings) * 100));
+  const velocityDays = velocityScore > 70 ? 14 : velocityScore > 40 ? 30 : 60;
+
+  // Trend data from year_distribution (pad to 36 if needed)
+  let trendData: number[];
+  if (yearDist.length > 0) {
+    trendData = yearDist.map(() => p50);
+    while (trendData.length < 36) {
+      trendData.push(p50 + (Math.random() - 0.5) * p50 * 0.02);
+    }
+    trendData = trendData.slice(0, 36).map(v => Math.round(v));
+  } else {
+    trendData = Array.from({ length: 36 }, (_, i) =>
+      Math.round(p50 * (0.82 + i / 35 * 0.22 + Math.sin(i / 3) * 0.02))
+    );
+  }
+
+  // Regional from comparable_listings
+  const regionalMap: Record<string, { total: number; count: number; velocity: number }> = {};
+  const comparables: any[] = api.comparable_listings || [];
+  comparables.forEach((l: any) => {
+    if (l.country && l.price_eur) {
+      if (!regionalMap[l.country]) regionalMap[l.country] = { total: 0, count: 0, velocity: 50 };
+      regionalMap[l.country].total += l.price_eur;
+      regionalMap[l.country].count += 1;
+    }
+  });
+
+  let regional = Object.entries(regionalMap).map(([code, d]) => ({
+    code,
+    price: Math.round(d.total / d.count),
+    velocity: Math.round(30 + Math.random() * 50),
+  }));
+
+  // Ensure at least a few regions
+  if (regional.length < 3) {
+    const defaults = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE"];
+    regional = defaults.map(code => {
+      const existing = regional.find(r => r.code === code);
+      return existing || { code, price: Math.round(p50 * (0.85 + Math.random() * 0.35)), velocity: Math.round(25 + Math.random() * 55) };
+    });
+  }
+
+  return {
+    p10, p25, p50, p75, p90,
+    recommended: { low: p25, high: p75 },
+    riskScore,
+    velocityDays,
+    velocityProb: velocityScore,
+    trendData,
+    regional,
+    marketDepth: api.data_points || 0,
+    similarListings: api.data_points || 0,
+    demandIndex: Math.min(99, Math.round(velocityScore * 0.9 + 10)),
+    isFallback: api.fallback_mode || false,
+    dataPoints: api.data_points || 0,
   };
 }
 
@@ -160,6 +280,65 @@ export default function EUAutoValueIntelligence() {
   const [stepLabel, setStepLabel] = useState('');
   const [tab, setTab] = useState(0);
 
+  // Dynamic makes/models from API
+  const [apiMakes, setApiMakes] = useState<string[]>([]);
+  const [makesLoading, setMakesLoading] = useState(true);
+  const [apiModels, setApiModels] = useState<string[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const makesLoaded = useRef(false);
+
+  // Fetch makes on mount
+  useEffect(() => {
+    if (makesLoaded.current) return;
+    makesLoaded.current = true;
+    (async () => {
+      try {
+        const res = await fetchWithTimeout(`${MARKET_API}/market/makes`, 8000);
+        if (!res.ok) throw new Error(`${res.status}`);
+        const json = await res.json();
+        const makes: string[] = (json.makes || []).map((m: any) => m.make || m);
+        if (makes.length > 0) setApiMakes(makes);
+      } catch (e) {
+        console.warn('Makes API failed, using fallback:', e);
+      } finally {
+        setMakesLoading(false);
+      }
+    })();
+  }, []);
+
+  // Fetch models when brand changes
+  useEffect(() => {
+    if (!form.brand) {
+      setApiModels([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setModelsLoading(true);
+      try {
+        const res = await fetchWithTimeout(
+          `${MARKET_API}/market/models?make=${encodeURIComponent(form.brand)}`, 8000
+        );
+        if (!res.ok) throw new Error(`${res.status}`);
+        const json = await res.json();
+        const models: string[] = (json.models || []).map((m: any) => m.model || m);
+        if (!cancelled && models.length > 0) setApiModels(models);
+      } catch (e) {
+        console.warn('Models API failed, using fallback:', e);
+        if (!cancelled) setApiModels([]);
+      } finally {
+        if (!cancelled) setModelsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [form.brand]);
+
+  // Resolved lists: API first, fallback second
+  const makesList = apiMakes.length > 0 ? apiMakes : Object.keys(FALLBACK_MODELS);
+  const modelsList = apiModels.length > 0
+    ? apiModels
+    : (FALLBACK_MODELS[form.brand] || []);
+
   const setField = (k: keyof FormState, v: string) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
@@ -190,11 +369,16 @@ export default function EUAutoValueIntelligence() {
         i++;
       } else {
         clearInterval(iv);
-        setTimeout(() => {
-          setResult(generateResult(form));
+        // Fire the real API call during the last loading phase
+        fetchValuation(form).then(apiResult => {
+          if (apiResult && apiResult.data_points > 0) {
+            setResult(mapApiToResult(apiResult, form));
+          } else {
+            setResult(generateResult(form));
+          }
           setScreen('result');
           setTab(0);
-        }, 300);
+        });
       }
     }, 420);
   }, [canSubmit, form]);
@@ -254,16 +438,16 @@ export default function EUAutoValueIntelligence() {
               <div>
                 <label style={S.label}>Márka</label>
                 <select className="av-inp" style={S.input} value={form.brand} onChange={e => setField('brand', e.target.value)}>
-                  <option value="">Válasszon...</option>
-                  {Object.keys(MODELS).map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value="">{makesLoading ? 'Betöltés...' : 'Válasszon...'}</option>
+                  {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               {/* Model */}
               <div>
                 <label style={S.label}>Modell</label>
-                <select className="av-inp" style={{ ...S.input, opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand}>
-                  <option value="">Válasszon...</option>
-                  {(MODELS[form.brand] || []).map(m => <option key={m} value={m}>{m}</option>)}
+                <select className="av-inp" style={{ ...S.input, opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
+                  <option value="">{modelsLoading ? 'Betöltés...' : 'Válasszon...'}</option>
+                  {modelsList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               {/* Year */}
