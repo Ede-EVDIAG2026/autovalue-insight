@@ -257,6 +257,7 @@ const CSS = `
 `;
 
 export default function EUAutoValueIntelligence() {
+  const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU' });
   const [result, setResult] = useState<Result | null>(null);
@@ -268,6 +269,131 @@ export default function EUAutoValueIntelligence() {
   const [apiModels, setApiModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
+
+  const ui = {
+    HU: {
+      vehicle_data: 'Jármű adatok megadása', vehicle_sub: 'Adja meg a jármű fő paramétereit',
+      make: 'Márka', model: 'Modell', year: 'Évjárat', fuel: 'Hajtáslánc', mileage: 'Futásteljesítmény (km)',
+      country: 'Ország', select: 'Válasszon...', loading: 'Betöltés...',
+      gdpr: 'Adatai biztonságban · GDPR-kompatibilis', submit: 'Értékbecslés indítása →',
+      trend_title: '3 éves ártrend', trend_sub: 'Havi árbontás EU piacon',
+      p10_title: 'P10–P90 percentilis', p10_sub: 'Teljes piaci áreloszlás',
+      velocity_title: 'Értékesítési sebesség', velocity_sub: 'Valószínűségi előrejelzés',
+      analyzing: 'AI ügynökök elemzése…', new_valuation: '← Új értékbecslés',
+      p50_label: 'P50 piaci értéke', suggested: 'Ajánlott eladási ársáv', sell_speed: 'Eladási sebesség',
+      day: 'nap', risk_low: 'Alacsony kockázat', risk_mid: 'Közepes kockázat', risk_high: 'Magas kockázat',
+      distribution: 'Piaci áreloszlás', agents_title: 'AI Ügynökök',
+      regional_empty: 'Korlátozott regionális adat',
+      regional_empty_sub: 'Ehhez a járműhöz jelenleg nem áll rendelkezésre elegendő összehasonlító hirdetés más országokból.',
+      tab_dist: 'Áteloszlás', tab_trend: 'Ártrend', tab_regional: 'Regionális', tab_agents: 'AI Ügynökök',
+      fuel_bev: 'BEV – Elektromos', fuel_phev: 'PHEV – Plug-in hibrid',
+      fuel_hev: 'HEV – Hibrid', fuel_mhev: 'MHEV – Enyhe hibrid',
+      agents_done: 'KÉSZ', agents_ready: 'ügynök kész',
+      speed_label: 'Sebesség', within14: '14 napon belül', within30: '30 napon belül', within60: '60 napon belül',
+      prob_suffix: '% valószínűség 30 napon belül',
+      market_depth: 'Piaci mélység', similar_listings: 'Hasonló hirdetések', demand_index: 'Keresleti index',
+      sell_velocity: 'Értékesítési sebesség',
+      strategy_hint: 'Stratégia: Hirdesse az ajánlott ársáv felső értékén, és legyen nyitott 5-8% tárgyalási mozgástérre.',
+      trend_36m: '36 hónapos ártrend',
+      lowest: 'Legalacsonyabb', highest: 'Legmagasabb', average: 'Átlag', current: 'Jelenlegi',
+      trend_rising: 'Emelkedő trend az elmúlt 12 hónapban.', trend_falling: 'Csökkenő trend az elmúlt 12 hónapban.',
+      trend_change_12m: '12 havi változás',
+      export_hint: 'Exportlehetőség — A legmagasabb regionális értéket kínáló piac:',
+      premium_label: 'prémium az EU átlaghoz képest',
+      p10l: 'Alsó', p25l: 'Alacsony', p50l: 'Közép', p75l: 'Magas', p90l: 'Felső',
+      active_listings: 'aktív hirdetés', sample: 'minta',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway modul · Ingyenes B2C értékbecslő platform · Az eredmények tájékoztató jellegűek, tényleges piaci körülményektől eltérhetnek. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ INGYENES',
+      hero_sub1: 'AI/MI ÜGYNÖKCSOPORT · PIACI INTELLIGENCIA',
+      hero_title: 'Professzionális Járműértékbecslés',
+      hero_desc: 'Bayes-alapú valószínűségi modell · 27 EU ország + Svájc · 3 év visszamenőleges ártrend',
+      result_gen: 'Eredmény generálása…',
+    },
+    EN: {
+      vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
+      make: 'Make', model: 'Model', year: 'Year', fuel: 'Powertrain', mileage: 'Mileage (km)',
+      country: 'Country', select: 'Select...', loading: 'Loading...',
+      gdpr: 'Your data is secure · GDPR-compliant', submit: 'Start valuation →',
+      trend_title: '3-year price trend', trend_sub: 'Monthly breakdown on EU market',
+      p10_title: 'P10–P90 percentile', p10_sub: 'Full market price distribution',
+      velocity_title: 'Sales velocity', velocity_sub: 'Probability forecast',
+      analyzing: 'AI agents analyzing…', new_valuation: '← New valuation',
+      p50_label: 'P50 market value', suggested: 'Suggested listing range', sell_speed: 'Sales speed',
+      day: 'days', risk_low: 'Low risk', risk_mid: 'Medium risk', risk_high: 'High risk',
+      distribution: 'Price distribution', agents_title: 'AI Agents',
+      regional_empty: 'Limited regional data',
+      regional_empty_sub: 'Not enough comparable listings available from other countries for this vehicle.',
+      tab_dist: 'Distribution', tab_trend: 'Price trend', tab_regional: 'Regional', tab_agents: 'AI Agents',
+      fuel_bev: 'BEV – Electric', fuel_phev: 'PHEV – Plug-in hybrid',
+      fuel_hev: 'HEV – Hybrid', fuel_mhev: 'MHEV – Mild hybrid',
+      agents_done: 'DONE', agents_ready: 'agents done',
+      speed_label: 'Speed', within14: 'Within 14 days', within30: 'Within 30 days', within60: 'Within 60 days',
+      prob_suffix: '% probability within 30 days',
+      market_depth: 'Market depth', similar_listings: 'Similar listings', demand_index: 'Demand index',
+      sell_velocity: 'Sales velocity',
+      strategy_hint: 'Strategy: List at the upper end of the suggested range and be open to 5-8% negotiation margin.',
+      trend_36m: '36-month price trend',
+      lowest: 'Lowest', highest: 'Highest', average: 'Average', current: 'Current',
+      trend_rising: 'Rising trend over the past 12 months.', trend_falling: 'Declining trend over the past 12 months.',
+      trend_change_12m: '12-month change',
+      export_hint: 'Export opportunity — Highest regional value market:',
+      premium_label: 'premium vs EU average',
+      p10l: 'Bottom', p25l: 'Low', p50l: 'Mid', p75l: 'High', p90l: 'Top',
+      active_listings: 'active listings', sample: 'samples',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway module · Free B2C valuation platform · Results are indicative and may differ from actual market conditions. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ FREE',
+      hero_sub1: 'AI/ML AGENT GROUP · MARKET INTELLIGENCE',
+      hero_title: 'Professional Vehicle Valuation',
+      hero_desc: 'Bayesian probability model · 27 EU countries + Switzerland · 3-year historical price trend',
+      result_gen: 'Generating results…',
+    },
+    DE: {
+      vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
+      make: 'Marke', model: 'Modell', year: 'Baujahr', fuel: 'Antrieb', mileage: 'Kilometerstand (km)',
+      country: 'Land', select: 'Auswählen...', loading: 'Laden...',
+      gdpr: 'Ihre Daten sind sicher · DSGVO-konform', submit: 'Bewertung starten →',
+      trend_title: '3-Jahres-Preistrend', trend_sub: 'Monatliche Aufschlüsselung EU-Markt',
+      p10_title: 'P10–P90 Perzentil', p10_sub: 'Vollständige Marktpreisverteilung',
+      velocity_title: 'Verkaufsgeschwindigkeit', velocity_sub: 'Wahrscheinlichkeitsprognose',
+      analyzing: 'KI-Agenten analysieren…', new_valuation: '← Neue Bewertung',
+      p50_label: 'P50 Marktwert', suggested: 'Empfohlene Verkaufsspanne', sell_speed: 'Verkaufsgeschwindigkeit',
+      day: 'Tage', risk_low: 'Niedriges Risiko', risk_mid: 'Mittleres Risiko', risk_high: 'Hohes Risiko',
+      distribution: 'Preisverteilung', agents_title: 'KI-Agenten',
+      regional_empty: 'Begrenzte Regionaldaten',
+      regional_empty_sub: 'Für dieses Fahrzeug sind derzeit nicht genügend Vergleichsanzeigen aus anderen Ländern verfügbar.',
+      tab_dist: 'Verteilung', tab_trend: 'Preistrend', tab_regional: 'Regional', tab_agents: 'KI-Agenten',
+      fuel_bev: 'BEV – Elektro', fuel_phev: 'PHEV – Plug-in-Hybrid',
+      fuel_hev: 'HEV – Hybrid', fuel_mhev: 'MHEV – Mild-Hybrid',
+      agents_done: 'FERTIG', agents_ready: 'Agenten fertig',
+      speed_label: 'Geschwindigkeit', within14: 'Innerhalb 14 Tagen', within30: 'Innerhalb 30 Tagen', within60: 'Innerhalb 60 Tagen',
+      prob_suffix: '% Wahrscheinlichkeit innerhalb 30 Tagen',
+      market_depth: 'Markttiefe', similar_listings: 'Ähnliche Anzeigen', demand_index: 'Nachfrageindex',
+      sell_velocity: 'Verkaufsgeschwindigkeit',
+      strategy_hint: 'Strategie: Listen Sie am oberen Ende der empfohlenen Spanne und seien Sie offen für 5-8% Verhandlungsspielraum.',
+      trend_36m: '36-Monats-Preistrend',
+      lowest: 'Niedrigster', highest: 'Höchster', average: 'Durchschnitt', current: 'Aktuell',
+      trend_rising: 'Steigender Trend in den letzten 12 Monaten.', trend_falling: 'Fallender Trend in den letzten 12 Monaten.',
+      trend_change_12m: '12-Monats-Änderung',
+      export_hint: 'Exportmöglichkeit — Markt mit dem höchsten regionalen Wert:',
+      premium_label: 'Aufpreis vs. EU-Durchschnitt',
+      p10l: 'Unten', p25l: 'Niedrig', p50l: 'Mitte', p75l: 'Hoch', p90l: 'Oben',
+      active_listings: 'aktive Anzeigen', sample: 'Stichproben',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway Modul · Kostenlose B2C-Bewertungsplattform · Die Ergebnisse sind indikativ und können von den tatsächlichen Marktbedingungen abweichen. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ KOSTENLOS',
+      hero_sub1: 'KI/ML AGENTENGRUPPE · MARKTINTELLIGENZ',
+      hero_title: 'Professionelle Fahrzeugbewertung',
+      hero_desc: 'Bayesianisches Wahrscheinlichkeitsmodell · 27 EU-Länder + Schweiz · 3-Jahres-Preistrend',
+      result_gen: 'Ergebnisse werden generiert…',
+    },
+  };
+  const tr = ui[lang] || ui['HU'];
+
+  const FUELS = [
+    { value: 'BEV', label: tr.fuel_bev },
+    { value: 'PHEV', label: tr.fuel_phev },
+    { value: 'HEV', label: tr.fuel_hev },
+    { value: 'MHEV', label: tr.fuel_mhev },
+  ];
 
   useEffect(() => {
     if (makesLoaded.current) return;
@@ -328,7 +454,7 @@ export default function EUAutoValueIntelligence() {
       [55, 'Sales Velocity Predictor…'],
       [72, 'Regional Risk Scoring…'],
       [88, 'Bayesian Market Risk Layer…'],
-      [100, 'Eredmény generálása…'],
+      [100, tr.result_gen],
     ] as [number, string][];
     let i = 0;
     const iv = setInterval(() => {
@@ -342,7 +468,7 @@ export default function EUAutoValueIntelligence() {
         });
       }
     }, 420);
-  }, [canSubmit, form]);
+  }, [canSubmit, form, tr.result_gen]);
 
   const reset = () => { setScreen('input'); setResult(null); };
 
