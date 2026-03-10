@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { UserInfo, getMe, login, register, logout,
-         getGdprStatus, acceptGdpr, RegisterInput } from '../services/authService';
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import type { UserInfo, RegisterInput } from '../services/authService';
+import { getMe, login, register, logout, getGdprStatus, acceptGdpr } from '../services/authService';
 import { getToken, clearTokens } from '../lib/apiClient';
 
 interface AuthContextType {
