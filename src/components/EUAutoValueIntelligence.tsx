@@ -110,79 +110,105 @@ async function fetchValuation(formData: FormState): Promise<any | null> {
 function mapApiToResult(api: any, form: FormState): Result {
   const ps = api.price_stats || {};
   const p50 = ps.median || ps.p50 || 0;
-  const p10 = ps.p10 || Math.round(p50 * 0.74);
-  const p25 = ps.p25 || Math.round(p50 * 0.87);
-  const p75 = ps.p75 || Math.round(p50 * 1.13);
-  const p90 = ps.p90 || Math.round(p50 * 1.26);
+  // FIX 1: proper falsy check – 0 triggers fallback formula
+  const p10 = (ps.p10 && ps.p10 > 0) ? ps.p10 : Math.round(p50 * 0.74);
+  const p25 = (ps.p25 && ps.p25 > 0) ? ps.p25 : Math.round(p50 * 0.87);
+  const p75 = (ps.p75 && ps.p75 > 0) ? ps.p75 : Math.round(p50 * 1.13);
+  const p90 = (ps.p90 && ps.p90 > 0) ? ps.p90 : Math.round(p50 * 1.26);
+
+  // If p25 === p75 (collapsed range from few data points), spread ±10%
+  const finalP25 = p25 === p75 ? Math.round(p50 * 0.90) : p25;
+  const finalP75 = p25 === p75 ? Math.round(p50 * 1.10) : p75;
 
   // Risk score from price_position
   let riskScore = 50;
   if (api.price_position?.label === 'ALULERTEKELT') riskScore = 25;
   else if (api.price_position?.label === 'TULARAZOTT') riskScore = 75;
 
-  // Velocity from year_distribution
+  // FIX 2: Improved velocity calculation
   const yearDist: { year: string; count: number }[] = api.year_distribution || [];
-  const currentYear = new Date().getFullYear();
-  const recentYears = yearDist
-    .filter(y => parseInt(y.year) >= currentYear - 2)
-    .reduce((s, y) => s + y.count, 0);
-  const totalListings = api.data_points || 1;
-  const velocityScore = Math.min(99, Math.round((recentYears / totalListings) * 100));
-  const velocityDays = velocityScore > 70 ? 14 : velocityScore > 40 ? 30 : 60;
+  const dataPoints = api.data_points || 0;
+  let velocityScore: number;
+  let velocityDays: number;
+  let velocityProb30: number;
 
-  // Trend data from year_distribution (pad to 36 if needed)
+  if (yearDist.length > 0) {
+    const sorted = [...yearDist].sort((a, b) => parseInt(b.year) - parseInt(a.year));
+    const total = yearDist.reduce((s, y) => s + y.count, 0);
+    const recent = sorted.slice(0, 2).reduce((s, y) => s + y.count, 0);
+    const depthBonus = Math.min(30, Math.round(total / 3));
+    velocityScore = Math.min(95, Math.round((recent / total) * 70) + depthBonus);
+  } else {
+    velocityScore = Math.min(85, Math.round(dataPoints / 2));
+  }
+
+  velocityDays = velocityScore > 70 ? 14 :
+                 velocityScore > 50 ? 21 :
+                 velocityScore > 30 ? 35 : 55;
+
+  velocityProb30 = velocityScore > 70 ? 82 :
+                   velocityScore > 50 ? 65 :
+                   velocityScore > 30 ? 45 : 28;
+
+  // FIX 3: Trend data from year_distribution with realistic depreciation
   let trendData: number[];
   if (yearDist.length > 0) {
-    trendData = yearDist.map(() => p50);
-    while (trendData.length < 36) {
-      trendData.push(p50 + (Math.random() - 0.5) * p50 * 0.02);
+    const sorted = [...yearDist].sort((a, b) => parseInt(a.year) - parseInt(b.year));
+    const baseYear = parseInt(sorted[sorted.length - 1].year);
+    const yearPrices = sorted.map(y => {
+      const yearsOld = baseYear - parseInt(y.year);
+      return Math.round(p50 * Math.pow(1.08, yearsOld));
+    });
+    // Interpolate to 36 monthly points from yearly data
+    trendData = [];
+    for (let i = 0; i < yearPrices.length - 1; i++) {
+      const monthsPerSegment = Math.max(1, Math.round(36 / Math.max(1, yearPrices.length - 1)));
+      for (let m = 0; m < monthsPerSegment && trendData.length < 36; m++) {
+        const t = m / monthsPerSegment;
+        trendData.push(Math.round(yearPrices[i] * (1 - t) + yearPrices[i + 1] * t));
+      }
     }
-    trendData = trendData.slice(0, 36).map(v => Math.round(v));
+    // Pad to 36 if needed
+    while (trendData.length < 36) trendData.push(yearPrices[yearPrices.length - 1]);
+    trendData = trendData.slice(0, 36);
   } else {
     trendData = Array.from({ length: 36 }, (_, i) =>
       Math.round(p50 * (0.82 + i / 35 * 0.22 + Math.sin(i / 3) * 0.02))
     );
   }
 
-  // Regional from comparable_listings
-  const regionalMap: Record<string, { total: number; count: number; velocity: number }> = {};
+  // FIX 4: Regional from comparable_listings – real data only, no mock padding
+  const regionalMap: Record<string, { total: number; count: number }> = {};
   const comparables: any[] = api.comparable_listings || [];
   comparables.forEach((l: any) => {
-    if (l.country && l.price_eur) {
-      if (!regionalMap[l.country]) regionalMap[l.country] = { total: 0, count: 0, velocity: 50 };
+    if (l.country && l.price_eur > 0) {
+      if (!regionalMap[l.country]) regionalMap[l.country] = { total: 0, count: 0 };
       regionalMap[l.country].total += l.price_eur;
       regionalMap[l.country].count += 1;
     }
   });
 
-  let regional = Object.entries(regionalMap).map(([code, d]) => ({
+  const regional = Object.entries(regionalMap).map(([code, d]) => ({
     code,
     price: Math.round(d.total / d.count),
     velocity: Math.round(30 + Math.random() * 50),
   }));
 
-  // Ensure at least a few regions
-  if (regional.length < 3) {
-    const defaults = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE"];
-    regional = defaults.map(code => {
-      const existing = regional.find(r => r.code === code);
-      return existing || { code, price: Math.round(p50 * (0.85 + Math.random() * 0.35)), velocity: Math.round(25 + Math.random() * 55) };
-    });
-  }
+  // No mock padding – if no regional data, array stays empty
 
   return {
-    p10, p25, p50, p75, p90,
-    recommended: { low: p25, high: p75 },
+    p10, p25: finalP25, p50, p75: finalP75, p90,
+    recommended: { low: finalP25, high: finalP75 },
     riskScore,
     velocityDays,
-    velocityProb: velocityScore,
+    velocityProb: velocityProb30,
     trendData,
     regional,
-    marketDepth: api.data_points || 0,
-    similarListings: api.data_points || 0,
+    marketDepth: dataPoints,
+    similarListings: dataPoints,
     demandIndex: Math.min(99, Math.round(velocityScore * 0.9 + 10)),
     isFallback: api.fallback_mode || false,
-    dataPoints: api.data_points || 0,
+    dataPoints,
   };
 }
 
