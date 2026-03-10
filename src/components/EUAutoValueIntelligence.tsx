@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
@@ -37,12 +38,6 @@ const COUNTRIES = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE","
 const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹',FR:'🇫🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',CZ:'🇨🇿',SK:'🇸🇰',RO:'🇷🇴',NL:'🇳🇱',BE:'🇧🇪',SE:'🇸🇪',DK:'🇩🇰',FI:'🇫🇮',NO:'🇳🇴',PT:'🇵🇹',GR:'🇬🇷',HR:'🇭🇷',BG:'🇧🇬',SI:'🇸🇮',LT:'🇱🇹',LV:'🇱🇻',EE:'🇪🇪',LU:'🇱🇺',MT:'🇲🇹',CY:'🇨🇾',CH:'🇨🇭' };
 
 const YEARS = Array.from({ length: 12 }, (_, i) => String(2024 - i));
-const FUELS = [
-  { value: 'BEV', label: 'BEV – Elektromos' },
-  { value: 'PHEV', label: 'PHEV – Plug-in hibrid' },
-  { value: 'HEV', label: 'HEV – Hibrid' },
-  { value: 'MHEV', label: 'MHEV – Enyhe hibrid' },
-];
 
 function generateResult(form: FormState): Result {
   const base = 18000 + (2024 - parseInt(form.year)) * -1400 + Math.random() * 2000 - 1000;
@@ -212,9 +207,9 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: { val
   return <>{prefix}{display.toLocaleString('hu-HU', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</>;
 }
 
-function RiskMeter({ score }: { score: number }) {
+function RiskMeter({ score, labels }: { score: number; labels: { low: string; mid: string; high: string } }) {
   const color = score < 35 ? '#4caf82' : score < 65 ? '#c9a84c' : '#e05a5a';
-  const label = score < 35 ? 'Alacsony kockázat' : score < 65 ? 'Közepes kockázat' : 'Magas kockázat';
+  const label = score < 35 ? labels.low : score < 65 ? labels.mid : labels.high;
   const dash = (score / 100) * 172;
   const angle = -135 + (score / 100) * 270;
   return (
@@ -262,6 +257,7 @@ const CSS = `
 `;
 
 export default function EUAutoValueIntelligence() {
+  const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU' });
   const [result, setResult] = useState<Result | null>(null);
@@ -273,6 +269,131 @@ export default function EUAutoValueIntelligence() {
   const [apiModels, setApiModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
+
+  const ui = {
+    HU: {
+      vehicle_data: 'Jármű adatok megadása', vehicle_sub: 'Adja meg a jármű fő paramétereit',
+      make: 'Márka', model: 'Modell', year: 'Évjárat', fuel: 'Hajtáslánc', mileage: 'Futásteljesítmény (km)',
+      country: 'Ország', select: 'Válasszon...', loading: 'Betöltés...',
+      gdpr: 'Adatai biztonságban · GDPR-kompatibilis', submit: 'Értékbecslés indítása →',
+      trend_title: '3 éves ártrend', trend_sub: 'Havi árbontás EU piacon',
+      p10_title: 'P10–P90 percentilis', p10_sub: 'Teljes piaci áreloszlás',
+      velocity_title: 'Értékesítési sebesség', velocity_sub: 'Valószínűségi előrejelzés',
+      analyzing: 'AI ügynökök elemzése…', new_valuation: '← Új értékbecslés',
+      p50_label: 'P50 piaci értéke', suggested: 'Ajánlott eladási ársáv', sell_speed: 'Eladási sebesség',
+      day: 'nap', risk_low: 'Alacsony kockázat', risk_mid: 'Közepes kockázat', risk_high: 'Magas kockázat',
+      distribution: 'Piaci áreloszlás', agents_title: 'AI Ügynökök',
+      regional_empty: 'Korlátozott regionális adat',
+      regional_empty_sub: 'Ehhez a járműhöz jelenleg nem áll rendelkezésre elegendő összehasonlító hirdetés más országokból.',
+      tab_dist: 'Áteloszlás', tab_trend: 'Ártrend', tab_regional: 'Regionális', tab_agents: 'AI Ügynökök',
+      fuel_bev: 'BEV – Elektromos', fuel_phev: 'PHEV – Plug-in hibrid',
+      fuel_hev: 'HEV – Hibrid', fuel_mhev: 'MHEV – Enyhe hibrid',
+      agents_done: 'KÉSZ', agents_ready: 'ügynök kész',
+      speed_label: 'Sebesség', within14: '14 napon belül', within30: '30 napon belül', within60: '60 napon belül',
+      prob_suffix: '% valószínűség 30 napon belül',
+      market_depth: 'Piaci mélység', similar_listings: 'Hasonló hirdetések', demand_index: 'Keresleti index',
+      sell_velocity: 'Értékesítési sebesség',
+      strategy_hint: 'Stratégia: Hirdesse az ajánlott ársáv felső értékén, és legyen nyitott 5-8% tárgyalási mozgástérre.',
+      trend_36m: '36 hónapos ártrend',
+      lowest: 'Legalacsonyabb', highest: 'Legmagasabb', average: 'Átlag', current: 'Jelenlegi',
+      trend_rising: 'Emelkedő trend az elmúlt 12 hónapban.', trend_falling: 'Csökkenő trend az elmúlt 12 hónapban.',
+      trend_change_12m: '12 havi változás',
+      export_hint: 'Exportlehetőség — A legmagasabb regionális értéket kínáló piac:',
+      premium_label: 'prémium az EU átlaghoz képest',
+      p10l: 'Alsó', p25l: 'Alacsony', p50l: 'Közép', p75l: 'Magas', p90l: 'Felső',
+      active_listings: 'aktív hirdetés', sample: 'minta',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway modul · Ingyenes B2C értékbecslő platform · Az eredmények tájékoztató jellegűek, tényleges piaci körülményektől eltérhetnek. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ INGYENES',
+      hero_sub1: 'AI/MI ÜGYNÖKCSOPORT · PIACI INTELLIGENCIA',
+      hero_title: 'Professzionális Járműértékbecslés',
+      hero_desc: 'Bayes-alapú valószínűségi modell · 27 EU ország + Svájc · 3 év visszamenőleges ártrend',
+      result_gen: 'Eredmény generálása…',
+    },
+    EN: {
+      vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
+      make: 'Make', model: 'Model', year: 'Year', fuel: 'Powertrain', mileage: 'Mileage (km)',
+      country: 'Country', select: 'Select...', loading: 'Loading...',
+      gdpr: 'Your data is secure · GDPR-compliant', submit: 'Start valuation →',
+      trend_title: '3-year price trend', trend_sub: 'Monthly breakdown on EU market',
+      p10_title: 'P10–P90 percentile', p10_sub: 'Full market price distribution',
+      velocity_title: 'Sales velocity', velocity_sub: 'Probability forecast',
+      analyzing: 'AI agents analyzing…', new_valuation: '← New valuation',
+      p50_label: 'P50 market value', suggested: 'Suggested listing range', sell_speed: 'Sales speed',
+      day: 'days', risk_low: 'Low risk', risk_mid: 'Medium risk', risk_high: 'High risk',
+      distribution: 'Price distribution', agents_title: 'AI Agents',
+      regional_empty: 'Limited regional data',
+      regional_empty_sub: 'Not enough comparable listings available from other countries for this vehicle.',
+      tab_dist: 'Distribution', tab_trend: 'Price trend', tab_regional: 'Regional', tab_agents: 'AI Agents',
+      fuel_bev: 'BEV – Electric', fuel_phev: 'PHEV – Plug-in hybrid',
+      fuel_hev: 'HEV – Hybrid', fuel_mhev: 'MHEV – Mild hybrid',
+      agents_done: 'DONE', agents_ready: 'agents done',
+      speed_label: 'Speed', within14: 'Within 14 days', within30: 'Within 30 days', within60: 'Within 60 days',
+      prob_suffix: '% probability within 30 days',
+      market_depth: 'Market depth', similar_listings: 'Similar listings', demand_index: 'Demand index',
+      sell_velocity: 'Sales velocity',
+      strategy_hint: 'Strategy: List at the upper end of the suggested range and be open to 5-8% negotiation margin.',
+      trend_36m: '36-month price trend',
+      lowest: 'Lowest', highest: 'Highest', average: 'Average', current: 'Current',
+      trend_rising: 'Rising trend over the past 12 months.', trend_falling: 'Declining trend over the past 12 months.',
+      trend_change_12m: '12-month change',
+      export_hint: 'Export opportunity — Highest regional value market:',
+      premium_label: 'premium vs EU average',
+      p10l: 'Bottom', p25l: 'Low', p50l: 'Mid', p75l: 'High', p90l: 'Top',
+      active_listings: 'active listings', sample: 'samples',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway module · Free B2C valuation platform · Results are indicative and may differ from actual market conditions. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ FREE',
+      hero_sub1: 'AI/ML AGENT GROUP · MARKET INTELLIGENCE',
+      hero_title: 'Professional Vehicle Valuation',
+      hero_desc: 'Bayesian probability model · 27 EU countries + Switzerland · 3-year historical price trend',
+      result_gen: 'Generating results…',
+    },
+    DE: {
+      vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
+      make: 'Marke', model: 'Modell', year: 'Baujahr', fuel: 'Antrieb', mileage: 'Kilometerstand (km)',
+      country: 'Land', select: 'Auswählen...', loading: 'Laden...',
+      gdpr: 'Ihre Daten sind sicher · DSGVO-konform', submit: 'Bewertung starten →',
+      trend_title: '3-Jahres-Preistrend', trend_sub: 'Monatliche Aufschlüsselung EU-Markt',
+      p10_title: 'P10–P90 Perzentil', p10_sub: 'Vollständige Marktpreisverteilung',
+      velocity_title: 'Verkaufsgeschwindigkeit', velocity_sub: 'Wahrscheinlichkeitsprognose',
+      analyzing: 'KI-Agenten analysieren…', new_valuation: '← Neue Bewertung',
+      p50_label: 'P50 Marktwert', suggested: 'Empfohlene Verkaufsspanne', sell_speed: 'Verkaufsgeschwindigkeit',
+      day: 'Tage', risk_low: 'Niedriges Risiko', risk_mid: 'Mittleres Risiko', risk_high: 'Hohes Risiko',
+      distribution: 'Preisverteilung', agents_title: 'KI-Agenten',
+      regional_empty: 'Begrenzte Regionaldaten',
+      regional_empty_sub: 'Für dieses Fahrzeug sind derzeit nicht genügend Vergleichsanzeigen aus anderen Ländern verfügbar.',
+      tab_dist: 'Verteilung', tab_trend: 'Preistrend', tab_regional: 'Regional', tab_agents: 'KI-Agenten',
+      fuel_bev: 'BEV – Elektro', fuel_phev: 'PHEV – Plug-in-Hybrid',
+      fuel_hev: 'HEV – Hybrid', fuel_mhev: 'MHEV – Mild-Hybrid',
+      agents_done: 'FERTIG', agents_ready: 'Agenten fertig',
+      speed_label: 'Geschwindigkeit', within14: 'Innerhalb 14 Tagen', within30: 'Innerhalb 30 Tagen', within60: 'Innerhalb 60 Tagen',
+      prob_suffix: '% Wahrscheinlichkeit innerhalb 30 Tagen',
+      market_depth: 'Markttiefe', similar_listings: 'Ähnliche Anzeigen', demand_index: 'Nachfrageindex',
+      sell_velocity: 'Verkaufsgeschwindigkeit',
+      strategy_hint: 'Strategie: Listen Sie am oberen Ende der empfohlenen Spanne und seien Sie offen für 5-8% Verhandlungsspielraum.',
+      trend_36m: '36-Monats-Preistrend',
+      lowest: 'Niedrigster', highest: 'Höchster', average: 'Durchschnitt', current: 'Aktuell',
+      trend_rising: 'Steigender Trend in den letzten 12 Monaten.', trend_falling: 'Fallender Trend in den letzten 12 Monaten.',
+      trend_change_12m: '12-Monats-Änderung',
+      export_hint: 'Exportmöglichkeit — Markt mit dem höchsten regionalen Wert:',
+      premium_label: 'Aufpreis vs. EU-Durchschnitt',
+      p10l: 'Unten', p25l: 'Niedrig', p50l: 'Mitte', p75l: 'Hoch', p90l: 'Oben',
+      active_listings: 'aktive Anzeigen', sample: 'Stichproben',
+      footer: 'EU AutoValue Intelligence™ · EV Brand Gateway Modul · Kostenlose B2C-Bewertungsplattform · Die Ergebnisse sind indikativ und können von den tatsächlichen Marktbedingungen abweichen. · © 2026 EV DIAG · European EV Risk Infrastructure',
+      free_badge: '✦ KOSTENLOS',
+      hero_sub1: 'KI/ML AGENTENGRUPPE · MARKTINTELLIGENZ',
+      hero_title: 'Professionelle Fahrzeugbewertung',
+      hero_desc: 'Bayesianisches Wahrscheinlichkeitsmodell · 27 EU-Länder + Schweiz · 3-Jahres-Preistrend',
+      result_gen: 'Ergebnisse werden generiert…',
+    },
+  };
+  const tr = ui[lang] || ui['HU'];
+
+  const FUELS = [
+    { value: 'BEV', label: tr.fuel_bev },
+    { value: 'PHEV', label: tr.fuel_phev },
+    { value: 'HEV', label: tr.fuel_hev },
+    { value: 'MHEV', label: tr.fuel_mhev },
+  ];
 
   useEffect(() => {
     if (makesLoaded.current) return;
@@ -333,7 +454,7 @@ export default function EUAutoValueIntelligence() {
       [55, 'Sales Velocity Predictor…'],
       [72, 'Regional Risk Scoring…'],
       [88, 'Bayesian Market Risk Layer…'],
-      [100, 'Eredmény generálása…'],
+      [100, tr.result_gen],
     ] as [number, string][];
     let i = 0;
     const iv = setInterval(() => {
@@ -347,7 +468,7 @@ export default function EUAutoValueIntelligence() {
         });
       }
     }, 420);
-  }, [canSubmit, form]);
+  }, [canSubmit, form, tr.result_gen]);
 
   const reset = () => { setScreen('input'); setResult(null); };
 
@@ -358,7 +479,7 @@ export default function EUAutoValueIntelligence() {
       <div style={S.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {screen === 'result' && (
-            <button onClick={reset} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans'" }}>← Új értékbecslés</button>
+            <button onClick={reset} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans'" }}>{tr.new_valuation}</button>
           )}
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#1a4a7a,#2880c4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📊</div>
           <div>
@@ -368,16 +489,16 @@ export default function EUAutoValueIntelligence() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <span style={S.badge}>🇪🇺 27 EU + 🇨🇭 CH</span>
-          <span style={S.badge}>✦ INGYENES</span>
+          <span style={S.badge}>{tr.free_badge}</span>
         </div>
       </div>
 
       {screen === 'input' && (
         <div style={{ padding: '48px 20px', maxWidth: 800, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>✦ AI/MI ÜGYNÖKCSOPORT · PIACI INTELLIGENCIA</div>
-            <h1 style={{ fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 16, ...S.gradientText }}>Professzionális Járműértékbecslés</h1>
-            <p style={{ fontSize: 15, color: '#6b7280', maxWidth: 560, margin: '0 auto 20px' }}>Bayes-alapú valószínűségi modell · 27 EU ország + Svájc · 3 év visszamenőleges ártrend</p>
+            <div style={{ fontSize: 11, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>✦ {tr.hero_sub1}</div>
+            <h1 style={{ fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 16, ...S.gradientText }}>{tr.hero_title}</h1>
+            <p style={{ fontSize: 15, color: '#6b7280', maxWidth: 560, margin: '0 auto 20px' }}>{tr.hero_desc}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
               {['Multi-country Price Aggregator','Probability Distribution Engine','Sales Velocity Predictor','Regional Risk Scoring','Bayesian Market Risk Layer'].map(c => (
                 <span key={c} style={{ display: 'inline-flex', padding: '4px 12px', borderRadius: 20, background: 'rgba(40,128,196,0.08)', border: '1px solid rgba(40,128,196,0.15)', color: '#3b82f6', fontSize: 11 }}>⬡ {c}</span>
@@ -389,58 +510,58 @@ export default function EUAutoValueIntelligence() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a2a' }}>Jármű adatok megadása</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Adja meg a jármű fő paramétereit</div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a2a' }}>{tr.vehicle_data}</div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{tr.vehicle_sub}</div>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label style={S.label}>Márka</label>
+                <label style={S.label}>{tr.make}</label>
                 <select className="av-inp" style={S.input} value={form.brand} onChange={e => setField('brand', e.target.value)}>
-                  <option value="">{makesLoading ? 'Betöltés...' : 'Válasszon...'}</option>
+                  <option value="">{makesLoading ? tr.loading : tr.select}</option>
                   {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Modell</label>
+                <label style={S.label}>{tr.model}</label>
                 <select className="av-inp" style={{ ...S.input, opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
-                  <option value="">{modelsLoading ? 'Betöltés...' : 'Válasszon...'}</option>
+                  <option value="">{modelsLoading ? tr.loading : tr.select}</option>
                   {modelsList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Évjárat</label>
+                <label style={S.label}>{tr.year}</label>
                 <select className="av-inp" style={S.input} value={form.year} onChange={e => setField('year', e.target.value)}>
-                  <option value="">Válasszon...</option>
+                  <option value="">{tr.select}</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Hajtáslánc</label>
+                <label style={S.label}>{tr.fuel}</label>
                 <select className="av-inp" style={S.input} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
-                  <option value="">Válasszon...</option>
+                  <option value="">{tr.select}</option>
                   {FUELS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Futásteljesítmény (km)</label>
+                <label style={S.label}>{tr.mileage}</label>
                 <input className="av-inp" type="number" style={S.input} placeholder="pl. 85000" value={form.km} onChange={e => setField('km', e.target.value)} />
               </div>
               <div>
-                <label style={S.label}>Ország</label>
+                <label style={S.label}>{tr.country}</label>
                 <select className="av-inp" style={S.input} value={form.country} onChange={e => setField('country', e.target.value)}>
                   {COUNTRIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
                 </select>
               </div>
             </div>
             <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, color: '#9ca3af' }}>🔒 Adatai biztonságban · GDPR-kompatibilis</span>
-              <button className="av-btn" style={{ ...S.btn, width: 'auto', opacity: canSubmit ? 1 : 0.4, cursor: canSubmit ? 'pointer' : 'not-allowed' }} disabled={!canSubmit} onClick={handleSubmit}>Értékbecslés indítása →</button>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>🔒 {tr.gdpr}</span>
+              <button className="av-btn" style={{ ...S.btn, width: 'auto', opacity: canSubmit ? 1 : 0.4, cursor: canSubmit ? 'pointer' : 'not-allowed' }} disabled={!canSubmit} onClick={handleSubmit}>{tr.submit}</button>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, maxWidth: 680, margin: '24px auto 0', textAlign: 'center' }}>
-            {[['📈','3 éves ártrend','Havi árbontás EU piacon'],['🎯','P10–P90 percentilis','Teljes piaci áreloszlás'],['⚡','Értékesítési sebesség','Valószínűségi előrejelzés']].map(([icon, t, d]) => (
+            {[['📈', tr.trend_title, tr.trend_sub],['🎯', tr.p10_title, tr.p10_sub],['⚡', tr.velocity_title, tr.velocity_sub]].map(([icon, t, d]) => (
               <div key={t} style={{ padding: 16 }}>
                 <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
                 <div style={{ fontWeight: 600, fontSize: 13, color: '#1a1a2a' }}>{t}</div>
@@ -454,12 +575,12 @@ export default function EUAutoValueIntelligence() {
       {screen === 'loading' && (
         <div style={{ padding: '80px 20px', textAlign: 'center' }}>
           <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,#1a4a7a,#2880c4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 32, animation: 'avPulse 2s infinite' }}>📊</div>
-          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 12, color: '#1a1a2a' }}>AI ügynökök elemzése…</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 12, color: '#1a1a2a' }}>{tr.analyzing}</div>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c9a84c', marginBottom: 16 }}>{stepLabel}</div>
           <div style={{ width: 380, maxWidth: '100%', height: 6, background: '#e5e7eb', borderRadius: 3, margin: '0 auto 12px', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#1a4a7a,#2880c4,#65a3cc)', borderRadius: 3, transition: 'width 0.4s ease' }} />
           </div>
-          <div style={{ fontSize: 13, color: '#6b7280' }}>{progress}% · {Math.min(5, Math.ceil(progress / 20))} / 5 ügynök kész</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>{progress}% · {Math.min(5, Math.ceil(progress / 20))} / 5 {tr.agents_ready}</div>
         </div>
       )}
 
@@ -469,21 +590,21 @@ export default function EUAutoValueIntelligence() {
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#6b7280', marginBottom: 4 }}>{form.brand} {form.model} · {form.year} · {form.fuel}</div>
               <div style={{ fontSize: 42, fontWeight: 800, ...S.goldText, lineHeight: 1.1 }}><AnimatedNumber value={result.p50} suffix=" €" /></div>
-              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>P50 piaci értéke</div>
-              <div style={{ fontSize: 14, color: '#3b82f6', marginTop: 8 }}>Ajánlott eladási ársáv: <span style={S.gold}>{result.recommended.low.toLocaleString('hu-HU')}</span> – <span style={S.gold}>{result.recommended.high.toLocaleString('hu-HU')} €</span></div>
+              <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{tr.p50_label}</div>
+              <div style={{ fontSize: 14, color: '#3b82f6', marginTop: 8 }}>{tr.suggested}: <span style={S.gold}>{result.recommended.low.toLocaleString('hu-HU')}</span> – <span style={S.gold}>{result.recommended.high.toLocaleString('hu-HU')} €</span></div>
             </div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-              <RiskMeter score={result.riskScore} />
+              <RiskMeter score={result.riskScore} labels={{ low: tr.risk_low, mid: tr.risk_mid, high: tr.risk_high }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#6b7280' }}>Eladási sebesség</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#4caf82' }}><AnimatedNumber value={result.velocityDays} suffix=" nap" /></div>
-                <div style={{ fontSize: 11, color: '#6b7280' }}>{result.velocityProb}% valószínűség 30 napon belül</div>
+                <div style={{ fontSize: 11, color: '#6b7280' }}>{tr.sell_speed}</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#4caf82' }}><AnimatedNumber value={result.velocityDays} suffix={` ${tr.day}`} /></div>
+                <div style={{ fontSize: 11, color: '#6b7280' }}>{result.velocityProb}{tr.prob_suffix}</div>
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb', marginBottom: 24 }}>
-            {['Áteloszlás','Ártrend','Regionális','AI Ügynökök'].map((t, i) => (
+            {[tr.tab_dist, tr.tab_trend, tr.tab_regional, tr.tab_agents].map((t, i) => (
               <button key={t} className="av-tab" onClick={() => setTab(i)} style={{ background: tab === i ? 'rgba(201,168,76,0.08)' : 'transparent', color: tab === i ? '#c9a84c' : '#6b7280', border: 'none', borderBottom: tab === i ? '2px solid #c9a84c' : '2px solid transparent', padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'DM Sans'" }}>{t}</button>
             ))}
           </div>
@@ -491,16 +612,16 @@ export default function EUAutoValueIntelligence() {
           {tab === 0 && (
             <div style={{ animation: 'avFadeUp 0.4s ease forwards' }}>
               <div style={S.card}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: '#1a1a2a' }}>Piaci áreloszlás</div>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: '#1a1a2a' }}>{tr.distribution}</div>
                 <PercentileBar p10={result.p10} p25={result.p25} p50={result.p50} p75={result.p75} p90={result.p90} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginTop: 16 }}>
                 {[
-                  ['P10','Alsó', result.p10, false],
-                  ['P25','Alacsony', result.p25, false],
-                  ['P50','Közép', result.p50, true],
-                  ['P75','Magas', result.p75, false],
-                  ['P90','Felső', result.p90, false],
+                  ['P10', tr.p10l, result.p10, false],
+                  ['P25', tr.p25l, result.p25, false],
+                  ['P50', tr.p50l, result.p50, true],
+                  ['P75', tr.p75l, result.p75, false],
+                  ['P90', tr.p90l, result.p90, false],
                 ].map(([label, desc, val, gold]) => (
                   <div key={label as string} className="av-stat" style={{ ...S.card, padding: 16, textAlign: 'center', borderColor: gold ? '#c9a84c33' : '#e5e7eb', transition: 'border-color 0.2s' }}>
                     <div style={{ fontSize: 11, color: gold ? '#c9a84c' : '#6b7280', fontWeight: 600 }}>{label as string}</div>
@@ -511,18 +632,18 @@ export default function EUAutoValueIntelligence() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
                 <div style={{ ...S.card }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: '#1a1a2a' }}>Ajánlott eladási ársáv</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: '#1a1a2a' }}>{tr.suggested}</div>
                   <div style={{ fontSize: 32, fontWeight: 800, color: '#4caf82' }}><AnimatedNumber value={result.recommended.low} /> – <AnimatedNumber value={result.recommended.high} suffix=" €" /></div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 16 }}>
-                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.marketDepth} /></div><div style={{ fontSize: 10, color: '#6b7280' }}>Piaci mélység</div></div>
-                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.similarListings} /></div><div style={{ fontSize: 10, color: '#6b7280' }}>Hasonló hirdetések</div></div>
-                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.demandIndex} suffix="%" /></div><div style={{ fontSize: 10, color: '#6b7280' }}>Keresleti index</div></div>
+                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.marketDepth} /></div><div style={{ fontSize: 10, color: '#6b7280' }}>{tr.market_depth}</div></div>
+                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.similarListings} /></div><div style={{ fontSize: 10, color: '#6b7280' }}>{tr.similar_listings}</div></div>
+                    <div><div style={{ fontSize: 20, fontWeight: 700, color: '#3b82f6' }}><AnimatedNumber value={result.demandIndex} suffix="%" /></div><div style={{ fontSize: 10, color: '#6b7280' }}>{tr.demand_index}</div></div>
                   </div>
                 </div>
                 <div style={{ ...S.card }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: '#1a1a2a' }}>Értékesítési sebesség</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: '#1a1a2a' }}>{tr.sell_velocity}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, textAlign: 'center' }}>
-                    {[['14 napon belül', Math.round(result.velocityProb * 0.4)], ['30 napon belül', result.velocityProb], ['60 napon belül', Math.min(99, result.velocityProb + 25)]].map(([l, v]) => (
+                    {[[tr.within14, Math.round(result.velocityProb * 0.4)], [tr.within30, result.velocityProb], [tr.within60, Math.min(99, result.velocityProb + 25)]].map(([l, v]) => (
                       <div key={l as string}>
                         <div style={{ fontSize: 24, fontWeight: 800, color: '#4caf82' }}><AnimatedNumber value={v as number} suffix="%" /></div>
                         <div style={{ fontSize: 10, color: '#6b7280' }}>{l as string}</div>
@@ -530,7 +651,7 @@ export default function EUAutoValueIntelligence() {
                     ))}
                   </div>
                   <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'rgba(76,175,130,0.06)', border: '1px solid rgba(76,175,130,0.15)', fontSize: 12, color: '#4caf82' }}>
-                    💡 Stratégia: Hirdesse az ajánlott ársáv felső értékén, és legyen nyitott 5-8% tárgyalási mozgástérre.
+                    💡 {tr.strategy_hint}
                   </div>
                 </div>
               </div>
@@ -540,7 +661,7 @@ export default function EUAutoValueIntelligence() {
           {tab === 1 && (
             <div style={{ animation: 'avFadeUp 0.4s ease forwards' }}>
               <div style={S.card}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a2a' }}>36 hónapos ártrend</div>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a2a' }}>{tr.trend_36m}</div>
                 <svg viewBox="0 0 800 200" preserveAspectRatio="none" style={{ width: '100%', height: 200 }}>
                   <defs>
                     <linearGradient id="av-tg" x1="0" x2="0" y1="0" y2="1">
@@ -571,15 +692,15 @@ export default function EUAutoValueIntelligence() {
                   })()}
                 </svg>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginTop: 8 }}>
-                  {["Jan '23","Jún '23","Jan '24","Jún '24","Jan '25","Dec '25"].map(l => <span key={l}>{l}</span>)}
+                  {["Jan '23","Jun '23","Jan '24","Jun '24","Jan '25","Dec '25"].map(l => <span key={l}>{l}</span>)}
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 16 }}>
                 {[
-                  ['Legalacsonyabb', Math.min(...result.trendData), '#e05a5a'],
-                  ['Legmagasabb', Math.max(...result.trendData), '#4caf82'],
-                  ['Átlag', Math.round(result.trendData.reduce((a, b) => a + b, 0) / 36), '#3b82f6'],
-                  ['Jelenlegi', result.trendData[35], '#c9a84c'],
+                  [tr.lowest, Math.min(...result.trendData), '#e05a5a'],
+                  [tr.highest, Math.max(...result.trendData), '#4caf82'],
+                  [tr.average, Math.round(result.trendData.reduce((a, b) => a + b, 0) / 36), '#3b82f6'],
+                  [tr.current, result.trendData[35], '#c9a84c'],
                 ].map(([l, v, c]) => (
                   <div key={l as string} className="av-stat" style={{ ...S.card, padding: 16, textAlign: 'center', transition: 'border-color 0.2s' }}>
                     <div style={{ fontSize: 11, color: c as string, fontWeight: 600 }}>{l as string}</div>
@@ -589,7 +710,7 @@ export default function EUAutoValueIntelligence() {
               </div>
               <div style={{ ...S.card, marginTop: 16, background: 'rgba(201,168,76,0.04)', borderColor: 'rgba(201,168,76,0.2)' }}>
                 <div style={{ fontSize: 13, color: '#c9a84c' }}>
-                  📈 Trend elemzés: {result.trendData[35] > result.trendData[24] ? 'Emelkedő trend az elmúlt 12 hónapban.' : 'Csökkenő trend az elmúlt 12 hónapban.'} 12 havi változás: <strong>{((result.trendData[35] - result.trendData[24]) / result.trendData[24] * 100).toFixed(1)}%</strong>
+                  📈 {result.trendData[35] > result.trendData[24] ? tr.trend_rising : tr.trend_falling} {tr.trend_change_12m}: <strong>{((result.trendData[35] - result.trendData[24]) / result.trendData[24] * 100).toFixed(1)}%</strong>
                 </div>
               </div>
             </div>
@@ -600,8 +721,8 @@ export default function EUAutoValueIntelligence() {
               {result.regional.length === 0 ? (
                 <div style={{ ...S.card, textAlign: 'center', padding: 32 }}>
                   <div style={{ fontSize: 28, marginBottom: 12 }}>🌍</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>Korlátozott regionális adat</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af' }}>Ehhez a járműhöz jelenleg nem áll rendelkezésre elegendő összehasonlító hirdetés más országokból.</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>{tr.regional_empty}</div>
+                  <div style={{ fontSize: 12, color: '#9ca3af' }}>{tr.regional_empty_sub}</div>
                 </div>
               ) : (
               <>
@@ -619,7 +740,7 @@ export default function EUAutoValueIntelligence() {
                       <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2a' }}><AnimatedNumber value={r.price} suffix=" €" /></div>
                       <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 4 }}>
-                          <span>Sebesség</span><span>{r.velocity}%</span>
+                          <span>{tr.speed_label}</span><span>{r.velocity}%</span>
                         </div>
                         <div style={{ height: 4, background: '#e5e7eb', borderRadius: 2 }}>
                           <div style={{ height: '100%', width: `${r.velocity}%`, background: 'linear-gradient(90deg,#1a4a7a,#2880c4)', borderRadius: 2 }} />
@@ -634,7 +755,7 @@ export default function EUAutoValueIntelligence() {
                 const prem = ((best.price - result.p50) / result.p50 * 100).toFixed(0);
                 return (
                   <div style={{ ...S.card, marginTop: 16, background: 'rgba(40,128,196,0.04)', borderColor: 'rgba(40,128,196,0.15)' }}>
-                    <div style={{ fontSize: 13, color: '#3b82f6' }}>💡 Exportlehetőség — A legmagasabb regionális értéket kínáló piac: <strong>{best.code}</strong> — <strong>{best.price.toLocaleString('hu-HU')} €</strong> ({prem}% prémium az EU átlaghoz képest)</div>
+                    <div style={{ fontSize: 13, color: '#3b82f6' }}>💡 {tr.export_hint} <strong>{best.code}</strong> — <strong>{best.price.toLocaleString('hu-HU')} €</strong> ({prem}% {tr.premium_label})</div>
                   </div>
                 );
               })()}
@@ -646,12 +767,12 @@ export default function EUAutoValueIntelligence() {
           {tab === 3 && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, animation: 'avFadeUp 0.4s ease forwards' }}>
               {[
-                { icon: '🌐', name: 'Multi-country Price Aggregator', color: '#4caf82', metric: `${result.marketDepth} aktív hirdetés`, desc: '27 EU + CH aggregált piaci adat', details: ['14 platform','4 óránkénti frissítés','27+1 ország lefedés','±2.3% eltérés'] },
-                { icon: '📊', name: 'Probability Distribution Engine', color: '#4caf82', metric: `P10–P90 · ${result.similarListings} minta`, desc: 'Bayesian Gaussian Mixture áreloszlás', details: ['94.2% konfidencia','5 percentilis szint','Kernel density becslés','Monte Carlo szimuláció'] },
-                { icon: '⚡', name: 'Sales Velocity Predictor', color: '#4caf82', metric: `${result.velocityDays} nap · ${result.velocityProb}%`, desc: 'Értékesítési idő előrejelzés', details: ['XGBoost + idősor','2.4M tranzakció','14/30/60 nap ablak','Szezonális korrekció'] },
-                { icon: '🗺️', name: 'Regional Risk Scoring', color: '#4caf82', metric: `${result.regional.length} régió elemezve`, desc: 'Regionális kockázati térkép', details: ['Ár szórás elemzés','Kockázati kategória','Export potenciál','Piaci likviditás'] },
-                { icon: '🧠', name: 'Bayesian Market Risk Layer', color: '#4caf82', metric: `Kockázati score: ${result.riskScore}/100`, desc: 'Komplex piaci kockázatelemzés', details: ['Likviditási index','Értékvesztési ráta','Volatilitás mérés','Piaci ciklus pozíció'] },
-                { icon: '✦', name: 'Összesítő Intelligencia', color: '#c9a84c', metric: `${result.p50.toLocaleString('hu-HU')} € · P50`, desc: 'Végső ajánlás és döntési bizalom', details: ['Ajánlott ársáv','Döntési bizalom 94%','Modell v3.2.1-EU','Multi-agent konsz.'] },
+                { icon: '🌐', name: 'Multi-country Price Aggregator', color: '#4caf82', metric: `${result.marketDepth} ${tr.active_listings}`, desc: '27 EU + CH aggregated market data', details: ['14 platforms','4h refresh','27+1 countries','±2.3% deviation'] },
+                { icon: '📊', name: 'Probability Distribution Engine', color: '#4caf82', metric: `P10–P90 · ${result.similarListings} ${tr.sample}`, desc: 'Bayesian Gaussian Mixture distribution', details: ['94.2% confidence','5 percentile levels','Kernel density est.','Monte Carlo sim.'] },
+                { icon: '⚡', name: 'Sales Velocity Predictor', color: '#4caf82', metric: `${result.velocityDays} ${tr.day} · ${result.velocityProb}%`, desc: 'Sales time prediction', details: ['XGBoost + time series','2.4M transactions','14/30/60 day window','Seasonal correction'] },
+                { icon: '🗺️', name: 'Regional Risk Scoring', color: '#4caf82', metric: `${result.regional.length} regions`, desc: 'Regional risk map', details: ['Price deviation','Risk category','Export potential','Market liquidity'] },
+                { icon: '🧠', name: 'Bayesian Market Risk Layer', color: '#4caf82', metric: `Risk score: ${result.riskScore}/100`, desc: 'Complex market risk analysis', details: ['Liquidity index','Depreciation rate','Volatility','Market cycle'] },
+                { icon: '✦', name: 'Aggregator Intelligence', color: '#c9a84c', metric: `${result.p50.toLocaleString('hu-HU')} € · P50`, desc: 'Final recommendation', details: ['Suggested range','94% decision conf.','Model v3.2.1-EU','Multi-agent cons.'] },
               ].map(a => (
                 <div key={a.name} className="av-stat" style={{ ...S.card, borderColor: a.color === '#c9a84c' ? '#c9a84c44' : '#e5e7eb', transition: 'border-color 0.2s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -659,7 +780,7 @@ export default function EUAutoValueIntelligence() {
                       <span style={{ fontSize: 24 }}>{a.icon}</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2a' }}>{a.name}</span>
                     </div>
-                    <span style={{ fontSize: 10, color: a.color, background: `${a.color}11`, padding: '2px 8px', borderRadius: 10 }}>✓ KÉSZ</span>
+                    <span style={{ fontSize: 10, color: a.color, background: `${a.color}11`, padding: '2px 8px', borderRadius: 10 }}>✓ {tr.agents_done}</span>
                   </div>
                   <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: '#c9a84c', marginBottom: 6 }}>{a.metric}</div>
                   <div style={{ fontSize: 12, color: '#3b82f6', marginBottom: 10 }}>{a.desc}</div>
@@ -672,7 +793,7 @@ export default function EUAutoValueIntelligence() {
           )}
 
           <div style={{ textAlign: 'center', padding: 16, marginTop: 32, fontSize: 11, color: '#9ca3af' }}>
-            EU AutoValue Intelligence™ · EV Brand Gateway modul · Ingyenes B2C értékbecslő platform · Az eredmények tájékoztató jellegűek, tényleges piaci körülményektől eltérhetnek. · © 2026 EV DIAG · European EV Risk Infrastructure
+            {tr.footer}
           </div>
         </div>
       )}
