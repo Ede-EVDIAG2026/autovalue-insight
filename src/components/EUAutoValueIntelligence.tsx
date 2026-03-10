@@ -38,12 +38,6 @@ const COUNTRIES = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE","
 const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹',FR:'🇫🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',CZ:'🇨🇿',SK:'🇸🇰',RO:'🇷🇴',NL:'🇳🇱',BE:'🇧🇪',SE:'🇸🇪',DK:'🇩🇰',FI:'🇫🇮',NO:'🇳🇴',PT:'🇵🇹',GR:'🇬🇷',HR:'🇭🇷',BG:'🇧🇬',SI:'🇸🇮',LT:'🇱🇹',LV:'🇱🇻',EE:'🇪🇪',LU:'🇱🇺',MT:'🇲🇹',CY:'🇨🇾',CH:'🇨🇭' };
 
 const YEARS = Array.from({ length: 12 }, (_, i) => String(2024 - i));
-const FUELS = [
-  { value: 'BEV', label: 'BEV – Elektromos' },
-  { value: 'PHEV', label: 'PHEV – Plug-in hibrid' },
-  { value: 'HEV', label: 'HEV – Hibrid' },
-  { value: 'MHEV', label: 'MHEV – Enyhe hibrid' },
-];
 
 function generateResult(form: FormState): Result {
   const base = 18000 + (2024 - parseInt(form.year)) * -1400 + Math.random() * 2000 - 1000;
