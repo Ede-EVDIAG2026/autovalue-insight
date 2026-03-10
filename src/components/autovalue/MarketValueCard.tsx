@@ -1,9 +1,13 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Info } from 'lucide-react';
+import { Info, AlertTriangle } from 'lucide-react';
+
+/* ─── API Config ─── */
+export const MARKET_API = 'https://market.evdiag.hu';
 
 /* ─── Types ─── */
 export interface PriceStats {
@@ -45,6 +49,44 @@ export interface MarketValuationResponse {
   comparable_listings: ComparableListing[];
   year_distribution: YearDistribution[];
   fallback_mode: boolean;
+}
+
+export interface VehicleQueryParams {
+  make: string;
+  model: string;
+  year: number;
+  powertrain: string;
+  mileage_km: number;
+  price_eur?: number;
+}
+
+/* ─── Fetch helper ─── */
+async function fetchMarketValuation(params: VehicleQueryParams): Promise<MarketValuationResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  const qs = new URLSearchParams({
+    make: params.make,
+    model: params.model,
+    year: String(params.year),
+    powertrain: params.powertrain,
+    mileage_km: String(params.mileage_km),
+  });
+  if (params.price_eur && params.price_eur > 0) {
+    qs.set('price_eur', String(params.price_eur));
+  }
+
+  try {
+    const res = await fetch(`${MARKET_API}/market/valuation?${qs.toString()}`, {
+      mode: 'cors',
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /* ─── Helpers ─── */
@@ -143,17 +185,52 @@ const MileageBadge = ({ position }: { position: string }) => {
 /* ─── Main component ─── */
 
 interface MarketValueCardProps {
-  data: MarketValuationResponse | null;
-  loading: boolean;
-  error: string | null;
+  data?: MarketValuationResponse | null;
+  loading?: boolean;
+  error?: string | null;
   priceEur: number;
   queryYear: number;
+  /** Optional: if provided, MarketValueCard fetches data internally */
+  vehicleQuery?: VehicleQueryParams;
 }
 
 const HEADER_TITLE = '📊 Piaci Összehasonlítás';
 const HEADER_BG = '#EBE6DD';
 
-const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketValueCardProps) => {
+const MarketValueCard = ({ data: externalData, loading: externalLoading, error: externalError, priceEur, queryYear, vehicleQuery }: MarketValueCardProps) => {
+  const [internalData, setInternalData] = useState<MarketValuationResponse | null>(null);
+  const [internalLoading, setInternalLoading] = useState(false);
+  const [internalError, setInternalError] = useState<string | null>(null);
+
+  // Self-fetch when vehicleQuery is provided and no external data is being managed
+  useEffect(() => {
+    if (!vehicleQuery) return;
+
+    const doFetch = async () => {
+      setInternalLoading(true);
+      setInternalError(null);
+      try {
+        const json = await fetchMarketValuation(vehicleQuery);
+        setInternalData(json);
+      } catch (e: any) {
+        if (e.name === 'AbortError') {
+          setInternalError('A kérés időtúllépés miatt megszakadt.');
+        } else {
+          setInternalError(e.message || 'Ismeretlen hiba');
+        }
+      } finally {
+        setInternalLoading(false);
+      }
+    };
+
+    doFetch();
+  }, [vehicleQuery?.make, vehicleQuery?.model, vehicleQuery?.year, vehicleQuery?.powertrain, vehicleQuery?.mileage_km, vehicleQuery?.price_eur]);
+
+  // Resolve which data source to use (external props take priority)
+  const data = externalData !== undefined ? externalData : internalData;
+  const loading = externalLoading !== undefined ? externalLoading : internalLoading;
+  const error = externalError !== undefined ? externalError : internalError;
+
   if (loading) {
     return (
       <Card className="border-0 shadow-lg" style={{ backgroundColor: '#fff' }}>
@@ -178,7 +255,10 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <p className="text-sm" style={{ color: '#6b6b6b' }}>Hiba történt a piaci adatok lekérésekor.</p>
+          <div className="flex items-center gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: '#f5f5f4', color: '#6b6b6b' }}>
+            <AlertTriangle className="h-5 w-5 flex-shrink-0" style={{ color: '#9ca3af' }} />
+            <p className="text-sm">Piaci adatok jelenleg nem elérhetők.</p>
+          </div>
         </CardContent>
       </Card>
     );
