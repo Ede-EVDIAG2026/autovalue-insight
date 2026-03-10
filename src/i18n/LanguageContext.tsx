@@ -1,3 +1,4 @@
+// Language context with localStorage persistence
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Lang, t } from './translations';
 
