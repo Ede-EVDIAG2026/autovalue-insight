@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -16,29 +15,13 @@ const AccountPage = () => {
   const { user, signOut } = useAuth();
   const { tr, lang, setLang } = useLanguage();
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState(user?.name || '');
   const [language, setLanguage] = useState<string>(lang);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      (supabase as any).from('profiles').select('full_name, language').eq('id', user.id).single()
-        .then(({ data }: any) => {
-          if (data) {
-            setFullName(data.full_name || '');
-            if (data.language) setLanguage(data.language);
-          }
-        });
-    }
-  }, [user]);
-
   const handleSave = async () => {
-    if (!user) return;
     setLoading(true);
-    await (supabase as any).from('profiles').update({
-      full_name: fullName,
-      language,
-    }).eq('id', user.id);
+    // Profile updates will go through api.evdiag.hu in the future
     setLang(language as Lang);
     setLoading(false);
     toast({ title: '✓', description: tr('saved_success') });

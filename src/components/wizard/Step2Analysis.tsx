@@ -70,7 +70,7 @@ const Step2Analysis = ({
       const { data: session, error: sessionErr } = await supabase
         .from('auto_value_sessions')
         .insert({
-          user_id: user?.id,
+          user_id: user?.dealer_id || null,
           vehicle_make: vehicleData.vehicle_make,
           vehicle_model: vehicleData.vehicle_model,
           vehicle_year: vehicleData.vehicle_year,
