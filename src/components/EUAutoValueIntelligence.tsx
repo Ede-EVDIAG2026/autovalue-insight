@@ -207,9 +207,9 @@ function AnimatedNumber({ value, prefix = '', suffix = '', decimals = 0 }: { val
   return <>{prefix}{display.toLocaleString('hu-HU', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}</>;
 }
 
-function RiskMeter({ score }: { score: number }) {
+function RiskMeter({ score, labels }: { score: number; labels: { low: string; mid: string; high: string } }) {
   const color = score < 35 ? '#4caf82' : score < 65 ? '#c9a84c' : '#e05a5a';
-  const label = score < 35 ? 'Alacsony kockázat' : score < 65 ? 'Közepes kockázat' : 'Magas kockázat';
+  const label = score < 35 ? labels.low : score < 65 ? labels.mid : labels.high;
   const dash = (score / 100) * 172;
   const angle = -135 + (score / 100) * 270;
   return (
