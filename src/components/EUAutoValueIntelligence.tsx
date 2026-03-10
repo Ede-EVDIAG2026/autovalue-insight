@@ -728,6 +728,8 @@ export default function EUAutoValueIntelligence() {
               })()}
               </>
               )}
+            </div>
+          )}
           {/* TAB 3: AI Agents */}
           {tab === 3 && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, animation: 'avFadeUp 0.4s ease forwards' }}>
