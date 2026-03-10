@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
