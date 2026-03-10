@@ -52,9 +52,9 @@ const ChatWidget = () => {
       clearTimeout(timer);
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'Nincs válasz.' }].slice(-MAX_HISTORY));
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: (data.reply || 'Nincs válasz.') as string }].slice(-MAX_HISTORY));
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Átmeneti hiba, próbáld újra.' }].slice(-MAX_HISTORY));
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: 'Átmeneti hiba, próbáld újra.' }].slice(-MAX_HISTORY));
     } finally {
       setLoading(false);
     }
