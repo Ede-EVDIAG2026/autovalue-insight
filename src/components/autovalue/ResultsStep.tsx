@@ -2,20 +2,18 @@ import { useEffect, useState } from 'react';
 import MarketValueCard, { MarketValuationResponse } from './MarketValueCard';
 
 export interface ResultsStepProps {
-  /** Full result payload from the EV DIAG analysis */
   result: any;
-  /** Vehicle input data from wizard steps */
   vehicleData: {
     vehicle_make: string;
     vehicle_model: string;
     vehicle_year: number;
     vehicle_mileage_km: number;
-    vehicle_fuel_type: string; // BEV / PHEV / HEV / MHEV
+    vehicle_fuel_type: string;
+    vehicle_price_eur?: number;
     [key: string]: any;
   };
-  /** Price in EUR (from wizard step 2 or result payload) */
-  priceEur: number;
-  /** Existing children rendered above the market card */
+  /** @deprecated Use vehicleData.vehicle_price_eur instead */
+  priceEur?: number;
   children?: React.ReactNode;
 }
 
@@ -23,6 +21,8 @@ const ResultsStep = ({ result, vehicleData, priceEur, children }: ResultsStepPro
   const [marketData, setMarketData] = useState<MarketValuationResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const effectivePriceEur = vehicleData.vehicle_price_eur || priceEur || 0;
 
   useEffect(() => {
     const fetchMarket = async () => {
@@ -35,8 +35,12 @@ const ResultsStep = ({ result, vehicleData, priceEur, children }: ResultsStepPro
           year: String(vehicleData.vehicle_year),
           powertrain: vehicleData.vehicle_fuel_type,
           mileage_km: String(vehicleData.vehicle_mileage_km),
-          price_eur: String(priceEur),
         });
+
+        // Only include price_eur if available and > 0
+        if (effectivePriceEur > 0) {
+          params.set('price_eur', String(effectivePriceEur));
+        }
 
         const res = await fetch(
           `http://46.224.176.213:8890/market/valuation?${params.toString()}`
@@ -47,8 +51,7 @@ const ResultsStep = ({ result, vehicleData, priceEur, children }: ResultsStepPro
         const json: MarketValuationResponse = await res.json();
         setMarketData(json);
       } catch (e: any) {
-        console.error('[MarketValuation] fetch error:', e);
-        setError(e.message || 'Unknown error');
+        setError(e.message || 'Ismeretlen hiba');
       } finally {
         setLoading(false);
       }
@@ -61,20 +64,17 @@ const ResultsStep = ({ result, vehicleData, priceEur, children }: ResultsStepPro
     vehicleData.vehicle_year,
     vehicleData.vehicle_fuel_type,
     vehicleData.vehicle_mileage_km,
-    priceEur,
+    effectivePriceEur,
   ]);
 
   return (
     <div className="space-y-6">
-      {/* Existing result content passed as children */}
       {children}
-
-      {/* Market comparison card */}
       <MarketValueCard
         data={marketData}
         loading={loading}
         error={error}
-        priceEur={priceEur}
+        priceEur={effectivePriceEur}
         queryYear={vehicleData.vehicle_year}
       />
     </div>
