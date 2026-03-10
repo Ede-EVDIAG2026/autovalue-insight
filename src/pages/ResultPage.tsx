@@ -216,20 +216,26 @@ const ResultPage = () => {
           ═══════════════════════════════════════════════════ */}
           <ZoneHeader icon={TrendingUp} label={tr('zone_market')} helper={tr('market_helper')} />
 
-          <MarketInsightRow
-            liquidityLevel={liquidityLevel}
-            velocityDays={velocityDays}
-            resale3y={resale3y}
-            depreciation3y={depreciation3y}
-            labels={{
-              liquidity: tr('market_liquidity'),
-              liquidityLevel: tr('liquidity_level'),
-              estSellingTime: tr('est_selling_time'),
-              days: tr('days'),
-              resale: tr('expected_resale'),
-              depreciation: tr('depreciation_3y'),
-            }}
-          />
+          <ResultsStep
+            result={result}
+            vehicleData={vehicleData}
+            priceEur={bayesian.recommended_ask_eur || bayesian.p50_eur || 0}
+          >
+            <MarketInsightRow
+              liquidityLevel={liquidityLevel}
+              velocityDays={velocityDays}
+              resale3y={resale3y}
+              depreciation3y={depreciation3y}
+              labels={{
+                liquidity: tr('market_liquidity'),
+                liquidityLevel: tr('liquidity_level'),
+                estSellingTime: tr('est_selling_time'),
+                days: tr('days'),
+                resale: tr('expected_resale'),
+                depreciation: tr('depreciation_3y'),
+              }}
+            />
+          </ResultsStep>
 
           {/* ─── Photo upgrade ─── */}
           <Card className="glass-card">
