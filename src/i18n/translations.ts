@@ -7,7 +7,7 @@ export const t: Record<string, TranslationValue> = {
   tagline: { HU: "Tudd meg pontosabban, mennyit ér az autód.", EN: "Know more precisely what your car is worth.", DE: "Erfahren Sie genauer, was Ihr Auto wert ist." },
   subtitle: { HU: "AI-alapú piaci értékbecslés, Price Confidence és kereskedői árszint elemzés.", EN: "AI-powered market valuation, Price Confidence and dealer price level analysis.", DE: "KI-gestützte Marktbewertung, Price Confidence und Händlerpreisanalyse." },
   start_valuation: { HU: "Ingyenes értékbecslés →", EN: "Free Valuation →", DE: "Kostenlose Bewertung →" },
-  no_registration: { HU: "Nincs regisztráció szükséges az első becsléshez", EN: "No registration required for your first estimate", DE: "Keine Registrierung für die erste Schätzung erforderlich" },
+  no_registration: { HU: "Regisztráció szükséges · Ingyenes használat", EN: "Registration required · Free to use", DE: "Registrierung erforderlich · Kostenlose Nutzung" },
 
   // Pillars
   pillar1_title: { HU: "Piaci árak", EN: "Market Prices", DE: "Marktpreise" },

@@ -49,7 +49,7 @@ const LandingPage = () => {
               <Button 
                 size="lg" 
                 className="hero-gradient text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
-                onClick={() => navigate('/valuation')}
+                onClick={() => navigate('/dashboard')}
               >
                 {tr('start_valuation')}
               </Button>
