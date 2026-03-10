@@ -684,6 +684,14 @@ export default function EUAutoValueIntelligence() {
           {/* TAB 2: Regional */}
           {tab === 2 && (
             <div style={{ animation: 'avFadeUp 0.4s ease forwards' }}>
+              {result.regional.length === 0 ? (
+                <div style={{ ...S.card, textAlign: 'center', padding: 32 }}>
+                  <div style={{ fontSize: 28, marginBottom: 12 }}>🌍</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#5a7a96', marginBottom: 8 }}>Korlátozott regionális adat</div>
+                  <div style={{ fontSize: 12, color: '#3a5a7a' }}>Ehhez a járműhöz jelenleg nem áll rendelkezésre elegendő összehasonlító hirdetés más országokból.</div>
+                </div>
+              ) : (
+              <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                 {result.regional.map((r, i) => {
                   const diff = ((r.price - result.p50) / result.p50 * 100);
@@ -718,9 +726,8 @@ export default function EUAutoValueIntelligence() {
                   </div>
                 );
               })()}
-            </div>
-          )}
-
+              </>
+              )}
           {/* TAB 3: AI Agents */}
           {tab === 3 && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, animation: 'avFadeUp 0.4s ease forwards' }}>
