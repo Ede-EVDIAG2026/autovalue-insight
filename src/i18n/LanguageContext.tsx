@@ -10,7 +10,14 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Lang>('HU');
+  const [lang, setLangState] = useState<Lang>(
+    () => (localStorage.getItem('evdiag_lang') as Lang) || 'HU'
+  );
+
+  const setLang = (l: Lang) => {
+    localStorage.setItem('evdiag_lang', l);
+    setLangState(l);
+  };
 
   const tr = useCallback((key: string): string => {
     return t[key]?.[lang] ?? key;
