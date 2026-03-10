@@ -116,9 +116,10 @@ export const t: Record<string, TranslationValue> = {
   market_depth: { HU: "Piaci mélység", EN: "Market depth", DE: "Markttiefe" },
 
   // Nav
-  nav_home: { HU: "Főoldal", EN: "Home", DE: "Startseite" },
+  nav_home: { HU: 'Főoldal', EN: 'Home', DE: 'Startseite' },
   nav_valuation: { HU: "Értékbecslés", EN: "Valuation", DE: "Bewertung" },
   nav_portal: { HU: "Becsléseim", EN: "My Valuations", DE: "Meine Bewertungen" },
+  nav_dashboard: { HU: 'Értékbecslés', EN: 'Valuation', DE: 'Bewertung' },
 
   // Misc
   copied: { HU: "Másolva!", EN: "Copied!", DE: "Kopiert!" },

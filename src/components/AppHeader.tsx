@@ -20,7 +20,7 @@ const AppHeader = () => {
 
   const navItems = [
     { path: '/', label: tr('nav_home') },
-    { path: '/dashboard', label: 'Dashboard' },
+    { path: '/dashboard', label: tr('nav_dashboard') },
   ];
 
   return (
