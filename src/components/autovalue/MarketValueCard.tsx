@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,6 +6,16 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { Info } from 'lucide-react';
 
 /* ─── Types ─── */
+export interface PriceStats {
+  p10: number;
+  p25: number;
+  median: number;
+  p75: number;
+  p90: number;
+  avg: number;
+  currency: string;
+}
+
 export interface ComparableListing {
   year: number;
   first_registration: string;
@@ -29,11 +38,7 @@ export interface YearDistribution {
 }
 
 export interface MarketValuationResponse {
-  p10: number;
-  p25: number;
-  p50: number;
-  p75: number;
-  p90: number;
+  price_stats: PriceStats;
   data_points: number;
   price_position: PricePosition;
   mileage_position: 'ALACSONY FUTAS' | 'ATLAGOS FUTAS' | 'MAGAS FUTAS';
@@ -51,16 +56,14 @@ const fmtKm = (v: number) =>
 
 /* ─── Sub-components ─── */
 
-const PriceBand = ({ p10, p50, p90, priceEur }: { p10: number; p50: number; p90: number; priceEur: number }) => {
+const PriceBand = ({ p10, median, p90, priceEur }: { p10: number; median: number; p90: number; priceEur: number }) => {
   const range = p90 - p10;
   let pct: number;
   let isOutOfRange = false;
-  let isBelow = false;
 
   if (priceEur < p10) {
     pct = 0;
     isOutOfRange = true;
-    isBelow = true;
   } else if (priceEur > p90) {
     pct = 100;
     isOutOfRange = true;
@@ -71,9 +74,7 @@ const PriceBand = ({ p10, p50, p90, priceEur }: { p10: number; p50: number; p90:
   return (
     <div className="space-y-2">
       <div className="relative h-3 rounded-full" style={{ backgroundColor: '#d4cfca' }}>
-        {/* filled range */}
-        <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: '100%', background: 'linear-gradient(90deg, #00875A 0%, #00875A 100%)' }} />
-        {/* dot */}
+        <div className="absolute inset-y-0 left-0 rounded-full w-full" style={{ background: 'linear-gradient(90deg, #00875A, #00875A)' }} />
         <div
           className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-white shadow-md transition-all"
           style={{
@@ -84,7 +85,7 @@ const PriceBand = ({ p10, p50, p90, priceEur }: { p10: number; p50: number; p90:
       </div>
       <div className="flex justify-between text-xs" style={{ color: '#6b6b6b' }}>
         <span>p10: {fmt(p10)}</span>
-        <span className="font-semibold">Medián: {fmt(p50)}</span>
+        <span className="font-semibold">Medián: {fmt(median)}</span>
         <span>p90: {fmt(p90)}</span>
       </div>
     </div>
@@ -149,11 +150,14 @@ interface MarketValueCardProps {
   queryYear: number;
 }
 
+const HEADER_TITLE = '📊 Piaci Összehasonlítás';
+const HEADER_BG = '#EBE6DD';
+
 const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketValueCardProps) => {
   if (loading) {
     return (
       <Card className="border-0 shadow-lg" style={{ backgroundColor: '#fff' }}>
-        <CardHeader style={{ backgroundColor: '#EBE6DD', borderRadius: '0.5rem 0.5rem 0 0' }}>
+        <CardHeader style={{ backgroundColor: HEADER_BG, borderRadius: '0.5rem 0.5rem 0 0' }}>
           <Skeleton className="h-6 w-64" />
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
@@ -168,9 +172,9 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
   if (error) {
     return (
       <Card className="border-0 shadow-lg" style={{ backgroundColor: '#fff' }}>
-        <CardHeader style={{ backgroundColor: '#EBE6DD', borderRadius: '0.5rem 0.5rem 0 0' }}>
+        <CardHeader style={{ backgroundColor: HEADER_BG, borderRadius: '0.5rem 0.5rem 0 0' }}>
           <CardTitle className="flex items-center gap-2 text-lg" style={{ color: '#1a1a1a' }}>
-            📊 Piaci Összehasonlítás
+            {HEADER_TITLE}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -183,9 +187,9 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
   if (!data || data.data_points === 0) {
     return (
       <Card className="border-0 shadow-lg" style={{ backgroundColor: '#fff' }}>
-        <CardHeader style={{ backgroundColor: '#EBE6DD', borderRadius: '0.5rem 0.5rem 0 0' }}>
+        <CardHeader style={{ backgroundColor: HEADER_BG, borderRadius: '0.5rem 0.5rem 0 0' }}>
           <CardTitle className="flex items-center gap-2 text-lg" style={{ color: '#1a1a1a' }}>
-            📊 Piaci Összehasonlítás
+            {HEADER_TITLE}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -195,6 +199,7 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
     );
   }
 
+  const ps = data.price_stats;
   const listings = (data.comparable_listings || []).slice(0, 5);
   const closestListing = listings.length > 0
     ? listings.reduce((prev, curr) => Math.abs(curr.price_eur - priceEur) < Math.abs(prev.price_eur - priceEur) ? curr : prev)
@@ -208,11 +213,10 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
 
   return (
     <Card className="border-0 shadow-lg overflow-hidden" style={{ backgroundColor: '#fff' }}>
-      {/* Header */}
-      <CardHeader className="pb-3" style={{ backgroundColor: '#EBE6DD' }}>
+      <CardHeader className="pb-3" style={{ backgroundColor: HEADER_BG }}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2 text-lg" style={{ color: '#1a1a1a' }}>
-            📊 Piaci Összehasonlítás
+            {HEADER_TITLE}
           </CardTitle>
           <Badge className="text-xs font-medium" style={{ backgroundColor: '#00875A', color: '#fff', border: 'none' }}>
             {data.data_points} hasonló hirdetés alapján
@@ -230,7 +234,7 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
         {/* Price band */}
         <div>
           <p className="text-xs font-semibold mb-3" style={{ color: '#1a1a1a' }}>Ár elhelyezkedés a piacon</p>
-          <PriceBand p10={data.p10} p50={data.p50} p90={data.p90} priceEur={priceEur} />
+          <PriceBand p10={ps.p10} median={ps.median} p90={ps.p90} priceEur={priceEur} />
         </div>
 
         {/* Badges row */}
@@ -246,7 +250,7 @@ const MarketValueCard = ({ data, loading, error, priceEur, queryYear }: MarketVa
             <div className="rounded-lg overflow-hidden border" style={{ borderColor: '#e5e0d8' }}>
               <Table>
                 <TableHeader>
-                  <TableRow style={{ backgroundColor: '#EBE6DD' }}>
+                  <TableRow style={{ backgroundColor: HEADER_BG }}>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Évjárat</TableHead>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Első forg.</TableHead>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Km</TableHead>
