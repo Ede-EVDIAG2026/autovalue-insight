@@ -95,7 +95,7 @@ const LandingPage = () => {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-primary mb-1">
-                      {s.num}. lépés
+                      {s.num}. {tr('step_label')}
                     </div>
                     <p className="font-display font-semibold text-foreground">{s.label}</p>
                   </div>

@@ -22,6 +22,7 @@ export const t: Record<string, TranslationValue> = {
   how_step1: { HU: "Járműadatok megadása", EN: "Enter vehicle data", DE: "Fahrzeugdaten eingeben" },
   how_step2: { HU: "AI elemzés", EN: "AI analysis", DE: "KI-Analyse" },
   how_step3: { HU: "Értékjelentés", EN: "Value report", DE: "Wertbericht" },
+  step_label: { HU: "lépés", EN: "step", DE: "Schritt" },
 
   // Wizard
   step1_title: { HU: "Járműadatok", EN: "Vehicle Data", DE: "Fahrzeugdaten" },
