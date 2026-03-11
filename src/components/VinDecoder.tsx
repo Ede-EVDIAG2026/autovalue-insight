@@ -4,7 +4,7 @@ const MARKET_API = 'https://market.evdiag.hu';
 
 // ── Types ──
 interface VinDecoderProps {
-  onVehicleDecoded: (make: string, model: string, year: string, powertrain: string) => void;
+  onVehicleDecoded: (make: string, model: string, year: string, powertrain: string, rawResult?: any) => void;
   styles: {
     card: React.CSSProperties;
     input: React.CSSProperties;
