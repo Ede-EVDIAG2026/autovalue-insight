@@ -277,6 +277,9 @@ const ResultPage = () => {
             </CardContent>
           </Card>
 
+          {/* PDF Download */}
+          <PdfDownloadButton vin={vehicleData?.vehicle_vin} />
+
           {/* ─── Actions ─── */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button className="flex-1 hero-gradient" onClick={handleShareReport}>

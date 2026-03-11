@@ -92,6 +92,9 @@ const Step3Results = ({
         </div>
       )}
 
+      {/* PDF Download */}
+      <PdfDownloadButton vin={(vehicleData as any)?.vehicle_vin} />
+
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Button variant="outline" className="flex-1" disabled>
