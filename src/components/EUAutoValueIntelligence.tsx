@@ -517,6 +517,8 @@ export default function EUAutoValueIntelligence() {
             </div>
           </div>
 
+          <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
+
           <div style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
