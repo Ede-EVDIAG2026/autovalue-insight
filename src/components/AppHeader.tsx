@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/useAuth';
 import AuthModal from '@/components/auth/AuthModal';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const flags: Record<Lang, string> = { HU: '🇭🇺', EN: '🇬🇧', DE: '🇩🇪' };
 const langLabels: Record<Lang, string> = { HU: 'HU', EN: 'EN', DE: 'DE' };
