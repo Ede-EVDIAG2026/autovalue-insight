@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
 
