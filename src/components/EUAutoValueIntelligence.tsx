@@ -446,6 +446,16 @@ export default function EUAutoValueIntelligence() {
   };
   const canSubmit = form.brand && form.model && form.year && form.fuel && form.km && form.country;
 
+  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string) => {
+    setForm(prev => ({
+      ...prev,
+      brand: make || prev.brand,
+      model: model || prev.model,
+      year: year || prev.year,
+      fuel: powertrain || prev.fuel,
+    }));
+  }, []);
+
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
     setScreen('loading'); setProgress(0);
