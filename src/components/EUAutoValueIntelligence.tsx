@@ -270,6 +270,8 @@ export default function EUAutoValueIntelligence() {
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '' });
   const [vinIdentity, setVinIdentity] = useState<VinIdentity>(null);
+  const [vinRawResult, setVinRawResult] = useState<any>(null);
+  const [vinModalOpen, setVinModalOpen] = useState(false);
   const [vinIdOpen, setVinIdOpen] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [progress, setProgress] = useState(0);
