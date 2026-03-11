@@ -94,22 +94,15 @@ const ChatWidget = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const send = useCallback(async () => {
-    const text = input.trim();
-    if (!text || loading) return;
-    setInput('');
-    const userMsg: Message = { role: 'user', content: text };
-    const history = [...messages, userMsg].slice(-MAX_HISTORY);
-    setMessages(history);
-    setLoading(true);
-
+  const sendToApi = useCallback(async (history: Message[]) => {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 10000);
+      const systemMsg = { role: 'system' as const, content: EV_DIAG_SYSTEM_CONTEXT };
       const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ messages: history.map(m => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: [systemMsg, ...history.map(m => ({ role: m.role, content: m.content }))] }),
         signal: controller.signal,
         mode: 'cors',
       });
@@ -122,7 +115,18 @@ const ChatWidget = () => {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages]);
+  }, []);
+
+  const send = useCallback(async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput('');
+    const userMsg: Message = { role: 'user', content: text };
+    const history = [...messages, userMsg].slice(-MAX_HISTORY);
+    setMessages(history);
+    setLoading(true);
+    sendToApi(history);
+  }, [input, loading, messages, sendToApi]);
 
   return (
     <>
