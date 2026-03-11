@@ -459,38 +459,70 @@ export default function EUAutoValueIntelligence() {
   };
   const canSubmit = form.brand && form.model && form.year && form.fuel && form.km && form.country;
 
-  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string, rawResult?: any) => {
+  const applyVinToForm = useCallback((rawResult: any) => {
+    const vi = rawResult?.vehicle_identity;
+    const agents = rawResult?.agents?.vin_decode;
+    const trim = rawResult?.agents?.trim_intelligence;
+    const make = vi?.make || '';
     const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+    const powertrain = (() => {
+      const e = (vi?.electrification || '').toUpperCase();
+      if (e === 'BEV') return 'BEV';
+      if (e.includes('PHEV')) return 'PHEV';
+      if (e.includes('MHEV')) return 'MHEV';
+      if (e.includes('HEV')) return 'HEV';
+      return '';
+    })();
     const updates: Partial<FormState> = {};
     let count = 0;
     if (normMake) { updates.brand = normMake; count++; }
-    if (model) { updates.model = model; count++; }
-    if (year) { updates.year = year; count++; }
+    if (vi?.model) { updates.model = vi.model; count++; }
+    if (vi?.year) { updates.year = String(vi.year); count++; }
     if (powertrain) { updates.fuel = powertrain; count++; }
-    if (rawResult) {
-      const vi = rawResult.vehicle_identity;
-      const agents = rawResult.agents?.vin_decode;
-      const trim = rawResult.agents?.trim_intelligence;
-      if (vi?.body_class) { updates.body = vi.body_class; count++; }
-      if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
-      if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
-      if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
-      if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
-      if (agents?.doors) { updates.doors = String(agents.doors); count++; }
-      if (agents?.seats) { updates.seats = String(agents.seats); count++; }
-      if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
-      if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
-      setVinIdentity({
-        manufacturer: vi?.manufacturer,
-        plantCountry: vi?.plant_country,
-        vin: rawResult.vin || undefined,
-        recallCount: rawResult.safety?.recall_count,
-      });
-      setVinIdOpen(true);
-    }
+    if (vi?.body_class) { updates.body = vi.body_class; count++; }
+    if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
+    if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
+    if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
+    if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
+    if (agents?.doors) { updates.doors = String(agents.doors); count++; }
+    if (agents?.seats) { updates.seats = String(agents.seats); count++; }
+    if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
+    if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
     setForm(prev => ({ ...prev, ...updates }));
+    setVinIdentity({
+      manufacturer: vi?.manufacturer,
+      plantCountry: vi?.plant_country,
+      vin: rawResult.vin || undefined,
+      recallCount: rawResult.safety?.recall_count,
+    });
+    setVinIdOpen(true);
     if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }, []);
+
+  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string, rawResult?: any) => {
+    if (rawResult) {
+      setVinRawResult(rawResult);
+      // Auto-fill immediately
+      applyVinToForm(rawResult);
+    } else {
+      // Fallback: basic fields only
+      const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+      const updates: Partial<FormState> = {};
+      let count = 0;
+      if (normMake) { updates.brand = normMake; count++; }
+      if (model) { updates.model = model; count++; }
+      if (year) { updates.year = year; count++; }
+      if (powertrain) { updates.fuel = powertrain; count++; }
+      setForm(prev => ({ ...prev, ...updates }));
+      if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
+    }
+  }, [applyVinToForm]);
+
+  const handleModalApply = useCallback(() => {
+    if (vinRawResult) applyVinToForm(vinRawResult);
+    setVinModalOpen(false);
+  }, [vinRawResult, applyVinToForm]);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
