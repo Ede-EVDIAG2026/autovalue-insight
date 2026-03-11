@@ -1028,6 +1028,8 @@ export default function EUAutoValueIntelligence() {
             </div>
           )}
 
+          <PdfDownloadButton vin={vinIdentity?.vin} inline />
+
           <div style={{ textAlign: 'center', padding: 16, marginTop: 32, fontSize: 11, color: '#9ca3af' }}>
             {tr.footer}
           </div>
