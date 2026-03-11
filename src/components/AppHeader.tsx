@@ -18,7 +18,23 @@ const AppHeader = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const logoRef = useRef<HTMLImageElement>(null);
   const langs: Lang[] = ['HU', 'EN', 'DE'];
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Pulse animation
+    if (logoRef.current) {
+      logoRef.current.animate(
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }],
+        { duration: 350, easing: 'ease-in-out' }
+      );
+    }
+    // Dispatch custom event to open chat and send message
+    window.dispatchEvent(new CustomEvent('evdiag-chat-send', { detail: 'Mutasd be az EV DIAG platformot!' }));
+  };
 
   const navItems = [
     { path: '/', label: tr('nav_home') },
