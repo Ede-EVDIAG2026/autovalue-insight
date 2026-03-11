@@ -7,7 +7,13 @@ const MARKET_API = 'https://market.evdiag.hu';
 
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
-type FormState = { brand: string; model: string; year: string; fuel: string; km: string; country: string };
+type FormState = {
+  brand: string; model: string; year: string; fuel: string; km: string; country: string;
+  body: string; trimLevel: string; enginePowerKw: string; engineDisplacement: string;
+  driveType: string; transmission: string; doors: string; seats: string;
+  batteryKwh: string; chargingPowerAc: string; color: string; equipmentNote: string;
+};
+type VinIdentity = { manufacturer?: string; plantCountry?: string; vin?: string; recallCount?: number } | null;
 type Result = {
   p10: number; p25: number; p50: number; p75: number; p90: number;
   recommended: { low: number; high: number };
