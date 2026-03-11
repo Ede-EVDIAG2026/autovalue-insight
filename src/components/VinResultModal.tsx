@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 // ── Types ──
 interface VinResultModalProps {
@@ -83,7 +84,7 @@ function KV({ label, value, styles }: { label: string; value: React.ReactNode; s
   );
 }
 
-function BoolBadge({ value, yes = 'Igen', no = 'Nem', styles }: { value?: boolean; yes?: string; no?: string; styles: ReturnType<typeof getStyles> }) {
+function BoolBadge({ value, yes = 'Yes', no = 'No', styles }: { value?: boolean; yes?: string; no?: string; styles: ReturnType<typeof getStyles> }) {
   if (value === undefined) return null;
   return value
     ? <span style={styles.badge('#dcfce7', '#166534')}>{yes}</span>
@@ -107,6 +108,7 @@ function Section({ title, emoji, color, children, defaultOpen = true, styles }: 
 
 export default function VinResultModal({ data, onClose, onApply }: VinResultModalProps) {
   const mobile = useIsMobile();
+  const { tr } = useLanguage();
   const S = getStyles(mobile);
   const vi = data?.vehicle_identity;
   const agents = data?.agents?.vin_decode;
@@ -125,32 +127,35 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
   const condScore = impact?.overall_condition_score ?? 0;
   const condColor = condScore >= 8 ? '#22c55e' : condScore >= 5 ? '#eab308' : '#ef4444';
 
+  const yesLabel = tr('yes') + ' ✓';
+  const noLabel = tr('no') + ' ✗';
+
   return (
     <div style={S.overlay} onClick={onClose}>
       <div style={S.modal} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={S.header}>
           <div style={{ fontWeight: 800, fontSize: mobile ? 15 : 18, color: '#1a1a2a' }}>
-            🔍 {make} {model} {year} – VIN Elemzés
+            🔍 {make} {model} {year} – {tr('vin_analysis')}
           </div>
           <button style={S.closeBtn} onClick={onClose}>✕</button>
         </div>
 
         <div style={S.body}>
           {/* Section A – Vehicle Identity */}
-          <Section title="Jármű azonosítás" emoji="🚗" color="#22c55e" styles={S}>
+          <Section title={tr('section_vehicle_id')} emoji="🚗" color="#22c55e" styles={S}>
             <div style={S.kvGrid}>
-              <KV label="Márka" value={make} styles={S} />
-              <KV label="Modell" value={model} styles={S} />
-              <KV label="Évjárat" value={year} styles={S} />
-              <KV label="Karosszéria" value={vi?.body_class} styles={S} />
-              <KV label="Jármű típus" value={vi?.vehicle_type} styles={S} />
-              <KV label="Hajtáslánc típus" value={vi?.electrification} styles={S} />
-              <KV label="Üzemanyag" value={vi?.fuel_type || agents?.fuel_type} styles={S} />
-              <KV label="Gyártó" value={vi?.manufacturer} styles={S} />
-              <KV label="Gyártási ország" value={vi?.plant_country} styles={S} />
-              <KV label="Gyártási város" value={vi?.plant_city} styles={S} />
-              <KV label="WMI kód" value={vi?.wmi} styles={S} />
+              <KV label={tr('label_make')} value={make} styles={S} />
+              <KV label={tr('label_model')} value={model} styles={S} />
+              <KV label={tr('label_year')} value={year} styles={S} />
+              <KV label={tr('label_body')} value={vi?.body_class} styles={S} />
+              <KV label={tr('label_vehicle_type')} value={vi?.vehicle_type} styles={S} />
+              <KV label={tr('label_drivetrain')} value={vi?.electrification} styles={S} />
+              <KV label={tr('label_fuel')} value={vi?.fuel_type || agents?.fuel_type} styles={S} />
+              <KV label={tr('label_manufacturer')} value={vi?.manufacturer} styles={S} />
+              <KV label={tr('label_plant_country')} value={vi?.plant_country} styles={S} />
+              <KV label={tr('label_plant_city')} value={vi?.plant_city} styles={S} />
+              <KV label={tr('label_wmi')} value={vi?.wmi} styles={S} />
               <KV label="VIN" value={
                 data?.vin ? <span style={{ fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em', fontSize: mobile ? 11 : undefined }}>{data.vin}</span> : undefined
               } styles={S} />
@@ -158,20 +163,20 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
           </Section>
 
           {/* Section B – Technical Data */}
-          <Section title="Műszaki adatok" emoji="🔧" color="#3b82f6" styles={S}>
+          <Section title={tr('section_technical')} emoji="🔧" color="#3b82f6" styles={S}>
             <div style={S.kvGrid}>
-              <KV label="Motor teljesítmény" value={agents?.engine_power_kw ? `${agents.engine_power_kw} kW` : undefined} styles={S} />
-              <KV label="Hengerűrtartalom" value={agents?.engine_displacement ? `${agents.engine_displacement} L` : undefined} styles={S} />
-              <KV label="Meghajtás" value={agents?.drive_type} styles={S} />
-              <KV label="Váltó típus" value={agents?.transmission} styles={S} />
-              <KV label="Ajtók száma" value={agents?.doors} styles={S} />
-              <KV label="Ülőhelyek" value={agents?.seats} styles={S} />
+              <KV label={tr('label_engine_power')} value={agents?.engine_power_kw ? `${agents.engine_power_kw} kW` : undefined} styles={S} />
+              <KV label={tr('label_displacement')} value={agents?.engine_displacement ? `${agents.engine_displacement} L` : undefined} styles={S} />
+              <KV label={tr('label_drive')} value={agents?.drive_type} styles={S} />
+              <KV label={tr('label_transmission')} value={agents?.transmission} styles={S} />
+              <KV label={tr('label_doors')} value={agents?.doors} styles={S} />
+              <KV label={tr('label_seats')} value={agents?.seats} styles={S} />
             </div>
 
             {/* Safety systems */}
             {(agents?.abs !== undefined || agents?.esc !== undefined || agents?.traction_control !== undefined) && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Fékrendszer</div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>{tr('label_braking')}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {agents?.abs !== undefined && <BoolBadge value={agents.abs} yes="ABS ✓" no="ABS ✗" styles={S} />}
                   {agents?.esc !== undefined && <BoolBadge value={agents.esc} yes="ESC ✓" no="ESC ✗" styles={S} />}
@@ -183,20 +188,20 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
             {/* EV-specific */}
             {isEV && (
               <div style={{ marginTop: 12, padding: mobile ? 8 : 12, borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 6 }}>⚡ EV adatok</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 6 }}>⚡ {tr('label_ev_data')}</div>
                 <div style={S.kvGrid}>
-                  <KV label="Akkumulátor típus" value={agents?.battery_type} styles={S} />
-                  <KV label="Akkumulátor kapacitás" value={agents?.battery_kwh ? `${agents.battery_kwh} kWh` : undefined} styles={S} />
-                  <KV label="Töltő szint" value={agents?.charger_level} styles={S} />
-                  <KV label="Töltési teljesítmény" value={agents?.charging_power_kw ? `${agents.charging_power_kw} kW` : undefined} styles={S} />
-                  <KV label="EV hajtásegység" value={agents?.ev_drive_unit} styles={S} />
+                  <KV label={tr('label_battery_type')} value={agents?.battery_type} styles={S} />
+                  <KV label={tr('label_battery_capacity')} value={agents?.battery_kwh ? `${agents.battery_kwh} kWh` : undefined} styles={S} />
+                  <KV label={tr('label_charger_level')} value={agents?.charger_level} styles={S} />
+                  <KV label={tr('label_charging_power')} value={agents?.charging_power_kw ? `${agents.charging_power_kw} kW` : undefined} styles={S} />
+                  <KV label={tr('label_ev_drive_unit')} value={agents?.ev_drive_unit} styles={S} />
                 </div>
               </div>
             )}
           </Section>
 
           {/* Section C – Equipment & Valuation */}
-          <Section title="Felszereltség & Értékelés" emoji="🛡️" color="#8b5cf6" styles={S}>
+          <Section title={tr('section_equipment')} emoji="🛡️" color="#8b5cf6" styles={S}>
             <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 16 : 24 }}>
               {/* Left column */}
               <div>
@@ -212,7 +217,7 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
                 {eq?.standard_equipment && eq.standard_equipment.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Alapfelszereltség</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{tr('label_std_equipment')}</div>
                     <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#374151' }}>
                       {eq.standard_equipment.map((item: string, i: number) => (
                         <li key={i} style={{ marginBottom: 2 }}>{item}</li>
@@ -245,7 +250,7 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
               {/* Right column */}
               <div>
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Visszahívások</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{tr('label_recalls')}</div>
                   <div style={{
                     display: 'inline-block', padding: '4px 14px', borderRadius: 12, fontSize: 16, fontWeight: 700,
                     background: recallCount === 0 ? '#dcfce7' : '#fef3c7',
@@ -256,12 +261,12 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
                 </div>
 
                 {safety?.complaints_count !== undefined && (
-                  <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>{safety.complaints_count} NHTSA panasz</div>
+                  <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>{safety.complaints_count} {tr('label_complaints')}</div>
                 )}
 
                 {impact?.impact_level && (
                   <div style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Értékhatás</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>{tr('label_value_impact')}</div>
                     <ConfBadge level={impact.impact_level} />
                   </div>
                 )}
@@ -281,14 +286,14 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
                 {impact?.overall_condition_score !== undefined && (
                   <div style={{ marginTop: 12 }}>
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Állapot pontszám</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>{tr('label_condition_score')}</div>
                     <span style={{ fontSize: 28, fontWeight: 800, color: condColor }}>{condScore}<span style={{ fontSize: 14, color: '#6b7280' }}>/10</span></span>
                   </div>
                 )}
 
                 {impact?.total_adjustment_pct !== undefined && (
                   <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>Értékkiigazítás</div>
+                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 2 }}>{tr('label_value_adjustment')}</div>
                     <span style={{ fontSize: 20, fontWeight: 700, color: impact.total_adjustment_pct >= 0 ? '#22c55e' : '#ef4444' }}>
                       {impact.total_adjustment_pct >= 0 ? '+' : ''}{impact.total_adjustment_pct}%
                     </span>
@@ -308,29 +313,29 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
           {/* Section D – Tesla specific */}
           {isTesla && safety?.tesla_specific && (
-            <Section title="Tesla specifikus" emoji="⚡" color="#c9a84c" styles={S}>
+            <Section title={tr('section_tesla')} emoji="⚡" color="#c9a84c" styles={S}>
               <div style={S.kvGrid}>
-                <KV label="HW verzió" value={safety.tesla_specific.hw_version} styles={S} />
-                <KV label="FSD képes" value={
+                <KV label={tr('label_hw_version')} value={safety.tesla_specific.hw_version} styles={S} />
+                <KV label={tr('label_fsd_capable')} value={
                   safety.tesla_specific.fsd_capable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes="Igen ✓" no="Nem ✗" styles={S} />
+                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes={yesLabel} no={noLabel} styles={S} />
                     : undefined
                 } styles={S} />
-                <KV label="Autopilot szint" value={safety.tesla_specific.autopilot_level} styles={S} />
-                <KV label="Szoftver opciók értéke" value={
+                <KV label={tr('label_autopilot')} value={safety.tesla_specific.autopilot_level} styles={S} />
+                <KV label={tr('label_sw_options_value')} value={
                   safety.tesla_specific.software_options_value_eur !== undefined
                     ? `€${safety.tesla_specific.software_options_value_eur.toLocaleString()}`
                     : undefined
                 } styles={S} />
-                <KV label="OTA frissíthetőség" value={
+                <KV label={tr('label_ota')} value={
                   safety.tesla_specific.ota_updatable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes="Igen ✓" no="Nem" styles={S} />
+                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes={yesLabel} no={tr('no')} styles={S} />
                     : undefined
                 } styles={S} />
-                <KV label="Hatótáv becslés" value={
+                <KV label={tr('label_range')} value={
                   safety.tesla_specific.range_km ? `${safety.tesla_specific.range_km} km` : undefined
                 } styles={S} />
-                <KV label="Akkumulátor degradáció" value={
+                <KV label={tr('label_battery_degradation')} value={
                   safety.tesla_specific.battery_degradation_risk
                     ? <ConfBadge level={safety.tesla_specific.battery_degradation_risk} />
                     : undefined
@@ -342,8 +347,8 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
         {/* Footer */}
         <div style={S.footer}>
-          <button style={S.btnSecondary} onClick={onClose}>✕ Bezárás</button>
-          <button style={S.btnPrimary} onClick={onApply}>✓ Adatok átvitele a formba</button>
+          <button style={S.btnSecondary} onClick={onClose}>✕ {tr('btn_close')}</button>
+          <button style={S.btnPrimary} onClick={onApply}>✓ {tr('btn_apply_data')}</button>
         </div>
       </div>
     </div>
