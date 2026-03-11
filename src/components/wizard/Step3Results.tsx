@@ -6,6 +6,7 @@ import NegotiationCard from '@/components/results/NegotiationCard';
 import DealerStrategyCard from '@/components/results/DealerStrategyCard';
 import VelocityCard from '@/components/results/VelocityCard';
 import ListingTextCard from '@/components/results/ListingTextCard';
+import PdfDownloadButton from '@/components/results/PdfDownloadButton';
 import { useNavigate } from 'react-router-dom';
 import { FileText, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react';
 
