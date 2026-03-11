@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ── Types ──
 interface VinResultModalProps {
@@ -7,30 +8,33 @@ interface VinResultModalProps {
   onApply: () => void;
 }
 
-const S = {
+const getStyles = (mobile: boolean) => ({
   overlay: {
     position: 'fixed' as const, inset: 0, zIndex: 10000,
     background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 16,
+    display: 'flex', alignItems: mobile ? 'stretch' : 'center', justifyContent: 'center',
+    padding: mobile ? 0 : 16,
   },
   modal: {
-    background: '#ffffff', borderRadius: 16, width: '100%', maxWidth: 800,
-    maxHeight: '90vh', overflow: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+    background: '#ffffff', borderRadius: mobile ? 0 : 16, width: '100%', maxWidth: mobile ? '100%' : 800,
+    maxHeight: mobile ? '100vh' : '90vh', height: mobile ? '100vh' : 'auto',
+    overflow: 'auto', boxShadow: mobile ? 'none' : '0 24px 64px rgba(0,0,0,0.2)',
     position: 'relative' as const,
   },
   header: {
     position: 'sticky' as const, top: 0, zIndex: 1,
     background: '#ffffff', borderBottom: '1px solid #e5e7eb',
-    padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: '16px 16px 0 0',
+    padding: mobile ? '16px' : '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    borderRadius: mobile ? 0 : '16px 16px 0 0',
   },
-  body: { padding: '16px 24px 24px' },
+  body: { padding: mobile ? '12px 16px 16px' : '16px 24px 24px' },
   footer: {
     position: 'sticky' as const, bottom: 0, zIndex: 1,
     background: '#ffffff', borderTop: '1px solid #e5e7eb',
-    padding: '16px 24px', display: 'flex', gap: 12, justifyContent: 'flex-end',
-    borderRadius: '0 0 16px 16px',
+    padding: mobile ? '12px 16px' : '16px 24px',
+    display: 'flex', gap: 12, justifyContent: mobile ? 'stretch' : 'flex-end',
+    flexDirection: mobile ? 'column-reverse' as const : 'row' as const,
+    borderRadius: mobile ? 0 : '0 0 16px 16px',
   },
   closeBtn: {
     background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
@@ -38,16 +42,16 @@ const S = {
   },
   sectionHeader: (color: string) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+    padding: mobile ? '10px 12px' : '12px 16px', borderRadius: 10, cursor: 'pointer',
     background: `${color}10`, border: `1px solid ${color}30`,
     marginBottom: 0, userSelect: 'none' as const,
   }),
   sectionBody: {
-    padding: '16px', border: '1px solid #e5e7eb', borderTop: 'none',
+    padding: mobile ? '12px' : '16px', border: '1px solid #e5e7eb', borderTop: 'none',
     borderRadius: '0 0 10px 10px', marginBottom: 16,
   },
   kvGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', fontSize: 13,
+    display: 'grid', gridTemplateColumns: mobile ? '1fr 1fr' : '1fr 1fr', gap: mobile ? '6px 12px' : '8px 24px', fontSize: mobile ? 12 : 13,
   },
   kvLabel: { color: '#6b7280' },
   kvValue: { color: '#1a1a2a', fontWeight: 600 as const },
@@ -59,13 +63,15 @@ const S = {
     background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 10,
     padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
     color: '#374151', fontFamily: "'DM Sans', sans-serif",
+    ...(mobile ? { width: '100%', textAlign: 'center' as const } : {}),
   } as React.CSSProperties,
   btnPrimary: {
     background: 'linear-gradient(135deg, #1a4a7a, #2880c4)', border: 'none',
     borderRadius: 10, padding: '11px 28px', fontSize: 14, fontWeight: 700,
     cursor: 'pointer', color: '#ffffff', fontFamily: "'DM Sans', sans-serif",
+    ...(mobile ? { width: '100%', textAlign: 'center' as const } : {}),
   } as React.CSSProperties,
-};
+});
 
 function KV({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === undefined || value === null || value === '') return null;
