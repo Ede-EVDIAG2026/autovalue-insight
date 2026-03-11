@@ -560,6 +560,7 @@ export default function EUAutoValueIntelligence() {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {/* Row 1: Make, Model */}
               <div>
                 <label style={S.label}>{tr.make}</label>
                 <select className="av-inp" style={S.input} value={form.brand} onChange={e => setField('brand', e.target.value)}>
@@ -574,6 +575,7 @@ export default function EUAutoValueIntelligence() {
                   {modelsList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
+              {/* Row 2: Year, Fuel */}
               <div>
                 <label style={S.label}>{tr.year}</label>
                 <select className="av-inp" style={S.input} value={form.year} onChange={e => setField('year', e.target.value)}>
@@ -588,6 +590,7 @@ export default function EUAutoValueIntelligence() {
                   {FUELS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
               </div>
+              {/* Row 2.5: Mileage, Country */}
               <div>
                 <label style={S.label}>{tr.mileage}</label>
                 <input className="av-inp" type="number" style={S.input} placeholder="pl. 85000" value={form.km} onChange={e => setField('km', e.target.value)} />
@@ -598,7 +601,121 @@ export default function EUAutoValueIntelligence() {
                   {COUNTRIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
                 </select>
               </div>
+
+              {/* ── Separator ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Row 3: Body, Trim */}
+              <div>
+                <label style={S.label}>Karosszéria</label>
+                <select className="av-inp" style={S.input} value={form.body} onChange={e => setField('body', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {['Sedan','Kombi','SUV','Crossover','Hatchback','Coupe','Cabrio','Van','Pickup','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Trim szint</label>
+                <input className="av-inp" style={S.input} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
+              </div>
+
+              {/* Row 4: Engine power, Displacement */}
+              <div>
+                <label style={S.label}>Motor teljesítmény</label>
+                <div style={{ position: 'relative' }}>
+                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
+                  <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
+                </div>
+              </div>
+              <div>
+                <label style={S.label}>Hengerűrtartalom</label>
+                <div style={{ position: 'relative' }}>
+                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 28 }} placeholder="pl. 2.0" value={form.engineDisplacement} onChange={e => setField('engineDisplacement', e.target.value)} />
+                  <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>L</span>
+                </div>
+              </div>
+
+              {/* Row 5: Drive, Transmission */}
+              <div>
+                <label style={S.label}>Meghajtás</label>
+                <select className="av-inp" style={S.input} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {['Első kerék','Hátsó kerék','Összkerék','4x4'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Váltó</label>
+                <select className="av-inp" style={S.input} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {['Kézi','Automata','DCT','CVT','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              {/* Row 6: Battery fields (BEV/PHEV only) */}
+              {(form.fuel === 'BEV' || form.fuel === 'PHEV') && (
+                <>
+                  <div>
+                    <label style={S.label}>Akkumulátor kapacitás</label>
+                    <div style={{ position: 'relative' }}>
+                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kWh</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={S.label}>Töltési teljesítmény AC</label>
+                    <div style={{ position: 'relative' }}>
+                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 36 }} placeholder="pl. 11" value={form.chargingPowerAc} onChange={e => setField('chargingPowerAc', e.target.value)} />
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Row 7: Doors, Seats */}
+              <div>
+                <label style={S.label}>Ajtók száma</label>
+                <select className="av-inp" style={S.input} value={form.doors} onChange={e => setField('doors', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {['2','3','4','5'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Ülőhelyek</label>
+                <select className="av-inp" style={S.input} value={form.seats} onChange={e => setField('seats', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {['2','4','5','6','7','8+'].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              {/* Row 8: Color, Equipment note */}
+              <div>
+                <label style={S.label}>Szín</label>
+                <input className="av-inp" style={S.input} placeholder="pl. Fehér, Fekete..." value={form.color} onChange={e => setField('color', e.target.value)} />
+              </div>
+              <div>
+                <label style={S.label}>Felszereltség megjegyzés</label>
+                <input className="av-inp" style={S.input} placeholder="pl. panorámatető, bőr, HUD..." value={form.equipmentNote} onChange={e => setField('equipmentNote', e.target.value)} />
+              </div>
             </div>
+
+            {/* Collapsible: Identification data */}
+            <div style={{ marginTop: 16 }}>
+              <button
+                onClick={() => setVinIdOpen(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#6b7280', fontFamily: "'DM Sans', sans-serif", padding: 0 }}
+              >
+                📋 Azonosítás adatok
+                <span style={{ display: 'inline-block', transform: vinIdOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', fontSize: 10 }}>▼</span>
+              </button>
+              {vinIdOpen && vinIdentity && (
+                <div style={{ marginTop: 8, padding: 12, borderRadius: 8, background: '#f8f9fa', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, color: '#6b7280' }}>
+                  {vinIdentity.manufacturer && <div>Gyártó: <strong style={{ color: '#374151' }}>{vinIdentity.manufacturer}</strong></div>}
+                  {vinIdentity.plantCountry && <div>Gyártási ország: <strong style={{ color: '#374151' }}>{vinIdentity.plantCountry}</strong></div>}
+                  {vinIdentity.vin && <div>VIN: <strong style={{ fontFamily: "'DM Mono', monospace", color: '#374151' }}>{vinIdentity.vin}</strong></div>}
+                  {vinIdentity.recallCount !== undefined && <div>Visszahívások: <strong style={{ color: vinIdentity.recallCount === 0 ? '#22c55e' : '#ef4444' }}>{vinIdentity.recallCount}</strong></div>}
+                </div>
+              )}
+            </div>
+
             <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>🔒 {tr.gdpr}</span>
               <button className="av-btn" style={{ ...S.btn, width: 'auto', opacity: canSubmit ? 1 : 0.4, cursor: canSubmit ? 'pointer' : 'not-allowed' }} disabled={!canSubmit} onClick={handleSubmit}>{tr.submit}</button>

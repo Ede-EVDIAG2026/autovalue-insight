@@ -144,7 +144,8 @@ export default function VinDecoder({ onVehicleDecoded, styles }: VinDecoderProps
           vi.make,
           vi.model || '',
           vi.year ? String(vi.year) : '',
-          mapPowertrain(vi.electrification)
+          mapPowertrain(vi.electrification),
+          data
         );
       }
     } catch (e: unknown) {
