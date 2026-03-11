@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import VinDecoder from './VinDecoder';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
@@ -445,6 +446,16 @@ export default function EUAutoValueIntelligence() {
   };
   const canSubmit = form.brand && form.model && form.year && form.fuel && form.km && form.country;
 
+  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string) => {
+    setForm(prev => ({
+      ...prev,
+      brand: make || prev.brand,
+      model: model || prev.model,
+      year: year || prev.year,
+      fuel: powertrain || prev.fuel,
+    }));
+  }, []);
+
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
     setScreen('loading'); setProgress(0);
@@ -505,6 +516,8 @@ export default function EUAutoValueIntelligence() {
               ))}
             </div>
           </div>
+
+          <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
 
           <div style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
