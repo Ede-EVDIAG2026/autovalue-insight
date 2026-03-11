@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ── Types ──
 interface VinResultModalProps {
@@ -7,30 +8,33 @@ interface VinResultModalProps {
   onApply: () => void;
 }
 
-const S = {
+const getStyles = (mobile: boolean) => ({
   overlay: {
     position: 'fixed' as const, inset: 0, zIndex: 10000,
     background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 16,
+    display: 'flex', alignItems: mobile ? 'stretch' : 'center', justifyContent: 'center',
+    padding: mobile ? 0 : 16,
   },
   modal: {
-    background: '#ffffff', borderRadius: 16, width: '100%', maxWidth: 800,
-    maxHeight: '90vh', overflow: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+    background: '#ffffff', borderRadius: mobile ? 0 : 16, width: '100%', maxWidth: mobile ? '100%' : 800,
+    maxHeight: mobile ? '100vh' : '90vh', height: mobile ? '100vh' : 'auto',
+    overflow: 'auto', boxShadow: mobile ? 'none' : '0 24px 64px rgba(0,0,0,0.2)',
     position: 'relative' as const,
   },
   header: {
     position: 'sticky' as const, top: 0, zIndex: 1,
     background: '#ffffff', borderBottom: '1px solid #e5e7eb',
-    padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: '16px 16px 0 0',
+    padding: mobile ? '16px' : '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    borderRadius: mobile ? 0 : '16px 16px 0 0',
   },
-  body: { padding: '16px 24px 24px' },
+  body: { padding: mobile ? '12px 16px 16px' : '16px 24px 24px' },
   footer: {
     position: 'sticky' as const, bottom: 0, zIndex: 1,
     background: '#ffffff', borderTop: '1px solid #e5e7eb',
-    padding: '16px 24px', display: 'flex', gap: 12, justifyContent: 'flex-end',
-    borderRadius: '0 0 16px 16px',
+    padding: mobile ? '12px 16px' : '16px 24px',
+    display: 'flex', gap: 12, justifyContent: mobile ? 'stretch' : 'flex-end',
+    flexDirection: mobile ? 'column-reverse' as const : 'row' as const,
+    borderRadius: mobile ? 0 : '0 0 16px 16px',
   },
   closeBtn: {
     background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
@@ -38,16 +42,16 @@ const S = {
   },
   sectionHeader: (color: string) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+    padding: mobile ? '10px 12px' : '12px 16px', borderRadius: 10, cursor: 'pointer',
     background: `${color}10`, border: `1px solid ${color}30`,
     marginBottom: 0, userSelect: 'none' as const,
   }),
   sectionBody: {
-    padding: '16px', border: '1px solid #e5e7eb', borderTop: 'none',
+    padding: mobile ? '12px' : '16px', border: '1px solid #e5e7eb', borderTop: 'none',
     borderRadius: '0 0 10px 10px', marginBottom: 16,
   },
   kvGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px', fontSize: 13,
+    display: 'grid', gridTemplateColumns: mobile ? '1fr 1fr' : '1fr 1fr', gap: mobile ? '6px 12px' : '8px 24px', fontSize: mobile ? 12 : 13,
   },
   kvLabel: { color: '#6b7280' },
   kvValue: { color: '#1a1a2a', fontWeight: 600 as const },
@@ -59,47 +63,51 @@ const S = {
     background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 10,
     padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
     color: '#374151', fontFamily: "'DM Sans', sans-serif",
+    ...(mobile ? { width: '100%', textAlign: 'center' as const } : {}),
   } as React.CSSProperties,
   btnPrimary: {
     background: 'linear-gradient(135deg, #1a4a7a, #2880c4)', border: 'none',
     borderRadius: 10, padding: '11px 28px', fontSize: 14, fontWeight: 700,
     cursor: 'pointer', color: '#ffffff', fontFamily: "'DM Sans', sans-serif",
+    ...(mobile ? { width: '100%', textAlign: 'center' as const } : {}),
   } as React.CSSProperties,
-};
+});
 
-function KV({ label, value }: { label: string; value: React.ReactNode }) {
+function KV({ label, value, styles }: { label: string; value: React.ReactNode; styles: ReturnType<typeof getStyles> }) {
   if (value === undefined || value === null || value === '') return null;
   return (
     <>
-      <div style={S.kvLabel}>{label}</div>
-      <div style={S.kvValue}>{value}</div>
+      <div style={styles.kvLabel}>{label}</div>
+      <div style={styles.kvValue}>{value}</div>
     </>
   );
 }
 
-function BoolBadge({ value, yes = 'Igen', no = 'Nem' }: { value?: boolean; yes?: string; no?: string }) {
+function BoolBadge({ value, yes = 'Igen', no = 'Nem', styles }: { value?: boolean; yes?: string; no?: string; styles: ReturnType<typeof getStyles> }) {
   if (value === undefined) return null;
   return value
-    ? <span style={S.badge('#dcfce7', '#166534')}>{yes}</span>
-    : <span style={S.badge('#fee2e2', '#991b1b')}>{no}</span>;
+    ? <span style={styles.badge('#dcfce7', '#166534')}>{yes}</span>
+    : <span style={styles.badge('#fee2e2', '#991b1b')}>{no}</span>;
 }
 
-function Section({ title, emoji, color, children, defaultOpen = true }: {
-  title: string; emoji: string; color: string; children: React.ReactNode; defaultOpen?: boolean;
+function Section({ title, emoji, color, children, defaultOpen = true, styles }: {
+  title: string; emoji: string; color: string; children: React.ReactNode; defaultOpen?: boolean; styles: ReturnType<typeof getStyles>;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ marginBottom: open ? 0 : 16 }}>
-      <div style={S.sectionHeader(color)} onClick={() => setOpen(o => !o)}>
+      <div style={styles.sectionHeader(color)} onClick={() => setOpen(o => !o)}>
         <span style={{ fontWeight: 700, fontSize: 14, color }}>{emoji} {title}</span>
         <span style={{ fontSize: 12, color, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
       </div>
-      {open && <div style={S.sectionBody}>{children}</div>}
+      {open && <div style={styles.sectionBody}>{children}</div>}
     </div>
   );
 }
 
 export default function VinResultModal({ data, onClose, onApply }: VinResultModalProps) {
+  const mobile = useIsMobile();
+  const S = getStyles(mobile);
   const vi = data?.vehicle_identity;
   const agents = data?.agents?.vin_decode;
   const trim = data?.agents?.trim_intelligence;
@@ -122,7 +130,7 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
       <div style={S.modal} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={S.header}>
-          <div style={{ fontWeight: 800, fontSize: 18, color: '#1a1a2a' }}>
+          <div style={{ fontWeight: 800, fontSize: mobile ? 15 : 18, color: '#1a1a2a' }}>
             🔍 {make} {model} {year} – VIN Elemzés
           </div>
           <button style={S.closeBtn} onClick={onClose}>✕</button>
@@ -130,34 +138,34 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
         <div style={S.body}>
           {/* Section A – Vehicle Identity */}
-          <Section title="Jármű azonosítás" emoji="🚗" color="#22c55e">
+          <Section title="Jármű azonosítás" emoji="🚗" color="#22c55e" styles={S}>
             <div style={S.kvGrid}>
-              <KV label="Márka" value={make} />
-              <KV label="Modell" value={model} />
-              <KV label="Évjárat" value={year} />
-              <KV label="Karosszéria" value={vi?.body_class} />
-              <KV label="Jármű típus" value={vi?.vehicle_type} />
-              <KV label="Hajtáslánc típus" value={vi?.electrification} />
-              <KV label="Üzemanyag" value={vi?.fuel_type || agents?.fuel_type} />
-              <KV label="Gyártó" value={vi?.manufacturer} />
-              <KV label="Gyártási ország" value={vi?.plant_country} />
-              <KV label="Gyártási város" value={vi?.plant_city} />
-              <KV label="WMI kód" value={vi?.wmi} />
+              <KV label="Márka" value={make} styles={S} />
+              <KV label="Modell" value={model} styles={S} />
+              <KV label="Évjárat" value={year} styles={S} />
+              <KV label="Karosszéria" value={vi?.body_class} styles={S} />
+              <KV label="Jármű típus" value={vi?.vehicle_type} styles={S} />
+              <KV label="Hajtáslánc típus" value={vi?.electrification} styles={S} />
+              <KV label="Üzemanyag" value={vi?.fuel_type || agents?.fuel_type} styles={S} />
+              <KV label="Gyártó" value={vi?.manufacturer} styles={S} />
+              <KV label="Gyártási ország" value={vi?.plant_country} styles={S} />
+              <KV label="Gyártási város" value={vi?.plant_city} styles={S} />
+              <KV label="WMI kód" value={vi?.wmi} styles={S} />
               <KV label="VIN" value={
-                data?.vin ? <span style={{ fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em' }}>{data.vin}</span> : undefined
-              } />
+                data?.vin ? <span style={{ fontFamily: "'DM Mono', monospace", letterSpacing: '0.06em', fontSize: mobile ? 11 : undefined }}>{data.vin}</span> : undefined
+              } styles={S} />
             </div>
           </Section>
 
           {/* Section B – Technical Data */}
-          <Section title="Műszaki adatok" emoji="🔧" color="#3b82f6">
+          <Section title="Műszaki adatok" emoji="🔧" color="#3b82f6" styles={S}>
             <div style={S.kvGrid}>
-              <KV label="Motor teljesítmény" value={agents?.engine_power_kw ? `${agents.engine_power_kw} kW` : undefined} />
-              <KV label="Hengerűrtartalom" value={agents?.engine_displacement ? `${agents.engine_displacement} L` : undefined} />
-              <KV label="Meghajtás" value={agents?.drive_type} />
-              <KV label="Váltó típus" value={agents?.transmission} />
-              <KV label="Ajtók száma" value={agents?.doors} />
-              <KV label="Ülőhelyek" value={agents?.seats} />
+              <KV label="Motor teljesítmény" value={agents?.engine_power_kw ? `${agents.engine_power_kw} kW` : undefined} styles={S} />
+              <KV label="Hengerűrtartalom" value={agents?.engine_displacement ? `${agents.engine_displacement} L` : undefined} styles={S} />
+              <KV label="Meghajtás" value={agents?.drive_type} styles={S} />
+              <KV label="Váltó típus" value={agents?.transmission} styles={S} />
+              <KV label="Ajtók száma" value={agents?.doors} styles={S} />
+              <KV label="Ülőhelyek" value={agents?.seats} styles={S} />
             </div>
 
             {/* Safety systems */}
@@ -165,31 +173,31 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>Fékrendszer</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {agents?.abs !== undefined && <BoolBadge value={agents.abs} yes="ABS ✓" no="ABS ✗" />}
-                  {agents?.esc !== undefined && <BoolBadge value={agents.esc} yes="ESC ✓" no="ESC ✗" />}
-                  {agents?.traction_control !== undefined && <BoolBadge value={agents.traction_control} yes="TC ✓" no="TC ✗" />}
+                  {agents?.abs !== undefined && <BoolBadge value={agents.abs} yes="ABS ✓" no="ABS ✗" styles={S} />}
+                  {agents?.esc !== undefined && <BoolBadge value={agents.esc} yes="ESC ✓" no="ESC ✗" styles={S} />}
+                  {agents?.traction_control !== undefined && <BoolBadge value={agents.traction_control} yes="TC ✓" no="TC ✗" styles={S} />}
                 </div>
               </div>
             )}
 
             {/* EV-specific */}
             {isEV && (
-              <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+              <div style={{ marginTop: 12, padding: mobile ? 8 : 12, borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 6 }}>⚡ EV adatok</div>
                 <div style={S.kvGrid}>
-                  <KV label="Akkumulátor típus" value={agents?.battery_type} />
-                  <KV label="Akkumulátor kapacitás" value={agents?.battery_kwh ? `${agents.battery_kwh} kWh` : undefined} />
-                  <KV label="Töltő szint" value={agents?.charger_level} />
-                  <KV label="Töltési teljesítmény" value={agents?.charging_power_kw ? `${agents.charging_power_kw} kW` : undefined} />
-                  <KV label="EV hajtásegység" value={agents?.ev_drive_unit} />
+                  <KV label="Akkumulátor típus" value={agents?.battery_type} styles={S} />
+                  <KV label="Akkumulátor kapacitás" value={agents?.battery_kwh ? `${agents.battery_kwh} kWh` : undefined} styles={S} />
+                  <KV label="Töltő szint" value={agents?.charger_level} styles={S} />
+                  <KV label="Töltési teljesítmény" value={agents?.charging_power_kw ? `${agents.charging_power_kw} kW` : undefined} styles={S} />
+                  <KV label="EV hajtásegység" value={agents?.ev_drive_unit} styles={S} />
                 </div>
               </div>
             )}
           </Section>
 
           {/* Section C – Equipment & Valuation */}
-          <Section title="Felszereltség & Értékelés" emoji="🛡️" color="#8b5cf6">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <Section title="Felszereltség & Értékelés" emoji="🛡️" color="#8b5cf6" styles={S}>
+            <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 16 : 24 }}>
               {/* Left column */}
               <div>
                 {(trim?.trim_level || eq?.trim_level) && (
@@ -300,33 +308,33 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
           {/* Section D – Tesla specific */}
           {isTesla && safety?.tesla_specific && (
-            <Section title="Tesla specifikus" emoji="⚡" color="#c9a84c">
+            <Section title="Tesla specifikus" emoji="⚡" color="#c9a84c" styles={S}>
               <div style={S.kvGrid}>
-                <KV label="HW verzió" value={safety.tesla_specific.hw_version} />
+                <KV label="HW verzió" value={safety.tesla_specific.hw_version} styles={S} />
                 <KV label="FSD képes" value={
                   safety.tesla_specific.fsd_capable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes="Igen ✓" no="Nem ✗" />
+                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes="Igen ✓" no="Nem ✗" styles={S} />
                     : undefined
-                } />
-                <KV label="Autopilot szint" value={safety.tesla_specific.autopilot_level} />
+                } styles={S} />
+                <KV label="Autopilot szint" value={safety.tesla_specific.autopilot_level} styles={S} />
                 <KV label="Szoftver opciók értéke" value={
                   safety.tesla_specific.software_options_value_eur !== undefined
                     ? `€${safety.tesla_specific.software_options_value_eur.toLocaleString()}`
                     : undefined
-                } />
+                } styles={S} />
                 <KV label="OTA frissíthetőség" value={
                   safety.tesla_specific.ota_updatable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes="Igen ✓" no="Nem" />
+                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes="Igen ✓" no="Nem" styles={S} />
                     : undefined
-                } />
+                } styles={S} />
                 <KV label="Hatótáv becslés" value={
                   safety.tesla_specific.range_km ? `${safety.tesla_specific.range_km} km` : undefined
-                } />
+                } styles={S} />
                 <KV label="Akkumulátor degradáció" value={
                   safety.tesla_specific.battery_degradation_risk
                     ? <ConfBadge level={safety.tesla_specific.battery_degradation_risk} />
                     : undefined
-                } />
+                } styles={S} />
               </div>
             </Section>
           )}
