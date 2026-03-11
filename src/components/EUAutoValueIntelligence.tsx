@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import VinDecoder from './VinDecoder';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
