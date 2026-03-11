@@ -308,33 +308,33 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
 
           {/* Section D – Tesla specific */}
           {isTesla && safety?.tesla_specific && (
-            <Section title="Tesla specifikus" emoji="⚡" color="#c9a84c">
+            <Section title="Tesla specifikus" emoji="⚡" color="#c9a84c" styles={S}>
               <div style={S.kvGrid}>
-                <KV label="HW verzió" value={safety.tesla_specific.hw_version} />
+                <KV label="HW verzió" value={safety.tesla_specific.hw_version} styles={S} />
                 <KV label="FSD képes" value={
                   safety.tesla_specific.fsd_capable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes="Igen ✓" no="Nem ✗" />
+                    ? <BoolBadge value={safety.tesla_specific.fsd_capable} yes="Igen ✓" no="Nem ✗" styles={S} />
                     : undefined
-                } />
-                <KV label="Autopilot szint" value={safety.tesla_specific.autopilot_level} />
+                } styles={S} />
+                <KV label="Autopilot szint" value={safety.tesla_specific.autopilot_level} styles={S} />
                 <KV label="Szoftver opciók értéke" value={
                   safety.tesla_specific.software_options_value_eur !== undefined
                     ? `€${safety.tesla_specific.software_options_value_eur.toLocaleString()}`
                     : undefined
-                } />
+                } styles={S} />
                 <KV label="OTA frissíthetőség" value={
                   safety.tesla_specific.ota_updatable !== undefined
-                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes="Igen ✓" no="Nem" />
+                    ? <BoolBadge value={safety.tesla_specific.ota_updatable} yes="Igen ✓" no="Nem" styles={S} />
                     : undefined
-                } />
+                } styles={S} />
                 <KV label="Hatótáv becslés" value={
                   safety.tesla_specific.range_km ? `${safety.tesla_specific.range_km} km` : undefined
-                } />
+                } styles={S} />
                 <KV label="Akkumulátor degradáció" value={
                   safety.tesla_specific.battery_degradation_risk
                     ? <ConfBadge level={safety.tesla_specific.battery_degradation_risk} />
                     : undefined
-                } />
+                } styles={S} />
               </div>
             </Section>
           )}
