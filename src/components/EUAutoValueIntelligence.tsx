@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
+import VinResultModal from './VinResultModal';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
@@ -269,6 +270,8 @@ export default function EUAutoValueIntelligence() {
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '' });
   const [vinIdentity, setVinIdentity] = useState<VinIdentity>(null);
+  const [vinRawResult, setVinRawResult] = useState<any>(null);
+  const [vinModalOpen, setVinModalOpen] = useState(false);
   const [vinIdOpen, setVinIdOpen] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [progress, setProgress] = useState(0);
@@ -279,6 +282,7 @@ export default function EUAutoValueIntelligence() {
   const [apiModels, setApiModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const ui = {
     HU: {
@@ -455,38 +459,70 @@ export default function EUAutoValueIntelligence() {
   };
   const canSubmit = form.brand && form.model && form.year && form.fuel && form.km && form.country;
 
-  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string, rawResult?: any) => {
+  const applyVinToForm = useCallback((rawResult: any) => {
+    const vi = rawResult?.vehicle_identity;
+    const agents = rawResult?.agents?.vin_decode;
+    const trim = rawResult?.agents?.trim_intelligence;
+    const make = vi?.make || '';
     const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+    const powertrain = (() => {
+      const e = (vi?.electrification || '').toUpperCase();
+      if (e === 'BEV') return 'BEV';
+      if (e.includes('PHEV')) return 'PHEV';
+      if (e.includes('MHEV')) return 'MHEV';
+      if (e.includes('HEV')) return 'HEV';
+      return '';
+    })();
     const updates: Partial<FormState> = {};
     let count = 0;
     if (normMake) { updates.brand = normMake; count++; }
-    if (model) { updates.model = model; count++; }
-    if (year) { updates.year = year; count++; }
+    if (vi?.model) { updates.model = vi.model; count++; }
+    if (vi?.year) { updates.year = String(vi.year); count++; }
     if (powertrain) { updates.fuel = powertrain; count++; }
-    if (rawResult) {
-      const vi = rawResult.vehicle_identity;
-      const agents = rawResult.agents?.vin_decode;
-      const trim = rawResult.agents?.trim_intelligence;
-      if (vi?.body_class) { updates.body = vi.body_class; count++; }
-      if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
-      if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
-      if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
-      if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
-      if (agents?.doors) { updates.doors = String(agents.doors); count++; }
-      if (agents?.seats) { updates.seats = String(agents.seats); count++; }
-      if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
-      if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
-      setVinIdentity({
-        manufacturer: vi?.manufacturer,
-        plantCountry: vi?.plant_country,
-        vin: rawResult.vin || undefined,
-        recallCount: rawResult.safety?.recall_count,
-      });
-      setVinIdOpen(true);
-    }
+    if (vi?.body_class) { updates.body = vi.body_class; count++; }
+    if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
+    if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
+    if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
+    if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
+    if (agents?.doors) { updates.doors = String(agents.doors); count++; }
+    if (agents?.seats) { updates.seats = String(agents.seats); count++; }
+    if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
+    if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
     setForm(prev => ({ ...prev, ...updates }));
+    setVinIdentity({
+      manufacturer: vi?.manufacturer,
+      plantCountry: vi?.plant_country,
+      vin: rawResult.vin || undefined,
+      recallCount: rawResult.safety?.recall_count,
+    });
+    setVinIdOpen(true);
     if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }, []);
+
+  const handleVinDecoded = useCallback((make: string, model: string, year: string, powertrain: string, rawResult?: any) => {
+    if (rawResult) {
+      setVinRawResult(rawResult);
+      // Auto-fill immediately
+      applyVinToForm(rawResult);
+    } else {
+      // Fallback: basic fields only
+      const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+      const updates: Partial<FormState> = {};
+      let count = 0;
+      if (normMake) { updates.brand = normMake; count++; }
+      if (model) { updates.model = model; count++; }
+      if (year) { updates.year = year; count++; }
+      if (powertrain) { updates.fuel = powertrain; count++; }
+      setForm(prev => ({ ...prev, ...updates }));
+      if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
+    }
+  }, [applyVinToForm]);
+
+  const handleModalApply = useCallback(() => {
+    if (vinRawResult) applyVinToForm(vinRawResult);
+    setVinModalOpen(false);
+  }, [vinRawResult, applyVinToForm]);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) return;
@@ -551,7 +587,45 @@ export default function EUAutoValueIntelligence() {
 
           <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
 
-          <div style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
+          {/* Clickable VIN summary card */}
+          {vinRawResult?.vehicle_identity?.make && (
+            <div
+              onClick={() => setVinModalOpen(true)}
+              style={{
+                ...S.card, maxWidth: 680, margin: '0 auto 16px', borderLeft: '4px solid #22c55e',
+                cursor: 'pointer', transition: 'box-shadow 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)')}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>✓ Jármű azonosítva</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2a' }}>
+                    {vinRawResult.vehicle_identity.make} {vinRawResult.vehicle_identity.model} {vinRawResult.vehicle_identity.year}
+                  </div>
+                  {vinRawResult.vehicle_identity.electrification && (
+                    <span style={{
+                      display: 'inline-block', marginTop: 6, padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
+                      background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
+                      color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
+                    }}>
+                      {vinRawResult.vehicle_identity.electrification}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  👁 Összes adat megtekintése →
+                </div>
+              </div>
+            </div>
+          )}
+
+          {vinModalOpen && vinRawResult && (
+            <VinResultModal data={vinRawResult} onClose={() => setVinModalOpen(false)} onApply={handleModalApply} />
+          )}
+
+          <div ref={formRef} style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
               <div>
