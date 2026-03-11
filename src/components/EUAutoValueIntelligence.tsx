@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
+import PdfDownloadButton from './results/PdfDownloadButton';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
@@ -1027,6 +1028,8 @@ export default function EUAutoValueIntelligence() {
               ))}
             </div>
           )}
+
+          <PdfDownloadButton vin={vinIdentity?.vin} inline />
 
           <div style={{ textAlign: 'center', padding: 16, marginTop: 32, fontSize: 11, color: '#9ca3af' }}>
             {tr.footer}
