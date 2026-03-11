@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { Download, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const MARKET_API = 'https://market.evdiag.hu';
 
 interface PdfDownloadButtonProps {
   vin?: string;
-  /** Use inline styles instead of shadcn Button */
   inline?: boolean;
 }
 
 const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const { tr } = useLanguage();
 
   const handleDownload = async () => {
     if (!vin || loading) return;
@@ -34,10 +35,10 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
         setReady(true);
         setTimeout(() => setReady(false), 3000);
       } else {
-        alert('PDF generálás sikertelen. Kérjük próbálja újra.');
+        alert(tr('pdf_error'));
       }
     } catch {
-      alert('Kapcsolódási hiba. Kérjük ellenőrizze az internetkapcsolatát.');
+      alert(tr('pdf_network_error'));
     } finally {
       setLoading(false);
     }
@@ -46,9 +47,9 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   if (!vin) return null;
 
   const label = ready
-    ? '✅ Letöltés kész!'
+    ? `✅ ${tr('pdf_ready')}`
     : loading
-      ? '⏳ Generálás folyamatban...'
+      ? `⏳ ${tr('pdf_generating')}`
       : null;
 
   if (inline) {
@@ -87,12 +88,12 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
           ) : (
             <Download size={16} />
           )}
-          {label || 'Riport letöltése (PDF)'}
+          {label || tr('pdf_download')}
         </button>
         <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 8, lineHeight: 1.5 }}>
-          📄 A riport tartalmazza a teljes értékelést, visszahívásokat és piaci árelemzést.
+          📄 {tr('pdf_disclaimer')}
           <br />
-          Érvényes: 30 napig • Formátum: PDF • Méret: ~60 KB
+          {tr('pdf_validity')}
         </p>
       </div>
     );
@@ -113,12 +114,12 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
         ) : (
           <Download size={16} className="mr-2" />
         )}
-        {label || 'Riport letöltése (PDF)'}
+        {label || tr('pdf_download')}
       </Button>
       <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-        📄 A riport tartalmazza a teljes értékelést, visszahívásokat és piaci árelemzést.
+        📄 {tr('pdf_disclaimer')}
         <br />
-        Érvényes: 30 napig • Formátum: PDF • Méret: ~60 KB
+        {tr('pdf_validity')}
       </p>
     </div>
   );
