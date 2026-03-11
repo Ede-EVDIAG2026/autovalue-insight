@@ -282,6 +282,7 @@ export default function EUAutoValueIntelligence() {
   const [apiModels, setApiModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const ui = {
     HU: {
