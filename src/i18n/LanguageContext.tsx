@@ -31,8 +31,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-export const useLanguage = () => {
+export const useLanguage = (): LanguageContextType => {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error('useLanguage must be used within LanguageProvider');
+  if (!ctx) {
+    // Fallback for edge cases (HMR, render outside provider)
+    return {
+      lang: 'HU' as Lang,
+      setLang: () => {},
+      tr: (key: string) => key,
+    };
+  }
   return ctx;
 };
