@@ -587,7 +587,45 @@ export default function EUAutoValueIntelligence() {
 
           <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
 
-          <div style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
+          {/* Clickable VIN summary card */}
+          {vinRawResult?.vehicle_identity?.make && (
+            <div
+              onClick={() => setVinModalOpen(true)}
+              style={{
+                ...S.card, maxWidth: 680, margin: '0 auto 16px', borderLeft: '4px solid #22c55e',
+                cursor: 'pointer', transition: 'box-shadow 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)')}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>✓ Jármű azonosítva</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2a' }}>
+                    {vinRawResult.vehicle_identity.make} {vinRawResult.vehicle_identity.model} {vinRawResult.vehicle_identity.year}
+                  </div>
+                  {vinRawResult.vehicle_identity.electrification && (
+                    <span style={{
+                      display: 'inline-block', marginTop: 6, padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
+                      background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
+                      color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
+                    }}>
+                      {vinRawResult.vehicle_identity.electrification}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  👁 Összes adat megtekintése →
+                </div>
+              </div>
+            </div>
+          )}
+
+          {vinModalOpen && vinRawResult && (
+            <VinResultModal data={vinRawResult} onClose={() => setVinModalOpen(false)} onApply={handleModalApply} />
+          )}
+
+          <div ref={formRef} style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
               <div>
