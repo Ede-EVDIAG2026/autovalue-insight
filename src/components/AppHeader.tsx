@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Settings, LogOut, User } from 'lucide-react';
@@ -6,6 +6,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Lang } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
 import AuthModal from '@/components/auth/AuthModal';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const flags: Record<Lang, string> = { HU: '🇭🇺', EN: '🇬🇧', DE: '🇩🇪' };
