@@ -60,10 +60,39 @@ const ChatWidget = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pendingAutoMessage = useRef<string | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Listen for custom event to open chat and send a message
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      setOpen(true);
+      pendingAutoMessage.current = detail;
+    };
+    window.addEventListener('evdiag-chat-send', handler);
+    return () => window.removeEventListener('evdiag-chat-send', handler);
+  }, []);
+
+  // When chat opens with a pending message, send it
+  useEffect(() => {
+    if (open && pendingAutoMessage.current && !loading) {
+      const text = pendingAutoMessage.current;
+      pendingAutoMessage.current = null;
+      const timer = setTimeout(() => {
+        const userMsg: Message = { role: 'user', content: text };
+        const history = [...messages, userMsg].slice(-MAX_HISTORY);
+        setMessages(history);
+        setLoading(true);
+        sendToApi(history);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const send = useCallback(async () => {
     const text = input.trim();
