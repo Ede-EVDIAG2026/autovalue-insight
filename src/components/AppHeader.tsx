@@ -38,7 +38,6 @@ const AppHeader = () => {
   const navItems = [
     { path: '/', label: tr('nav_home') },
     { path: '/dashboard', label: tr('nav_dashboard') },
-    { path: '/valuation', label: tr('nav_valuation') },
   ];
 
   return (
