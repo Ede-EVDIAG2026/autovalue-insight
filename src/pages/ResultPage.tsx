@@ -16,6 +16,7 @@ import ConfidenceCard from '@/components/results/ConfidenceCard';
 import PriceRangeCard from '@/components/results/PriceRangeCard';
 import MarketInsightRow from '@/components/results/MarketInsightRow';
 import ResultsStep from '@/components/autovalue/ResultsStep';
+import PdfDownloadButton from '@/components/results/PdfDownloadButton';
 
 const formatHuf = (v: number) => v ? `${Math.round(v).toLocaleString('hu-HU')} Ft` : '–';
 const formatEur = (v: number) => v ? `€${Math.round(v).toLocaleString('de-DE')}` : '–';
