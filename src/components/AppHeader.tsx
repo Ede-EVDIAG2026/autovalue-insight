@@ -45,11 +45,29 @@ const AppHeader = () => {
     <>
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border/50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl">📊</span>
-            <span className="font-display font-bold text-foreground text-lg">EU AutoValue</span>
-          </Link>
+          {/* Left: Logo + Brand */}
+          <div className="flex items-center gap-2">
+            <img
+              ref={logoRef}
+              src="/ev_diag_logo.png"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://market.evdiag.hu/static/ev_diag_logo.png'; }}
+              alt="EV DIAG Logo"
+              onClick={handleLogoClick}
+              className="cursor-pointer transition-all duration-200 hover:scale-105"
+              style={{
+                height: isMobile ? 28 : 36,
+                width: 'auto',
+                marginRight: 10,
+                filter: 'drop-shadow(0 0 0px transparent)',
+              }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.filter = 'drop-shadow(0 0 8px rgba(37,99,235,0.4))'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.filter = 'drop-shadow(0 0 0px transparent)'; }}
+            />
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-xl">📊</span>
+              <span className="font-display font-bold text-foreground text-lg">EU AutoValue</span>
+            </Link>
+          </div>
 
           {/* Center: Nav */}
           <nav className="hidden md:flex items-center gap-1">
