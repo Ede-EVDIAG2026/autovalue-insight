@@ -13,7 +13,7 @@ interface PdfDownloadButtonProps {
 const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
 
   const handleDownload = async () => {
     if (!vin || loading) return;
