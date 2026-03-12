@@ -15,7 +15,7 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   const handleDownload = () => {
     if (!vin) return;
     const langParam = lang === 'EN' ? 'en' : lang === 'DE' ? 'de' : 'hu';
-    const url = `${MARKET_API}/vin/report/${vin}?lang=${langParam}`;
+    const url = `${MARKET_API}/vin/pdf/${vin}?lang=${langParam}`;
     window.open(url, '_blank');
   };
 
