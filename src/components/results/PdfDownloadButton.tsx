@@ -13,7 +13,7 @@ interface PdfDownloadButtonProps {
 const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
 
   const handleDownload = async () => {
     if (!vin || loading) return;
@@ -23,7 +23,8 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
-      const response = await fetch(`${MARKET_API}/vin/report/${vin}`, {
+      const langParam = lang === 'EN' ? 'en' : lang === 'DE' ? 'de' : 'hu';
+      const response = await fetch(`${MARKET_API}/vin/report/${vin}?lang=${langParam}`, {
         signal: controller.signal,
         headers: { Accept: 'application/json' },
       });
