@@ -1,8 +1,38 @@
 import { useMarketIntelligence } from '@/hooks/useMarketIntelligence';
+import { useLanguage } from '@/i18n/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, BarChart3, TrendingUp, Activity, Layers, Info } from 'lucide-react';
 import type { MarketSignal } from '@/types/marketIntelligence';
+
+type Lang = 'HU' | 'EN' | 'DE';
+
+const mi: Record<string, Record<Lang, string>> = {
+  market_intelligence_title:    { HU: 'EV DIAG Piaci Intelligencia', EN: 'EV DIAG Market Intelligence', DE: 'EV DIAG Marktintelligenz' },
+  market_intelligence_subtitle: { HU: 'Valós idejű piaci listing-, ármozgási- és készletforgási jelek az értékbecslés támogatására', EN: 'Real-time market listing, price movement and inventory turnover signals supporting vehicle valuation', DE: 'Echtzeit-Marktsignale zu Inseraten, Preisbewegungen und Lagerumschlag zur Unterstützung der Fahrzeugbewertung' },
+  summary_active_listings:      { HU: 'Aktív hirdetések', EN: 'Active listings', DE: 'Aktive Inserate' },
+  summary_total_listings:       { HU: 'Összes hirdetés', EN: 'Total listings', DE: 'Gesamtanzeigen' },
+  summary_unique_dealers:       { HU: 'Egyedi kereskedők', EN: 'Unique dealers', DE: 'Einzigartige Händler' },
+  summary_unique_sources:       { HU: 'Adatforrások', EN: 'Data sources', DE: 'Datenquellen' },
+  summary_avg_price:            { HU: 'Átlagár', EN: 'Average price', DE: 'Durchschnittspreis' },
+  summary_median_price:         { HU: 'Medián ár', EN: 'Median price', DE: 'Medianpreis' },
+  summary_avg_mileage:          { HU: 'Átlag futásteljesítmény', EN: 'Average mileage', DE: 'Durchschnittliche Laufleistung' },
+  summary_price_drops_7d:       { HU: 'Árcsökkentések 7 nap', EN: 'Price drops (7 days)', DE: 'Preisreduzierungen (7 Tage)' },
+  summary_price_drops_30d:      { HU: 'Árcsökkentések 30 nap', EN: 'Price drops (30 days)', DE: 'Preisreduzierungen (30 Tage)' },
+  summary_avg_drop:             { HU: 'Átlagos árkorrekció', EN: 'Average price drop', DE: 'Durchschnittliche Preisreduktion' },
+  autovalue_context_title:      { HU: 'AutoValue piaci kontextus', EN: 'AutoValue market context', DE: 'AutoValue Markt Kontext' },
+  signal_market_pressure:       { HU: 'Piaci nyomás', EN: 'Market pressure', DE: 'Marktdruck' },
+  signal_inventory_turnover:    { HU: 'Készletforgás', EN: 'Inventory turnover', DE: 'Lagerumschlag' },
+  signal_confidence:            { HU: 'Bizonytalanság', EN: 'Confidence', DE: 'Konfidenz' },
+  signal_updated:               { HU: 'Frissítve', EN: 'Updated', DE: 'Aktualisiert' },
+  loading_text:                 { HU: 'Market Intelligence betöltése…', EN: 'Loading Market Intelligence…', DE: 'Market Intelligence wird geladen…' },
+  error_text:                   { HU: 'Piaci adatok jelenleg nem elérhetők.', EN: 'Market data currently unavailable.', DE: 'Marktdaten derzeit nicht verfügbar.' },
+};
+
+function useMiT() {
+  const { lang } = useLanguage();
+  return (key: string) => mi[key]?.[lang as Lang] ?? mi[key]?.EN ?? key;
+}
 
 function fmt(n: number | null | undefined, type: 'eur' | 'km' | 'pct' | 'num' = 'num'): string {
   if (n == null) return '–';
@@ -10,6 +40,11 @@ function fmt(n: number | null | undefined, type: 'eur' | 'km' | 'pct' | 'num' = 
   if (type === 'km') return `${n.toLocaleString('de-DE', { maximumFractionDigits: 0 })} km`;
   if (type === 'pct') return `${n.toFixed(1)}%`;
   return n.toLocaleString('de-DE');
+}
+
+function localeDateStr(iso: string, lang: string) {
+  const locale = lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-GB' : 'hu-HU';
+  return new Date(iso).toLocaleDateString(locale);
 }
 
 function MetricCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -26,7 +61,7 @@ function MetricCard({ label, value, icon }: { label: string; value: string; icon
   );
 }
 
-function SignalCard({ signal, icon }: { signal: MarketSignal | null; icon: React.ReactNode }) {
+function SignalCard({ signal, icon, t, lang }: { signal: MarketSignal | null; icon: React.ReactNode; t: (k: string) => string; lang: string }) {
   if (!signal) return null;
   const score = signal.score ?? 0;
   const levelColor =
@@ -54,8 +89,8 @@ function SignalCard({ signal, icon }: { signal: MarketSignal | null; icon: React
           <p className="text-xs text-muted-foreground leading-relaxed">{signal.interpretation}</p>
         )}
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground/70">
-          {signal.confidence != null && <span>Confidence: {signal.confidence}%</span>}
-          {signal.updated_at && <span>{new Date(signal.updated_at).toLocaleDateString('hu-HU')}</span>}
+          {signal.confidence != null && <span>{t('signal_confidence')}: {signal.confidence}%</span>}
+          {signal.updated_at && <span>{t('signal_updated')}: {localeDateStr(signal.updated_at, lang)}</span>}
         </div>
       </CardContent>
     </Card>
@@ -64,12 +99,14 @@ function SignalCard({ signal, icon }: { signal: MarketSignal | null; icon: React
 
 export default function MarketIntelligenceSection() {
   const { summary, context, pressure, turnover, loading, error } = useMarketIntelligence();
+  const { lang } = useLanguage();
+  const t = useMiT();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
         <Loader2 className="animate-spin h-5 w-5" />
-        <span className="text-sm">Market Intelligence betöltése…</span>
+        <span className="text-sm">{t('loading_text')}</span>
       </div>
     );
   }
@@ -79,7 +116,7 @@ export default function MarketIntelligenceSection() {
       <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="p-6 flex items-center gap-3 text-muted-foreground">
           <AlertTriangle className="h-5 w-5 text-destructive" />
-          <span className="text-sm">Piaci adatok jelenleg nem elérhetők.</span>
+          <span className="text-sm">{t('error_text')}</span>
         </CardContent>
       </Card>
     );
@@ -89,44 +126,39 @@ export default function MarketIntelligenceSection() {
 
   return (
     <section className="space-y-6">
-      {/* Section header */}
       <div>
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
-          EV DIAG Market Intelligence
+          {t('market_intelligence_title')}
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Valós idejű piaci listing-, ármozgási- és készletforgási jelek az értékbecslés támogatására.
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{t('market_intelligence_subtitle')}</p>
       </div>
 
-      {/* A) Market Summary Grid */}
       {o && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <MetricCard label="Aktív hirdetések" value={fmt(o.active_listings)} icon={<Layers className="h-4 w-4" />} />
-          <MetricCard label="Összes hirdetés" value={fmt(o.total_listings)} />
-          <MetricCard label="Kereskedők" value={fmt(o.unique_dealers)} />
-          <MetricCard label="Források" value={fmt(o.unique_sources)} />
-          <MetricCard label="Átlagár" value={fmt(o.avg_price_eur, 'eur')} icon={<TrendingUp className="h-4 w-4" />} />
-          <MetricCard label="Medián ár" value={fmt(o.median_price_eur, 'eur')} />
-          <MetricCard label="Átl. futás" value={fmt(o.avg_mileage_km, 'km')} />
-          <MetricCard label="Árcsökk. (7 nap)" value={fmt(o.price_drop_events_last_7d)} />
-          <MetricCard label="Árcsökk. (30 nap)" value={fmt(o.price_drop_events_last_30d)} />
-          <MetricCard label="Átl. csökkenés (30n)" value={fmt(o.avg_drop_pct_last_30d, 'pct')} />
+          <MetricCard label={t('summary_active_listings')} value={fmt(o.active_listings)} icon={<Layers className="h-4 w-4" />} />
+          <MetricCard label={t('summary_total_listings')} value={fmt(o.total_listings)} />
+          <MetricCard label={t('summary_unique_dealers')} value={fmt(o.unique_dealers)} />
+          <MetricCard label={t('summary_unique_sources')} value={fmt(o.unique_sources)} />
+          <MetricCard label={t('summary_avg_price')} value={fmt(o.avg_price_eur, 'eur')} icon={<TrendingUp className="h-4 w-4" />} />
+          <MetricCard label={t('summary_median_price')} value={fmt(o.median_price_eur, 'eur')} />
+          <MetricCard label={t('summary_avg_mileage')} value={fmt(o.avg_mileage_km, 'km')} />
+          <MetricCard label={t('summary_price_drops_7d')} value={fmt(o.price_drop_events_last_7d)} />
+          <MetricCard label={t('summary_price_drops_30d')} value={fmt(o.price_drop_events_last_30d)} />
+          <MetricCard label={t('summary_avg_drop')} value={fmt(o.avg_drop_pct_last_30d, 'pct')} />
         </div>
       )}
 
-      {/* B) AutoValue Context */}
       {context && (context.market_summary || context.price_positioning_hint || context.negotiation_room_hint) && (
         <Card className="border border-border/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Info className="h-4 w-4 text-primary/70" />
-              AutoValue Kontextus
+              {t('autovalue_context_title')}
             </CardTitle>
             {context.updated_at && (
               <CardDescription className="text-[11px]">
-                Frissítve: {new Date(context.updated_at).toLocaleDateString('hu-HU')}
+                {t('signal_updated')}: {localeDateStr(context.updated_at, lang)}
               </CardDescription>
             )}
           </CardHeader>
@@ -138,11 +170,10 @@ export default function MarketIntelligenceSection() {
         </Card>
       )}
 
-      {/* C) Signal Cards */}
       {(pressure || turnover) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SignalCard signal={pressure} icon={<Activity className="h-4 w-4" />} />
-          <SignalCard signal={turnover} icon={<TrendingUp className="h-4 w-4" />} />
+          <SignalCard signal={pressure} icon={<Activity className="h-4 w-4" />} t={t} lang={lang} />
+          <SignalCard signal={turnover} icon={<TrendingUp className="h-4 w-4" />} t={t} lang={lang} />
         </div>
       )}
     </section>
