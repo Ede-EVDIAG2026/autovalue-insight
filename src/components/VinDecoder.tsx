@@ -113,7 +113,7 @@ export default function VinDecoder({ onVehicleDecoded, styles }: VinDecoderProps
     abortRef.current = controller;
 
     try {
-      const res = await fetch(`${MARKET_API}/vin/decode`, {
+      const res = await fetch(`${MARKET_API}/api/v1/vin/decode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ vin, include_market_price: true }),
