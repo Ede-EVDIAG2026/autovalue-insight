@@ -1,9 +1,13 @@
-import { useMarketIntelligence } from '@/hooks/useMarketIntelligence';
+import { useMarketIntelligence, type VehicleParams } from '@/hooks/useMarketIntelligence';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertTriangle, BarChart3, TrendingUp, Activity, Layers, Info } from 'lucide-react';
 import type { MarketSignal } from '@/types/marketIntelligence';
+
+interface MarketIntelligenceSectionProps {
+  vehicle: VehicleParams | null;
+}
 
 type Lang = 'HU' | 'EN' | 'DE';
 
@@ -97,10 +101,14 @@ function SignalCard({ signal, icon, t, lang }: { signal: MarketSignal | null; ic
   );
 }
 
-export default function MarketIntelligenceSection() {
-  const { summary, context, pressure, turnover, loading, error } = useMarketIntelligence();
+export default function MarketIntelligenceSection({ vehicle }: MarketIntelligenceSectionProps) {
+  const { summary, context, pressure, turnover, loading, error } = useMarketIntelligence(vehicle);
   const { lang } = useLanguage();
   const t = useMiT();
+
+  if (!vehicle) {
+    return null;
+  }
 
   if (loading) {
     return (

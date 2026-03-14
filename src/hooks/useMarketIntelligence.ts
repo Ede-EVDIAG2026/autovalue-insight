@@ -3,6 +3,14 @@ import type { FrontendSummary, AutoValueContext, MarketSignal } from '@/types/ma
 
 const MARKET_API = 'https://market.evdiag.hu';
 
+export interface VehicleParams {
+  make: string;
+  model: string;
+  year: string;
+  mileage: string;
+  country: string;
+}
+
 async function safeFetch<T>(url: string, timeoutMs = 10000): Promise<T | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -21,24 +29,44 @@ async function safeFetch<T>(url: string, timeoutMs = 10000): Promise<T | null> {
   }
 }
 
-export function useMarketIntelligence() {
+export function useMarketIntelligence(vehicle: VehicleParams | null) {
   const [summary, setSummary] = useState<FrontendSummary | null>(null);
   const [context, setContext] = useState<AutoValueContext | null>(null);
   const [pressure, setPressure] = useState<MarketSignal | null>(null);
   const [turnover, setTurnover] = useState<MarketSignal | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!vehicle) {
+      setSummary(null);
+      setContext(null);
+      setPressure(null);
+      setTurnover(null);
+      setLoading(false);
+      setError(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(false);
 
+    const params = new URLSearchParams({
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      mileage_km: vehicle.mileage,
+      country: vehicle.country,
+    });
+
+    const qs = params.toString();
+
     Promise.allSettled([
-      safeFetch<FrontendSummary>(`${MARKET_API}/api/v1/market/dashboard/frontend-summary`),
-      safeFetch<AutoValueContext>(`${MARKET_API}/api/v1/market/autovalue-context`),
-      safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/market-pressure`),
-      safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/inventory-turnover`),
+      safeFetch<FrontendSummary>(`${MARKET_API}/api/v1/market/context?${qs}`),
+      safeFetch<AutoValueContext>(`${MARKET_API}/api/v1/market/autovalue-context?${qs}`),
+      safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/market-pressure?${qs}`),
+      safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/inventory-turnover?${qs}`),
     ]).then(([s, c, p, t]) => {
       if (cancelled) return;
       const sv = s.status === 'fulfilled' ? s.value : null;
@@ -56,7 +84,7 @@ export function useMarketIntelligence() {
     });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [vehicle?.make, vehicle?.model, vehicle?.year, vehicle?.mileage, vehicle?.country]);
 
   return { summary, context, pressure, turnover, loading, error };
 }

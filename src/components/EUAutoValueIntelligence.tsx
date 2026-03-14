@@ -266,7 +266,19 @@ const CSS = `
 @keyframes avPulse { 0%,100% { transform:scale(1); opacity:0.6; } 50% { transform:scale(1.08); opacity:1; } }
 `;
 
-export default function EUAutoValueIntelligence() {
+export interface VehicleEvaluation {
+  make: string;
+  model: string;
+  year: string;
+  mileage: string;
+  country: string;
+}
+
+interface EUAutoValueIntelligenceProps {
+  onVehicleEvaluated?: (vehicle: VehicleEvaluation) => void;
+}
+
+export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoValueIntelligenceProps = {}) {
   const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '' });
@@ -545,6 +557,13 @@ export default function EUAutoValueIntelligence() {
           if (apiResult && apiResult.data_points > 0) setResult(mapApiToResult(apiResult, form));
           else setResult(generateResult(form));
           setScreen('result'); setTab(0);
+          onVehicleEvaluated?.({
+            make: form.brand,
+            model: form.model,
+            year: form.year,
+            mileage: form.km,
+            country: form.country,
+          });
         });
       }
     }, 420);

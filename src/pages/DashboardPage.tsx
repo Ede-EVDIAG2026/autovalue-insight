@@ -1,14 +1,28 @@
-import EUAutoValueIntelligence from '@/components/EUAutoValueIntelligence';
+import { useState, useCallback } from 'react';
+import EUAutoValueIntelligence, { type VehicleEvaluation } from '@/components/EUAutoValueIntelligence';
 import AppHeader from '@/components/AppHeader';
 import MarketIntelligenceSection from '@/components/market/MarketIntelligenceSection';
+import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
 const DashboardPage = () => {
+  const [vehicle, setVehicle] = useState<VehicleParams | null>(null);
+
+  const handleVehicleEvaluated = useCallback((v: VehicleEvaluation) => {
+    setVehicle({
+      make: v.make,
+      model: v.model,
+      year: v.year,
+      mileage: v.mileage,
+      country: v.country,
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-muted/30">
       <AppHeader />
       <div className="container mx-auto px-4 py-6 space-y-8">
-        <EUAutoValueIntelligence />
-        <MarketIntelligenceSection />
+        <EUAutoValueIntelligence onVehicleEvaluated={handleVehicleEvaluated} />
+        <MarketIntelligenceSection vehicle={vehicle} />
       </div>
     </div>
   );
