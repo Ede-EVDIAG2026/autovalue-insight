@@ -101,10 +101,14 @@ function SignalCard({ signal, icon, t, lang }: { signal: MarketSignal | null; ic
   );
 }
 
-export default function MarketIntelligenceSection() {
-  const { summary, context, pressure, turnover, loading, error } = useMarketIntelligence();
+export default function MarketIntelligenceSection({ vehicle }: MarketIntelligenceSectionProps) {
+  const { summary, context, pressure, turnover, loading, error } = useMarketIntelligence(vehicle);
   const { lang } = useLanguage();
   const t = useMiT();
+
+  if (!vehicle) {
+    return null;
+  }
 
   if (loading) {
     return (

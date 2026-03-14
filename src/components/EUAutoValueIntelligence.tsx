@@ -557,6 +557,13 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
           if (apiResult && apiResult.data_points > 0) setResult(mapApiToResult(apiResult, form));
           else setResult(generateResult(form));
           setScreen('result'); setTab(0);
+          onVehicleEvaluated?.({
+            make: form.brand,
+            model: form.model,
+            year: form.year,
+            mileage: form.km,
+            country: form.country,
+          });
         });
       }
     }, 420);
