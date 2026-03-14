@@ -63,23 +63,82 @@ export function useMarketIntelligence(vehicle: VehicleParams | null) {
     const qs = params.toString();
 
     Promise.allSettled([
-      safeFetch<FrontendSummary>(`${MARKET_API}/api/v1/market/context?${qs}`),
-      safeFetch<AutoValueContext>(`${MARKET_API}/api/v1/market/autovalue-context?${qs}`),
+      safeFetch<any>(`${MARKET_API}/api/v1/market/autovalue-context?${qs}`),
       safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/market-pressure?${qs}`),
       safeFetch<MarketSignal>(`${MARKET_API}/api/v1/market/signals/inventory-turnover?${qs}`),
-    ]).then(([s, c, p, t]) => {
+    ]).then(([c, p, t]) => {
       if (cancelled) return;
-      const sv = s.status === 'fulfilled' ? s.value : null;
       const cv = c.status === 'fulfilled' ? c.value : null;
       const pv = p.status === 'fulfilled' ? p.value : null;
       const tv = t.status === 'fulfilled' ? t.value : null;
 
-      setSummary(sv);
-      setContext(cv);
-      setPressure(pv);
-      setTurnover(tv);
+      // Derive FrontendSummary overview from autovalue-context stats
+      if (cv?.stats) {
+        const s = cv.stats;
+        const d = cv.price_drop_summary;
+        setSummary({
+          overview: {
+            active_listings: s.active_listings ?? null,
+            total_listings: s.total_listings ?? null,
+            unique_dealers: null,
+            unique_sources: null,
+            avg_price_eur: s.avg_price_eur != null ? parseFloat(String(s.avg_price_eur)) : null,
+            median_price_eur: s.median_price_eur ?? null,
+            avg_mileage_km: s.avg_mileage_km != null ? parseFloat(String(s.avg_mileage_km)) : null,
+            price_drop_events_last_7d: null,
+            price_drop_events_last_30d: d?.drop_count ?? null,
+            avg_drop_pct_last_30d: d?.avg_drop_pct != null ? parseFloat(String(d.avg_drop_pct)) : null,
+          },
+        });
+      } else {
+        setSummary(null);
+      }
 
-      if (!sv && !cv && !pv && !tv) setError(true);
+      // Extract market context hints
+      if (cv?.market_context) {
+        const mc = cv.market_context;
+        setContext({
+          market_summary: mc.listing_count != null
+            ? `${mc.active_listing_count ?? mc.listing_count} aktív hirdetés, medián: €${mc.market_price_center?.toLocaleString('de-DE') ?? '–'}, P25–P75: €${mc.market_price_low?.toLocaleString('de-DE') ?? '–'} – €${mc.market_price_high?.toLocaleString('de-DE') ?? '–'}`
+            : null,
+          price_positioning_hint: mc.pricing_confidence ? `Pricing confidence: ${mc.pricing_confidence}` : null,
+          negotiation_room_hint: mc.avg_drop_pct != null ? `Átlagos árcsökkentés: ${parseFloat(String(mc.avg_drop_pct)).toFixed(1)}%` : null,
+          updated_at: null,
+        });
+      } else {
+        setContext(null);
+      }
+
+      // Use embedded signals from autovalue-context as fallback
+      if (!pv && cv?.signals?.market_pressure) {
+        const mp = cv.signals.market_pressure;
+        setPressure({
+          title: 'Piaci nyomás',
+          score: mp.score ?? null,
+          level: mp.band ?? null,
+          interpretation: `${mp.drop_event_count ?? 0} árcsökkentés, ${mp.listing_count ?? 0} hirdetés`,
+          confidence: null,
+          updated_at: null,
+        });
+      } else {
+        setPressure(pv);
+      }
+
+      if (!tv && cv?.signals?.inventory_turnover) {
+        const it = cv.signals.inventory_turnover;
+        setTurnover({
+          title: 'Készletforgás',
+          score: it.score ?? null,
+          level: it.band ?? null,
+          interpretation: `${it.sample_size ?? 0} minta alapján`,
+          confidence: null,
+          updated_at: null,
+        });
+      } else {
+        setTurnover(tv);
+      }
+
+      if (!cv && !pv && !tv) setError(true);
       setLoading(false);
     });
 
