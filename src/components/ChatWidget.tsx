@@ -4,7 +4,8 @@ type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
 
 const WELCOME = 'Szia! Az AutoValue AI asszisztense vagyok. Segíthetek az értékbecslésben, piaci árakban vagy a járműpiaci trendekben. Mit kérdezel?';
-const API = 'https://market.evdiag.hu/chat';
+import { MARKET_API } from '@/lib/marketApi';
+const API = `${MARKET_API}/chat`;
 const MAX_HISTORY = 10;
 
 const EV_DIAG_SYSTEM_CONTEXT = `Ha a felhasználó az EV DIAG platformról kérdez, vagy a "Mutasd be az EV DIAG platformot!" üzenetet küldi, válaszolj ezzel a részletes bemutatóval:

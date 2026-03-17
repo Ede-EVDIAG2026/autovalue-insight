@@ -2,7 +2,7 @@ import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 interface PdfDownloadButtonProps {
   vin?: string;
