@@ -408,6 +408,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professional Vehicle Valuation',
       hero_desc: 'Bayesian probability model · 27 EU countries + Switzerland · 3-year historical price trend',
       result_gen: 'Generating results…',
+      warn_mfg_before_model: '⚠️ Manufacturing year is earlier than model year – please verify!',
+      warn_reg_before_mfg: '⚠️ Registration year is before manufacturing year – please verify!',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
