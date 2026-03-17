@@ -144,7 +144,7 @@ export default function MarketContextCard({ make, model, year, mileageKm, fuelTy
 
       {data.fallback_mode && (
         <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
-          <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-destructive/70 shrink-0 mt-0.5" />
           Kevés azonos évjáratú találat, ezért a piaci kontextus modellszintű mintából készült.
         </div>
       )}
