@@ -412,6 +412,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Generating results…',
       warn_mfg_before_model: '⚠️ Manufacturing year is earlier than model year – please verify!',
       warn_reg_before_mfg: '⚠️ Registration year is before manufacturing year – please verify!',
+      warn_reg_month_before_mfg: '⚠️ Registration month is before manufacturing month (same year) – please verify!',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
