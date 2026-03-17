@@ -483,6 +483,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_fields: 'Felder ausgefüllt',
       readiness_missing: 'Fehlende Felder',
       readiness_complete: 'Alle Felder ausgefüllt!',
+      priority_critical: 'Erforderlich',
+      priority_optional: 'Empfohlen',
       field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
       field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
       field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
