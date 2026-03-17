@@ -823,15 +823,15 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
               {/* Row 5: Drive, Transmission */}
               <div>
-                <label style={S.label}>Meghajtás</label>
-                <select className="av-inp" style={S.input} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
+                <label style={S.label}>Meghajtás {vinFilledFields.has('driveType') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('driveType') ? vinHighlight : {}) }} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Első kerék','Hátsó kerék','Összkerék','4x4'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Váltó</label>
-                <select className="av-inp" style={S.input} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
+                <label style={S.label}>Váltó {vinFilledFields.has('transmission') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('transmission') ? vinHighlight : {}) }} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Kézi','Automata','DCT','CVT','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
@@ -841,16 +841,16 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               {(form.fuel === 'BEV' || form.fuel === 'PHEV') && (
                 <>
                   <div>
-                    <label style={S.label}>Akkumulátor kapacitás</label>
+                    <label style={S.label}>Akkumulátor kapacitás {vinFilledFields.has('batteryKwh') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
-                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
+                      <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('batteryKwh') ? vinHighlight : {}), paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
                       <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kWh</span>
                     </div>
                   </div>
                   <div>
-                    <label style={S.label}>Töltési teljesítmény AC</label>
+                    <label style={S.label}>Töltési teljesítmény AC {vinFilledFields.has('chargingPowerAc') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
-                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 36 }} placeholder="pl. 11" value={form.chargingPowerAc} onChange={e => setField('chargingPowerAc', e.target.value)} />
+                      <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('chargingPowerAc') ? vinHighlight : {}), paddingRight: 36 }} placeholder="pl. 11" value={form.chargingPowerAc} onChange={e => setField('chargingPowerAc', e.target.value)} />
                       <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
                     </div>
                   </div>
@@ -859,15 +859,15 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
               {/* Row 7: Doors, Seats */}
               <div>
-                <label style={S.label}>Ajtók száma</label>
-                <select className="av-inp" style={S.input} value={form.doors} onChange={e => setField('doors', e.target.value)}>
+                <label style={S.label}>Ajtók száma {vinFilledFields.has('doors') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('doors') ? vinHighlight : {}) }} value={form.doors} onChange={e => setField('doors', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['2','3','4','5'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Ülőhelyek</label>
-                <select className="av-inp" style={S.input} value={form.seats} onChange={e => setField('seats', e.target.value)}>
+                <label style={S.label}>Ülőhelyek {vinFilledFields.has('seats') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('seats') ? vinHighlight : {}) }} value={form.seats} onChange={e => setField('seats', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['2','4','5','6','7','8+'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
