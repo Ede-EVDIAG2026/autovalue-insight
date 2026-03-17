@@ -296,7 +296,7 @@ interface EUAutoValueIntelligenceProps {
 export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoValueIntelligenceProps = {}) {
   const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
-  const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '' });
+  const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '', mfgYear: '', mfgMonth: '', regYear: '', regMonth: '', optionalPackages: '', standardEquipment: '', priorUsage: '', priorUsageConfidence: '' });
   const [vinIdentity, setVinIdentity] = useState<VinIdentity>(null);
   const [vinRawResult, setVinRawResult] = useState<any>(null);
   const [vinModalOpen, setVinModalOpen] = useState(false);
