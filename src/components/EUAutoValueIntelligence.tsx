@@ -521,6 +521,17 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const totalCount = READINESS_FIELDS.length;
   const readinessPct = Math.round((filledCount / totalCount) * 100);
 
+  // ── Smart suggestion: impact weights per field ──
+  const FIELD_IMPACT: Record<string, number> = {
+    brand: 12, model: 12, year: 10, fuel: 9, km: 10, country: 8,
+    batteryKwh: 6, enginePowerKw: 5, trimLevel: 5, driveType: 4,
+    transmission: 4, body: 3, mfgYear: 3, regYear: 3, color: 2,
+  };
+  const smartSuggestion = missingFields.length > 0
+    ? [...missingFields].sort((a, b) => (FIELD_IMPACT[b] || 0) - (FIELD_IMPACT[a] || 0))[0]
+    : null;
+  const smartImpact = smartSuggestion ? (FIELD_IMPACT[smartSuggestion] || 0) : 0;
+
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
     { value: 'PHEV', label: tr.fuel_phev },
