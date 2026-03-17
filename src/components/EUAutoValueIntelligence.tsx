@@ -668,7 +668,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
           <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
 
-          {/* Clickable VIN summary card */}
+          {/* Clickable VIN summary hero card — SINGLE instance */}
           {vinRawResult?.vehicle_identity?.make && (
             <div
               onClick={() => setVinModalOpen(true)}
@@ -679,24 +679,42 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)')}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)')}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>✓ Jármű azonosítva</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2a' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1a1a2a', marginBottom: 6 }}>
                     {vinRawResult.vehicle_identity.make} {vinRawResult.vehicle_identity.model} {vinRawResult.vehicle_identity.year}
                   </div>
-                  {vinRawResult.vehicle_identity.electrification && (
-                    <span style={{
-                      display: 'inline-block', marginTop: 6, padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
-                      background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
-                      color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
-                    }}>
-                      {vinRawResult.vehicle_identity.electrification}
-                    </span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                    {vinRawResult.vehicle_identity.body_class && (
+                      <span style={{ padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: '#f3f4f6', color: '#374151' }}>{vinRawResult.vehicle_identity.body_class}</span>
+                    )}
+                    {vinRawResult.vehicle_identity.electrification && (
+                      <span style={{
+                        padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
+                        background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
+                        color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
+                      }}>
+                        {vinRawResult.vehicle_identity.electrification}
+                      </span>
+                    )}
+                  </div>
+                  {(vinRawResult.vehicle_identity.manufacturer || vinRawResult.vehicle_identity.plant_country) && (
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>
+                      {vinRawResult.vehicle_identity.manufacturer}{vinRawResult.vehicle_identity.manufacturer && vinRawResult.vehicle_identity.plant_country ? ' · ' : ''}{vinRawResult.vehicle_identity.plant_country}
+                    </div>
                   )}
                 </div>
-                <div style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  👁 Összes adat megtekintése →
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 10,
+                  background: '#eff6ff', border: '1px solid #bfdbfe',
+                  cursor: 'pointer', flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 14 }}>👁</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', whiteSpace: 'nowrap' }}>
+                    Összes adat megtekintése
+                  </span>
                 </div>
               </div>
             </div>
