@@ -377,6 +377,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_fields: 'mező kitöltve',
       readiness_missing: 'Hiányzó mezők',
       readiness_complete: 'Minden mező kitöltve!',
+      priority_critical: 'Kötelező',
+      priority_optional: 'Ajánlott',
       field_brand: 'Márka', field_model: 'Modell', field_year: 'Évjárat', field_fuel: 'Hajtáslánc',
       field_km: 'Futásteljesítmény', field_country: 'Ország', field_body: 'Karosszéria',
       field_trimLevel: 'Felszereltség', field_enginePowerKw: 'Teljesítmény (kW)',
@@ -428,6 +430,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_fields: 'fields filled',
       readiness_missing: 'Missing fields',
       readiness_complete: 'All fields filled!',
+      priority_critical: 'Required',
+      priority_optional: 'Recommended',
       field_brand: 'Make', field_model: 'Model', field_year: 'Year', field_fuel: 'Powertrain',
       field_km: 'Mileage', field_country: 'Country', field_body: 'Body type',
       field_trimLevel: 'Trim level', field_enginePowerKw: 'Power (kW)',
@@ -479,6 +483,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_fields: 'Felder ausgefüllt',
       readiness_missing: 'Fehlende Felder',
       readiness_complete: 'Alle Felder ausgefüllt!',
+      priority_critical: 'Erforderlich',
+      priority_optional: 'Empfohlen',
       field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
       field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
       field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
@@ -879,18 +885,42 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                       <p style={{ fontSize: 12, color: '#166534', fontWeight: 600, margin: 0 }}>
                         ✅ {tr.readiness_complete}
                       </p>
-                    ) : (
-                      <>
-                        <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px 0', color: '#1a1a2a' }}>
-                          {tr.readiness_missing} ({missingFields.length})
-                        </p>
-                        <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#6b7280', lineHeight: 1.8 }}>
-                          {missingFields.map(f => (
-                            <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
+                    ) : (() => {
+                      const CRITICAL: Set<string> = new Set(['brand', 'model', 'year', 'fuel', 'km', 'country']);
+                      const criticalMissing = missingFields.filter(f => CRITICAL.has(f));
+                      const optionalMissing = missingFields.filter(f => !CRITICAL.has(f));
+                      return (
+                        <>
+                          <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px 0', color: '#1a1a2a' }}>
+                            {tr.readiness_missing} ({missingFields.length})
+                          </p>
+                          {criticalMissing.length > 0 && (
+                            <>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                ● {tr.priority_critical}
+                              </span>
+                              <ul style={{ margin: '2px 0 8px', paddingLeft: 16, fontSize: 11, color: '#dc2626', lineHeight: 1.8 }}>
+                                {criticalMissing.map(f => (
+                                  <li key={f} style={{ fontWeight: 500 }}>{(tr as any)[`field_${f}`] || f}</li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                          {optionalMissing.length > 0 && (
+                            <>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                ○ {tr.priority_optional}
+                              </span>
+                              <ul style={{ margin: '2px 0 0', paddingLeft: 16, fontSize: 11, color: '#92400e', lineHeight: 1.8 }}>
+                                {optionalMissing.map(f => (
+                                  <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                   </PopoverContent>
                 </Popover>
               </div>
