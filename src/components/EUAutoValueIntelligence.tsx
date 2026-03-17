@@ -429,7 +429,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     makesLoaded.current = true;
     (async () => {
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/market/makes`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/makes`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
         const makes: string[] = (json.makes || []).map((m: any) => m.make || m);
