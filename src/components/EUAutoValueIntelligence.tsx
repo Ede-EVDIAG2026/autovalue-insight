@@ -994,6 +994,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                   {tr.warn_reg_before_mfg}
                 </div>
               )}
+              {form.regYear && form.mfgYear && form.regMonth && form.mfgMonth && form.regYear === form.mfgYear && parseInt(form.regMonth) < parseInt(form.mfgMonth) && (
+                <div style={{ gridColumn: '1 / -1', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'hsl(var(--destructive))', background: 'hsl(var(--destructive) / 0.08)', border: '1px solid hsl(var(--destructive) / 0.2)' }}>
+                  {tr.warn_reg_month_before_mfg}
+                </div>
+              )}
 
               {/* ── Separator: Felszereltség ── */}
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
