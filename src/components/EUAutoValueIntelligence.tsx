@@ -453,6 +453,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Ergebnisse werden generiert…',
       warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
       warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
+      warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
     },
   };
   const tr = ui[lang] || ui['HU'];
