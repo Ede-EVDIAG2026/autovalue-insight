@@ -4,6 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
 import PdfDownloadButton from './results/PdfDownloadButton';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { MARKET_API } from '@/lib/marketApi';
 
@@ -374,6 +375,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_reg_month_before_mfg: '⚠️ Az üzembehelyezés hónapja korábbi, mint a gyártási hónap (azonos évben) – ellenőrizze!',
       readiness: 'Értékbecslés készültség',
       readiness_fields: 'mező kitöltve',
+      readiness_missing: 'Hiányzó mezők',
+      readiness_complete: 'Minden mező kitöltve!',
+      field_brand: 'Márka', field_model: 'Modell', field_year: 'Évjárat', field_fuel: 'Hajtáslánc',
+      field_km: 'Futásteljesítmény', field_country: 'Ország', field_body: 'Karosszéria',
+      field_trimLevel: 'Felszereltség', field_enginePowerKw: 'Teljesítmény (kW)',
+      field_driveType: 'Meghajtás', field_transmission: 'Váltó',
+      field_mfgYear: 'Gyártási év', field_regYear: 'Üzembehelyezés éve',
+      field_batteryKwh: 'Akkumulátor (kWh)', field_color: 'Szín',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
@@ -417,6 +426,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_reg_month_before_mfg: '⚠️ Registration month is before manufacturing month (same year) – please verify!',
       readiness: 'Valuation readiness',
       readiness_fields: 'fields filled',
+      readiness_missing: 'Missing fields',
+      readiness_complete: 'All fields filled!',
+      field_brand: 'Make', field_model: 'Model', field_year: 'Year', field_fuel: 'Powertrain',
+      field_km: 'Mileage', field_country: 'Country', field_body: 'Body type',
+      field_trimLevel: 'Trim level', field_enginePowerKw: 'Power (kW)',
+      field_driveType: 'Drive type', field_transmission: 'Transmission',
+      field_mfgYear: 'Mfg. year', field_regYear: 'Reg. year',
+      field_batteryKwh: 'Battery (kWh)', field_color: 'Color',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
@@ -460,6 +477,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
       readiness: 'Bewertungsbereitschaft',
       readiness_fields: 'Felder ausgefüllt',
+      readiness_missing: 'Fehlende Felder',
+      readiness_complete: 'Alle Felder ausgefüllt!',
+      field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
+      field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
+      field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
+      field_driveType: 'Antriebsart', field_transmission: 'Getriebe',
+      field_mfgYear: 'Herstellungsjahr', field_regYear: 'Zulassungsjahr',
+      field_batteryKwh: 'Batterie (kWh)', field_color: 'Farbe',
     },
   };
   const tr = ui[lang] || ui['HU'];
@@ -471,6 +496,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     'mfgYear', 'regYear', 'batteryKwh', 'color',
   ];
   const filledCount = READINESS_FIELDS.filter(k => form[k] && String(form[k]).trim() !== '').length;
+  const missingFields = READINESS_FIELDS.filter(k => !form[k] || String(form[k]).trim() === '');
   const totalCount = READINESS_FIELDS.length;
   const readinessPct = Math.round((filledCount / totalCount) * 100);
 
@@ -829,14 +855,44 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
             </div>
 
             {/* Valuation readiness progress */}
-            <div style={{ marginBottom: 18 }}>
+            <div style={{ marginBottom: 18, position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: readinessPct >= 80 ? '#166534' : readinessPct >= 50 ? '#92400e' : '#6b7280' }}>
                   {tr.readiness}
                 </span>
-                <span style={{ fontSize: 11, color: '#6b7280' }}>
-                  {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
-                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      style={{
+                        fontSize: 11, color: missingFields.length > 0 ? '#2563eb' : '#166534',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        textDecoration: 'underline', textDecorationStyle: 'dotted',
+                        padding: 0,
+                      }}
+                    >
+                      {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" side="bottom" align="end">
+                    {missingFields.length === 0 ? (
+                      <p style={{ fontSize: 12, color: '#166534', fontWeight: 600, margin: 0 }}>
+                        ✅ {tr.readiness_complete}
+                      </p>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px 0', color: '#1a1a2a' }}>
+                          {tr.readiness_missing} ({missingFields.length})
+                        </p>
+                        <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#6b7280', lineHeight: 1.8 }}>
+                          {missingFields.map(f => (
+                            <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <div style={{ height: 6, borderRadius: 3, background: '#e5e7eb', overflow: 'hidden' }}>
                 <div style={{
