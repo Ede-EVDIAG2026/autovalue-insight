@@ -6,6 +6,7 @@ import NegotiationCard from '@/components/results/NegotiationCard';
 import DealerStrategyCard from '@/components/results/DealerStrategyCard';
 import VelocityCard from '@/components/results/VelocityCard';
 import ListingTextCard from '@/components/results/ListingTextCard';
+import MarketContextCard from '@/components/results/MarketContextCard';
 import PdfDownloadButton from '@/components/results/PdfDownloadButton';
 import { useNavigate } from 'react-router-dom';
 import { FileText, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react';
@@ -69,6 +70,16 @@ const Step3Results = ({
         priceTrend={market.price_trend_3m || 'stable'}
         priceTrendPct={market.price_trend_pct || 0}
         marketDepth={market.market_depth || 'normal'}
+      />
+
+      {/* Market Context */}
+      <MarketContextCard
+        make={vehicleData.vehicle_make}
+        model={vehicleData.vehicle_model}
+        year={vehicleData.vehicle_year}
+        mileageKm={vehicleData.vehicle_mileage_km}
+        fuelType={vehicleData.vehicle_fuel_type}
+        priceEur={bayesian.recommended_ask_eur}
       />
 
       {/* Listing Text */}
