@@ -368,6 +368,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professzionális Járműértékbecslés',
       hero_desc: 'Bayes-alapú valószínűségi modell · 27 EU ország + Svájc · 3 év visszamenőleges ártrend',
       result_gen: 'Eredmény generálása…',
+      warn_mfg_before_model: '⚠️ A gyártási év korábbi, mint a modellév – ellenőrizze!',
+      warn_reg_before_mfg: '⚠️ Az üzembehelyezés éve korábbi, mint a gyártási év – ellenőrizze!',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
@@ -406,6 +408,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professional Vehicle Valuation',
       hero_desc: 'Bayesian probability model · 27 EU countries + Switzerland · 3-year historical price trend',
       result_gen: 'Generating results…',
+      warn_mfg_before_model: '⚠️ Manufacturing year is earlier than model year – please verify!',
+      warn_reg_before_mfg: '⚠️ Registration year is before manufacturing year – please verify!',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
@@ -444,6 +448,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professionelle Fahrzeugbewertung',
       hero_desc: 'Bayesianisches Wahrscheinlichkeitsmodell · 27 EU-Länder + Schweiz · 3-Jahres-Preistrend',
       result_gen: 'Ergebnisse werden generiert…',
+      warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
+      warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
     },
   };
   const tr = ui[lang] || ui['HU'];
@@ -963,6 +969,18 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                   {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </div>
+
+              {/* Date validation warnings */}
+              {form.mfgYear && form.year && parseInt(form.mfgYear) < parseInt(form.year) && (
+                <div style={{ gridColumn: '1 / -1', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'hsl(var(--destructive))', background: 'hsl(var(--destructive) / 0.08)', border: '1px solid hsl(var(--destructive) / 0.2)' }}>
+                  {tr.warn_mfg_before_model}
+                </div>
+              )}
+              {form.regYear && form.mfgYear && parseInt(form.regYear) < parseInt(form.mfgYear) && (
+                <div style={{ gridColumn: '1 / -1', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'hsl(var(--destructive))', background: 'hsl(var(--destructive) / 0.08)', border: '1px solid hsl(var(--destructive) / 0.2)' }}>
+                  {tr.warn_reg_before_mfg}
+                </div>
+              )}
 
               {/* ── Separator: Felszereltség ── */}
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
