@@ -368,6 +368,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professzionális Járműértékbecslés',
       hero_desc: 'Bayes-alapú valószínűségi modell · 27 EU ország + Svájc · 3 év visszamenőleges ártrend',
       result_gen: 'Eredmény generálása…',
+      warn_mfg_before_model: '⚠️ A gyártási év korábbi, mint a modellév – ellenőrizze!',
+      warn_reg_before_mfg: '⚠️ Az üzembehelyezés éve korábbi, mint a gyártási év – ellenőrizze!',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
