@@ -371,6 +371,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Eredmény generálása…',
       warn_mfg_before_model: '⚠️ A gyártási év korábbi, mint a modellév – ellenőrizze!',
       warn_reg_before_mfg: '⚠️ Az üzembehelyezés éve korábbi, mint a gyártási év – ellenőrizze!',
+      warn_reg_month_before_mfg: '⚠️ Az üzembehelyezés hónapja korábbi, mint a gyártási hónap (azonos évben) – ellenőrizze!',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
