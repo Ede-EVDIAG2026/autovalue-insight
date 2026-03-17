@@ -16,6 +16,7 @@ type FormState = {
   batteryKwh: string; chargingPowerAc: string; color: string; equipmentNote: string;
 };
 type VinIdentity = { manufacturer?: string; plantCountry?: string; vin?: string; recallCount?: number } | null;
+type VinFilledFields = Set<string>;
 type Result = {
   p10: number; p25: number; p50: number; p75: number; p90: number;
   recommended: { low: number; high: number };
