@@ -271,4 +271,11 @@ export const t: Record<string, TranslationValue> = {
   mc_vs_avg: { HU: "vs átlag", EN: "vs average", DE: "vs Durchschnitt" },
   mc_fallback: { HU: "Kevés azonos évjáratú találat, ezért a piaci kontextus modellszintű mintából készült.", EN: "Few same-year matches found, so the market context is based on model-level data.", DE: "Wenige gleichaltrige Treffer, daher basiert der Marktkontext auf Modelldaten." },
   mc_loading: { HU: "Piaci kontextus betöltése…", EN: "Loading market context…", DE: "Marktkontext wird geladen…" },
+  mc_comparables: { HU: "Hasonló hirdetések", EN: "Comparable listings", DE: "Vergleichbare Anzeigen" },
+  mc_col_source: { HU: "Forrás", EN: "Source", DE: "Quelle" },
+  mc_col_title: { HU: "Megnevezés", EN: "Title", DE: "Bezeichnung" },
+  mc_col_year: { HU: "Év", EN: "Year", DE: "Jahr" },
+  mc_col_mileage: { HU: "Futás", EN: "Mileage", DE: "Km-Stand" },
+  mc_col_price: { HU: "Ár", EN: "Price", DE: "Preis" },
+  mc_no_comparables: { HU: "Nincs elérhető hasonló hirdetés.", EN: "No comparable listings available.", DE: "Keine vergleichbaren Anzeigen verfügbar." },
 };
