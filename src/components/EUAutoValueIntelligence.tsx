@@ -14,6 +14,9 @@ type FormState = {
   body: string; trimLevel: string; enginePowerKw: string; engineDisplacement: string;
   driveType: string; transmission: string; doors: string; seats: string;
   batteryKwh: string; chargingPowerAc: string; color: string; equipmentNote: string;
+  mfgYear: string; mfgMonth: string; regYear: string; regMonth: string;
+  optionalPackages: string; standardEquipment: string;
+  priorUsage: string; priorUsageConfidence: 'confirmed' | 'estimated' | '';
 };
 type VinIdentity = { manufacturer?: string; plantCountry?: string; vin?: string; recallCount?: number } | null;
 type VinFilledFields = Set<string>;
