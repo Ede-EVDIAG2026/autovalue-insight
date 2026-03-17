@@ -911,6 +911,75 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 <label style={S.label}>Felszereltség megjegyzés</label>
                 <input className="av-inp" style={S.input} placeholder="pl. panorámatető, bőr, HUD..." value={form.equipmentNote} onChange={e => setField('equipmentNote', e.target.value)} />
               </div>
+
+              {/* ── Separator: Dátumok ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Manufacturing date */}
+              <div>
+                <label style={S.label}>Gyártási év {vinFilledFields.has('mfgYear') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgYear') ? vinHighlight : {}) }} value={form.mfgYear} onChange={e => setField('mfgYear', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Gyártási hónap {vinFilledFields.has('mfgMonth') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgMonth') ? vinHighlight : {}) }} value={form.mfgMonth} onChange={e => setField('mfgMonth', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+
+              {/* First registration */}
+              <div>
+                <label style={S.label}>Első üzembehelyezés éve {vinFilledFields.has('regYear') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regYear') ? vinHighlight : {}) }} value={form.regYear} onChange={e => setField('regYear', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Első üzembehelyezés hónapja {vinFilledFields.has('regMonth') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regMonth') ? vinHighlight : {}) }} value={form.regMonth} onChange={e => setField('regMonth', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+
+              {/* ── Separator: Felszereltség ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Standard equipment */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Alapfelszereltség {vinFilledFields.has('standardEquipment') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('standardEquipment') ? vinHighlight : {}) }} placeholder="pl. LED fényszóró, tolatókamera, klíma..." value={form.standardEquipment} onChange={e => setField('standardEquipment', e.target.value)} />
+              </div>
+
+              {/* Optional packages */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Extra csomagok / opciók {vinFilledFields.has('optionalPackages') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('optionalPackages') ? vinHighlight : {}) }} placeholder="pl. Premium csomag, Sport csomag, Tech csomag..." value={form.optionalPackages} onChange={e => setField('optionalPackages', e.target.value)} />
+              </div>
+
+              {/* ── Separator: Korábbi használat ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Prior special usage */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>
+                  Korábbi különleges használat {vinFilledFields.has('priorUsage') && <VinBadge />}
+                  {form.priorUsageConfidence === 'estimated' && (
+                    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 9, fontWeight: 600, background: '#fef3c7', color: '#92400e', marginLeft: 4, verticalAlign: 'middle' }}>
+                      becsült
+                    </span>
+                  )}
+                </label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('priorUsage') ? vinHighlight : {}) }} value={form.priorUsage} onChange={e => setField('priorUsage', e.target.value)}>
+                  <option value="">Nincs ismert különleges használat</option>
+                  {PRIOR_USAGES.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                </select>
+              </div>
             </div>
 
             {/* Collapsible: Identification data */}
