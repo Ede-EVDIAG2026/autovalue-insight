@@ -16,6 +16,7 @@ type FormState = {
   batteryKwh: string; chargingPowerAc: string; color: string; equipmentNote: string;
 };
 type VinIdentity = { manufacturer?: string; plantCountry?: string; vin?: string; recallCount?: number } | null;
+type VinFilledFields = Set<string>;
 type Result = {
   p10: number; p25: number; p50: number; p75: number; p90: number;
   recommended: { low: number; high: number };
@@ -257,6 +258,15 @@ function PercentileBar({ p10, p25, p50, p75, p90 }: { p10: number; p25: number; 
     </div>
   );
 }
+function VinBadge() {
+  return (
+    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 9, fontWeight: 600, background: '#dcfce7', color: '#166534', marginLeft: 4, verticalAlign: 'middle' }}>
+      VIN ✓
+    </span>
+  );
+}
+
+const vinHighlight: React.CSSProperties = { borderColor: '#86efac', background: '#f0fdf4' };
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -288,6 +298,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const [vinRawResult, setVinRawResult] = useState<any>(null);
   const [vinModalOpen, setVinModalOpen] = useState(false);
   const [vinIdOpen, setVinIdOpen] = useState(false);
+  const [vinFilledFields, setVinFilledFields] = useState<VinFilledFields>(new Set());
   const [result, setResult] = useState<Result | null>(null);
   const [progress, setProgress] = useState(0);
   const [stepLabel, setStepLabel] = useState('');
@@ -478,9 +489,37 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const vi = rawResult?.vehicle_identity;
     const agents = rawResult?.agents?.vin_decode;
     const trim = rawResult?.agents?.trim_intelligence;
+    const evSpec = rawResult?.agents?.ev_specialist;
+    const summary = rawResult?.summary;
+    const recallSafety = rawResult?.agents?.recall_safety;
+
     const make = vi?.make || '';
     const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+
+    // Normalize model: split "Passat / GTE" → main model + trim
+    const rawModel = vi?.model || '';
+    let mainModel = rawModel;
+    let trimFromModel = '';
+    if (rawModel.includes('/')) {
+      const parts = rawModel.split('/').map((s: string) => s.trim());
+      mainModel = parts[0];
+      trimFromModel = parts.slice(1).join(' ').trim();
+    } else if (rawModel.includes(' ')) {
+      // Handle "Model 3" vs "ID.4 Pro" - only split if last word looks like a trim
+      const words = rawModel.split(' ');
+      const trimKeywords = ['pro', 'performance', 'gte', 'gtx', 'sport', 'line', 'edition', 'plus', 'max', 'premium', 'launch', 'first', 'style', 'life', 'elegance', 'amg', 'luxury'];
+      if (words.length > 1 && trimKeywords.includes(words[words.length - 1].toLowerCase())) {
+        mainModel = words.slice(0, -1).join(' ');
+        trimFromModel = words[words.length - 1];
+      }
+    }
+
     const powertrain = (() => {
+      const evType = (evSpec?.ev_type || summary?.ev_type || '').toUpperCase();
+      if (evType === 'BEV') return 'BEV';
+      if (evType.includes('PHEV')) return 'PHEV';
+      if (evType.includes('MHEV')) return 'MHEV';
+      if (evType.includes('HEV')) return 'HEV';
       const e = (vi?.electrification || '').toUpperCase();
       if (e === 'BEV') return 'BEV';
       if (e.includes('PHEV')) return 'PHEV';
@@ -488,29 +527,58 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       if (e.includes('HEV')) return 'HEV';
       return '';
     })();
+
     const updates: Partial<FormState> = {};
-    let count = 0;
-    if (normMake) { updates.brand = normMake; count++; }
-    if (vi?.model) { updates.model = vi.model; count++; }
-    if (vi?.year) { updates.year = String(vi.year); count++; }
-    if (powertrain) { updates.fuel = powertrain; count++; }
-    if (vi?.body_class) { updates.body = vi.body_class; count++; }
-    if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
-    if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
-    if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
-    if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
-    if (agents?.doors) { updates.doors = String(agents.doors); count++; }
-    if (agents?.seats) { updates.seats = String(agents.seats); count++; }
-    if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
-    if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
+    const filled = new Set<string>();
+
+    const set = (key: keyof FormState, val: string | number | undefined | null) => {
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        updates[key] = String(val);
+        filled.add(key);
+      }
+    };
+
+    // Primary identity
+    set('brand', normMake);
+    set('model', mainModel);
+    set('year', vi?.year);
+    set('fuel', powertrain);
+
+    // Trim: prefer summary, then trim_intelligence, then model-derived
+    const bestTrim = summary?.trim_identified || summary?.trim_level || trim?.trim_level || trimFromModel;
+    set('trimLevel', bestTrim);
+
+    // Body
+    set('body', vi?.body_class || vi?.body);
+
+    // Technical from agents
+    set('enginePowerKw', agents?.engine_power_kw);
+    set('engineDisplacement', agents?.engine_displacement);
+    set('driveType', agents?.drive_type);
+    set('transmission', agents?.transmission);
+    set('doors', agents?.doors);
+    set('seats', agents?.seats);
+
+    // Battery from summary or ev_specialist
+    const battKwh = summary?.battery_kwh || evSpec?.battery?.capacity_kwh;
+    if (battKwh && (powertrain === 'BEV' || powertrain === 'PHEV')) {
+      set('batteryKwh', battKwh);
+    }
+    const acKw = evSpec?.charging?.ac_kw;
+    if (acKw && (powertrain === 'BEV' || powertrain === 'PHEV')) {
+      set('chargingPowerAc', acKw);
+    }
+
     setForm(prev => ({ ...prev, ...updates }));
+    setVinFilledFields(filled);
     setVinIdentity({
       manufacturer: vi?.manufacturer,
       plantCountry: vi?.plant_country,
       vin: rawResult.vin || undefined,
-      recallCount: rawResult.safety?.recall_count,
+      recallCount: recallSafety?.recall_count ?? rawResult.safety?.recall_count,
     });
     setVinIdOpen(true);
+    const count = filled.size;
     if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }, []);
@@ -609,7 +677,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
           <VinDecoder onVehicleDecoded={handleVinDecoded} styles={{ card: S.card, input: S.input, btn: S.btn, label: S.label, muted: S.muted }} />
 
-          {/* Clickable VIN summary card */}
+          {/* Clickable VIN summary hero card — SINGLE instance */}
           {vinRawResult?.vehicle_identity?.make && (
             <div
               onClick={() => setVinModalOpen(true)}
@@ -620,24 +688,42 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)')}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)')}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>✓ Jármű azonosítva</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2a' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1a1a2a', marginBottom: 6 }}>
                     {vinRawResult.vehicle_identity.make} {vinRawResult.vehicle_identity.model} {vinRawResult.vehicle_identity.year}
                   </div>
-                  {vinRawResult.vehicle_identity.electrification && (
-                    <span style={{
-                      display: 'inline-block', marginTop: 6, padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
-                      background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
-                      color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
-                    }}>
-                      {vinRawResult.vehicle_identity.electrification}
-                    </span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                    {vinRawResult.vehicle_identity.body_class && (
+                      <span style={{ padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: '#f3f4f6', color: '#374151' }}>{vinRawResult.vehicle_identity.body_class}</span>
+                    )}
+                    {vinRawResult.vehicle_identity.electrification && (
+                      <span style={{
+                        padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600,
+                        background: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#dcfce7' : '#eff6ff',
+                        color: vinRawResult.vehicle_identity.electrification.toUpperCase() === 'BEV' ? '#166534' : '#1d4ed8',
+                      }}>
+                        {vinRawResult.vehicle_identity.electrification}
+                      </span>
+                    )}
+                  </div>
+                  {(vinRawResult.vehicle_identity.manufacturer || vinRawResult.vehicle_identity.plant_country) && (
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>
+                      {vinRawResult.vehicle_identity.manufacturer}{vinRawResult.vehicle_identity.manufacturer && vinRawResult.vehicle_identity.plant_country ? ' · ' : ''}{vinRawResult.vehicle_identity.plant_country}
+                    </div>
                   )}
                 </div>
-                <div style={{ fontSize: 13, color: '#3b82f6', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  👁 Összes adat megtekintése →
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 10,
+                  background: '#eff6ff', border: '1px solid #bfdbfe',
+                  cursor: 'pointer', flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 14 }}>👁</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#2563eb', whiteSpace: 'nowrap' }}>
+                    Összes adat megtekintése
+                  </span>
                 </div>
               </div>
             </div>
@@ -650,38 +736,43 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
           <div ref={formRef} style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a2a' }}>{tr.vehicle_data}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{tr.vehicle_sub}</div>
               </div>
+              {vinFilledFields.size > 0 && (
+                <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: '#dcfce7', color: '#166534', whiteSpace: 'nowrap' }}>
+                  🤖 {vinFilledFields.size} mező kitöltve VIN alapján
+                </span>
+              )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
               <div>
-                <label style={S.label}>{tr.make}</label>
-                <select className="av-inp" style={S.input} value={form.brand} onChange={e => setField('brand', e.target.value)}>
+                <label style={S.label}>{tr.make} {vinFilledFields.has('brand') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('brand') ? vinHighlight : {}) }} value={form.brand} onChange={e => setField('brand', e.target.value)}>
                   <option value="">{makesLoading ? tr.loading : tr.select}</option>
                   {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>{tr.model}</label>
-                <select className="av-inp" style={{ ...S.input, opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
+                <label style={S.label}>{tr.model} {vinFilledFields.has('model') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('model') ? vinHighlight : {}), opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
                   <option value="">{modelsLoading ? tr.loading : tr.select}</option>
                   {modelsList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               {/* Row 2: Year, Fuel */}
               <div>
-                <label style={S.label}>{tr.year}</label>
-                <select className="av-inp" style={S.input} value={form.year} onChange={e => setField('year', e.target.value)}>
+                <label style={S.label}>{tr.year} {vinFilledFields.has('year') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('year') ? vinHighlight : {}) }} value={form.year} onChange={e => setField('year', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>{tr.fuel}</label>
-                <select className="av-inp" style={S.input} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
+                <label style={S.label}>{tr.fuel} {vinFilledFields.has('fuel') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('fuel') ? vinHighlight : {}) }} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {FUELS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
@@ -703,44 +794,44 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
               {/* Row 3: Body, Trim */}
               <div>
-                <label style={S.label}>Karosszéria</label>
-                <select className="av-inp" style={S.input} value={form.body} onChange={e => setField('body', e.target.value)}>
+                <label style={S.label}>Karosszéria {vinFilledFields.has('body') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('body') ? vinHighlight : {}) }} value={form.body} onChange={e => setField('body', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Sedan','Kombi','SUV','Crossover','Hatchback','Coupe','Cabrio','Van','Pickup','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Trim szint</label>
-                <input className="av-inp" style={S.input} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
+                <label style={S.label}>Trim szint {vinFilledFields.has('trimLevel') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('trimLevel') ? vinHighlight : {}) }} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
               </div>
 
               {/* Row 4: Engine power, Displacement */}
               <div>
-                <label style={S.label}>Motor teljesítmény</label>
+                <label style={S.label}>Motor teljesítmény {vinFilledFields.has('enginePowerKw') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
-                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
+                  <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('enginePowerKw') ? vinHighlight : {}), paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
                   <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
                 </div>
               </div>
               <div>
-                <label style={S.label}>Hengerűrtartalom</label>
+                <label style={S.label}>Hengerűrtartalom {vinFilledFields.has('engineDisplacement') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
-                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 28 }} placeholder="pl. 2.0" value={form.engineDisplacement} onChange={e => setField('engineDisplacement', e.target.value)} />
+                  <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('engineDisplacement') ? vinHighlight : {}), paddingRight: 28 }} placeholder="pl. 2.0" value={form.engineDisplacement} onChange={e => setField('engineDisplacement', e.target.value)} />
                   <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>L</span>
                 </div>
               </div>
 
               {/* Row 5: Drive, Transmission */}
               <div>
-                <label style={S.label}>Meghajtás</label>
-                <select className="av-inp" style={S.input} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
+                <label style={S.label}>Meghajtás {vinFilledFields.has('driveType') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('driveType') ? vinHighlight : {}) }} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Első kerék','Hátsó kerék','Összkerék','4x4'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Váltó</label>
-                <select className="av-inp" style={S.input} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
+                <label style={S.label}>Váltó {vinFilledFields.has('transmission') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('transmission') ? vinHighlight : {}) }} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Kézi','Automata','DCT','CVT','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
@@ -750,16 +841,16 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               {(form.fuel === 'BEV' || form.fuel === 'PHEV') && (
                 <>
                   <div>
-                    <label style={S.label}>Akkumulátor kapacitás</label>
+                    <label style={S.label}>Akkumulátor kapacitás {vinFilledFields.has('batteryKwh') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
-                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
+                      <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('batteryKwh') ? vinHighlight : {}), paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
                       <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kWh</span>
                     </div>
                   </div>
                   <div>
-                    <label style={S.label}>Töltési teljesítmény AC</label>
+                    <label style={S.label}>Töltési teljesítmény AC {vinFilledFields.has('chargingPowerAc') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
-                      <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 36 }} placeholder="pl. 11" value={form.chargingPowerAc} onChange={e => setField('chargingPowerAc', e.target.value)} />
+                      <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('chargingPowerAc') ? vinHighlight : {}), paddingRight: 36 }} placeholder="pl. 11" value={form.chargingPowerAc} onChange={e => setField('chargingPowerAc', e.target.value)} />
                       <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
                     </div>
                   </div>
@@ -768,15 +859,15 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
               {/* Row 7: Doors, Seats */}
               <div>
-                <label style={S.label}>Ajtók száma</label>
-                <select className="av-inp" style={S.input} value={form.doors} onChange={e => setField('doors', e.target.value)}>
+                <label style={S.label}>Ajtók száma {vinFilledFields.has('doors') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('doors') ? vinHighlight : {}) }} value={form.doors} onChange={e => setField('doors', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['2','3','4','5'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Ülőhelyek</label>
-                <select className="av-inp" style={S.input} value={form.seats} onChange={e => setField('seats', e.target.value)}>
+                <label style={S.label}>Ülőhelyek {vinFilledFields.has('seats') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('seats') ? vinHighlight : {}) }} value={form.seats} onChange={e => setField('seats', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['2','4','5','6','7','8+'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
