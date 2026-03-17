@@ -268,7 +268,7 @@ function VinBadge() {
 
 const vinHighlight: React.CSSProperties = { borderColor: '#86efac', background: '#f0fdf4' };
 
-
+const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 .av-inp:focus { border-color: #2880c4 !important; }
 .av-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
