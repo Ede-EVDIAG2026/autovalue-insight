@@ -448,7 +448,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     (async () => {
       setModelsLoading(true);
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
         const models: string[] = (json.models || []).map((m: any) => m.model || m);
