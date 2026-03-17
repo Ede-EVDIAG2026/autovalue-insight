@@ -72,6 +72,16 @@ const Step3Results = ({
         marketDepth={market.market_depth || 'normal'}
       />
 
+      {/* Market Context */}
+      <MarketContextCard
+        make={vehicleData.vehicle_make}
+        model={vehicleData.vehicle_model}
+        year={vehicleData.vehicle_year}
+        mileageKm={vehicleData.vehicle_mileage_km}
+        fuelType={vehicleData.vehicle_fuel_type}
+        priceEur={bayesian.recommended_ask_eur}
+      />
+
       {/* Listing Text */}
       <ListingTextCard text={dealer.listing_description_hu || ''} />
 
