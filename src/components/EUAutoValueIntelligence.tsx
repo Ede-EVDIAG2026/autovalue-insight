@@ -289,6 +289,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const [vinRawResult, setVinRawResult] = useState<any>(null);
   const [vinModalOpen, setVinModalOpen] = useState(false);
   const [vinIdOpen, setVinIdOpen] = useState(false);
+  const [vinFilledFields, setVinFilledFields] = useState<VinFilledFields>(new Set());
   const [result, setResult] = useState<Result | null>(null);
   const [progress, setProgress] = useState(0);
   const [stepLabel, setStepLabel] = useState('');
