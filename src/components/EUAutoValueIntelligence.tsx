@@ -476,6 +476,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
       readiness: 'Bewertungsbereitschaft',
       readiness_fields: 'Felder ausgefüllt',
+      readiness_missing: 'Fehlende Felder',
+      readiness_complete: 'Alle Felder ausgefüllt!',
+      field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
+      field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
+      field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
+      field_driveType: 'Antriebsart', field_transmission: 'Getriebe',
+      field_mfgYear: 'Herstellungsjahr', field_regYear: 'Zulassungsjahr',
+      field_batteryKwh: 'Batterie (kWh)', field_color: 'Farbe',
     },
   };
   const tr = ui[lang] || ui['HU'];
