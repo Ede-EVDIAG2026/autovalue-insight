@@ -575,6 +575,15 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const bestTrim = summary?.trim_identified || summary?.trim_level || trim?.trim_level || trimFromModel;
     set('trimLevel', bestTrim);
 
+    // Mileage
+    set('km', vi?.mileage_km || summary?.mileage_km || agents?.mileage_km);
+
+    // Country
+    const rawCountry = vi?.country || summary?.country || agents?.country;
+    if (rawCountry && COUNTRIES.includes(rawCountry.toUpperCase())) {
+      set('country', rawCountry.toUpperCase());
+    }
+
     // Body
     set('body', vi?.body_class || vi?.body);
 
