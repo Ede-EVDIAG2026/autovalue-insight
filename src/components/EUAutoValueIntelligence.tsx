@@ -48,7 +48,23 @@ const FALLBACK_MODELS: Record<string, string[]> = {
   "Seat": ["Ibiza","Leon","Ateca","Cupra Born"],
 };
 
-const COUNTRIES = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE","SE","DK","FI","NO","PT","GR","HR","BG","SI","LT","LV","EE","LU","MT","CY","CH"];
+const MONTHS = [
+  { value: '1', label: 'Január' }, { value: '2', label: 'Február' }, { value: '3', label: 'Március' },
+  { value: '4', label: 'Április' }, { value: '5', label: 'Május' }, { value: '6', label: 'Június' },
+  { value: '7', label: 'Július' }, { value: '8', label: 'Augusztus' }, { value: '9', label: 'Szeptember' },
+  { value: '10', label: 'Október' }, { value: '11', label: 'November' }, { value: '12', label: 'December' },
+];
+
+const PRIOR_USAGES = [
+  { value: 'taxi', label: 'Taxi' },
+  { value: 'ambulance', label: 'Mentő' },
+  { value: 'police', label: 'Rendőrségi' },
+  { value: 'driving_school', label: 'Oktatóautó' },
+  { value: 'rental', label: 'Bérautó / Rental' },
+  { value: 'fleet', label: 'Flottás intenzív használat' },
+  { value: 'other', label: 'Egyéb különleges használat' },
+];
+
 const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹',FR:'🇫🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',CZ:'🇨🇿',SK:'🇸🇰',RO:'🇷🇴',NL:'🇳🇱',BE:'🇧🇪',SE:'🇸🇪',DK:'🇩🇰',FI:'🇫🇮',NO:'🇳🇴',PT:'🇵🇹',GR:'🇬🇷',HR:'🇭🇷',BG:'🇧🇬',SI:'🇸🇮',LT:'🇱🇹',LV:'🇱🇻',EE:'🇪🇪',LU:'🇱🇺',MT:'🇲🇹',CY:'🇨🇾',CH:'🇨🇭' };
 
 const YEARS = Array.from({ length: 12 }, (_, i) => String(2024 - i));
