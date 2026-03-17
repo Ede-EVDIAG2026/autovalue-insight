@@ -740,30 +740,30 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
               <div>
-                <label style={S.label}>{tr.make}</label>
-                <select className="av-inp" style={S.input} value={form.brand} onChange={e => setField('brand', e.target.value)}>
+                <label style={S.label}>{tr.make} {vinFilledFields.has('brand') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('brand') ? vinHighlight : {}) }} value={form.brand} onChange={e => setField('brand', e.target.value)}>
                   <option value="">{makesLoading ? tr.loading : tr.select}</option>
                   {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>{tr.model}</label>
-                <select className="av-inp" style={{ ...S.input, opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
+                <label style={S.label}>{tr.model} {vinFilledFields.has('model') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('model') ? vinHighlight : {}), opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
                   <option value="">{modelsLoading ? tr.loading : tr.select}</option>
                   {modelsList.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
               {/* Row 2: Year, Fuel */}
               <div>
-                <label style={S.label}>{tr.year}</label>
-                <select className="av-inp" style={S.input} value={form.year} onChange={e => setField('year', e.target.value)}>
+                <label style={S.label}>{tr.year} {vinFilledFields.has('year') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('year') ? vinHighlight : {}) }} value={form.year} onChange={e => setField('year', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>{tr.fuel}</label>
-                <select className="av-inp" style={S.input} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
+                <label style={S.label}>{tr.fuel} {vinFilledFields.has('fuel') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('fuel') ? vinHighlight : {}) }} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {FUELS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
@@ -785,29 +785,29 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
               {/* Row 3: Body, Trim */}
               <div>
-                <label style={S.label}>Karosszéria</label>
-                <select className="av-inp" style={S.input} value={form.body} onChange={e => setField('body', e.target.value)}>
+                <label style={S.label}>Karosszéria {vinFilledFields.has('body') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('body') ? vinHighlight : {}) }} value={form.body} onChange={e => setField('body', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Sedan','Kombi','SUV','Crossover','Hatchback','Coupe','Cabrio','Van','Pickup','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={S.label}>Trim szint</label>
-                <input className="av-inp" style={S.input} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
+                <label style={S.label}>Trim szint {vinFilledFields.has('trimLevel') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('trimLevel') ? vinHighlight : {}) }} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
               </div>
 
               {/* Row 4: Engine power, Displacement */}
               <div>
-                <label style={S.label}>Motor teljesítmény</label>
+                <label style={S.label}>Motor teljesítmény {vinFilledFields.has('enginePowerKw') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
-                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
+                  <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('enginePowerKw') ? vinHighlight : {}), paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
                   <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>kW</span>
                 </div>
               </div>
               <div>
-                <label style={S.label}>Hengerűrtartalom</label>
+                <label style={S.label}>Hengerűrtartalom {vinFilledFields.has('engineDisplacement') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
-                  <input className="av-inp" type="number" style={{ ...S.input, paddingRight: 28 }} placeholder="pl. 2.0" value={form.engineDisplacement} onChange={e => setField('engineDisplacement', e.target.value)} />
+                  <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('engineDisplacement') ? vinHighlight : {}), paddingRight: 28 }} placeholder="pl. 2.0" value={form.engineDisplacement} onChange={e => setField('engineDisplacement', e.target.value)} />
                   <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>L</span>
                 </div>
               </div>
