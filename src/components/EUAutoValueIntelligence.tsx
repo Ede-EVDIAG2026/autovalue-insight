@@ -458,9 +458,21 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
       warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
       warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
+      readiness: 'Bewertungsbereitschaft',
+      readiness_fields: 'Felder ausgefüllt',
     },
   };
   const tr = ui[lang] || ui['HU'];
+
+  // ── Valuation readiness calculation ──
+  const READINESS_FIELDS: (keyof FormState)[] = [
+    'brand', 'model', 'year', 'fuel', 'km', 'country',
+    'body', 'trimLevel', 'enginePowerKw', 'driveType', 'transmission',
+    'mfgYear', 'regYear', 'batteryKwh', 'color',
+  ];
+  const filledCount = READINESS_FIELDS.filter(k => form[k] && String(form[k]).trim() !== '').length;
+  const totalCount = READINESS_FIELDS.length;
+  const readinessPct = Math.round((filledCount / totalCount) * 100);
 
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
