@@ -371,6 +371,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Eredmény generálása…',
       warn_mfg_before_model: '⚠️ A gyártási év korábbi, mint a modellév – ellenőrizze!',
       warn_reg_before_mfg: '⚠️ Az üzembehelyezés éve korábbi, mint a gyártási év – ellenőrizze!',
+      warn_reg_month_before_mfg: '⚠️ Az üzembehelyezés hónapja korábbi, mint a gyártási hónap (azonos évben) – ellenőrizze!',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
@@ -411,6 +412,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Generating results…',
       warn_mfg_before_model: '⚠️ Manufacturing year is earlier than model year – please verify!',
       warn_reg_before_mfg: '⚠️ Registration year is before manufacturing year – please verify!',
+      warn_reg_month_before_mfg: '⚠️ Registration month is before manufacturing month (same year) – please verify!',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
@@ -451,6 +453,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       result_gen: 'Ergebnisse werden generiert…',
       warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
       warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
+      warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
     },
   };
   const tr = ui[lang] || ui['HU'];
@@ -989,6 +992,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               {form.regYear && form.mfgYear && parseInt(form.regYear) < parseInt(form.mfgYear) && (
                 <div style={{ gridColumn: '1 / -1', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'hsl(var(--destructive))', background: 'hsl(var(--destructive) / 0.08)', border: '1px solid hsl(var(--destructive) / 0.2)' }}>
                   {tr.warn_reg_before_mfg}
+                </div>
+              )}
+              {form.regYear && form.mfgYear && form.regMonth && form.mfgMonth && form.regYear === form.mfgYear && parseInt(form.regMonth) < parseInt(form.mfgMonth) && (
+                <div style={{ gridColumn: '1 / -1', padding: '6px 10px', borderRadius: 6, fontSize: 13, color: 'hsl(var(--destructive))', background: 'hsl(var(--destructive) / 0.08)', border: '1px solid hsl(var(--destructive) / 0.2)' }}>
+                  {tr.warn_reg_month_before_mfg}
                 </div>
               )}
 
