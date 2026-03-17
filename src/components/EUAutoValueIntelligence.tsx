@@ -379,6 +379,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_complete: 'Minden mező kitöltve!',
       priority_critical: 'Kötelező',
       priority_optional: 'Ajánlott',
+      smart_next: 'Következő lépés',
+      smart_next_prefix: 'Töltsd ki a',
+      smart_next_suffix: 'mezőt',
+      smart_impact: 'pontosság javulás',
+      smart_all_done: 'Maximális pontosság elérve!',
       field_brand: 'Márka', field_model: 'Modell', field_year: 'Évjárat', field_fuel: 'Hajtáslánc',
       field_km: 'Futásteljesítmény', field_country: 'Ország', field_body: 'Karosszéria',
       field_trimLevel: 'Felszereltség', field_enginePowerKw: 'Teljesítmény (kW)',
@@ -432,6 +437,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_complete: 'All fields filled!',
       priority_critical: 'Required',
       priority_optional: 'Recommended',
+      smart_next: 'Next step',
+      smart_next_prefix: 'Fill in',
+      smart_next_suffix: '',
+      smart_impact: 'accuracy boost',
+      smart_all_done: 'Maximum accuracy reached!',
       field_brand: 'Make', field_model: 'Model', field_year: 'Year', field_fuel: 'Powertrain',
       field_km: 'Mileage', field_country: 'Country', field_body: 'Body type',
       field_trimLevel: 'Trim level', field_enginePowerKw: 'Power (kW)',
@@ -485,6 +495,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       readiness_complete: 'Alle Felder ausgefüllt!',
       priority_critical: 'Erforderlich',
       priority_optional: 'Empfohlen',
+      smart_next: 'Nächster Schritt',
+      smart_next_prefix: 'Füllen Sie',
+      smart_next_suffix: 'aus',
+      smart_impact: 'Genauigkeit',
+      smart_all_done: 'Maximale Genauigkeit erreicht!',
       field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
       field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
       field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
@@ -505,6 +520,17 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const missingFields = READINESS_FIELDS.filter(k => !form[k] || String(form[k]).trim() === '');
   const totalCount = READINESS_FIELDS.length;
   const readinessPct = Math.round((filledCount / totalCount) * 100);
+
+  // ── Smart suggestion: impact weights per field ──
+  const FIELD_IMPACT: Record<string, number> = {
+    brand: 12, model: 12, year: 10, fuel: 9, km: 10, country: 8,
+    batteryKwh: 6, enginePowerKw: 5, trimLevel: 5, driveType: 4,
+    transmission: 4, body: 3, mfgYear: 3, regYear: 3, color: 2,
+  };
+  const smartSuggestion = missingFields.length > 0
+    ? [...missingFields].sort((a, b) => (FIELD_IMPACT[b] || 0) - (FIELD_IMPACT[a] || 0))[0]
+    : null;
+  const smartImpact = smartSuggestion ? (FIELD_IMPACT[smartSuggestion] || 0) : 0;
 
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
@@ -931,6 +957,36 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                   background: readinessPct >= 80 ? '#22c55e' : readinessPct >= 50 ? '#f59e0b' : '#d1d5db',
                 }} />
               </div>
+              {/* Smart suggestion */}
+              {smartSuggestion ? (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 10px', borderRadius: 8,
+                  background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
+                }}>
+                  <span style={{ fontSize: 14 }}>💡</span>
+                  <span style={{ fontSize: 11, color: '#1e40af', flex: 1 }}>
+                    <strong>{tr.smart_next}:</strong>{' '}
+                    {tr.smart_next_prefix} <strong>{(tr as any)[`field_${smartSuggestion}`] || smartSuggestion}</strong> {tr.smart_next_suffix}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
+                    background: smartImpact >= 8 ? '#dc2626' : smartImpact >= 5 ? '#f59e0b' : '#6b7280',
+                    borderRadius: 10, padding: '2px 8px',
+                  }}>
+                    +{smartImpact}% {tr.smart_impact}
+                  </span>
+                </div>
+              ) : (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 10px', borderRadius: 8,
+                  background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)',
+                }}>
+                  <span style={{ fontSize: 13 }}>✅</span>
+                  <span style={{ fontSize: 11, color: '#166534', fontWeight: 600 }}>{tr.smart_all_done}</span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
