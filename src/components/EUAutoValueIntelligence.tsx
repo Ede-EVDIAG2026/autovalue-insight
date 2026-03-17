@@ -957,6 +957,36 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                   background: readinessPct >= 80 ? '#22c55e' : readinessPct >= 50 ? '#f59e0b' : '#d1d5db',
                 }} />
               </div>
+              {/* Smart suggestion */}
+              {smartSuggestion ? (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '6px 10px', borderRadius: 8,
+                  background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
+                }}>
+                  <span style={{ fontSize: 14 }}>💡</span>
+                  <span style={{ fontSize: 11, color: '#1e40af', flex: 1 }}>
+                    <strong>{tr.smart_next}:</strong>{' '}
+                    {tr.smart_next_prefix} <strong>{(tr as any)[`field_${smartSuggestion}`] || smartSuggestion}</strong> {tr.smart_next_suffix}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
+                    background: smartImpact >= 8 ? '#dc2626' : smartImpact >= 5 ? '#f59e0b' : '#6b7280',
+                    borderRadius: 10, padding: '2px 8px',
+                  }}>
+                    +{smartImpact}% {tr.smart_impact}
+                  </span>
+                </div>
+              ) : (
+                <div style={{
+                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 10px', borderRadius: 8,
+                  background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)',
+                }}>
+                  <span style={{ fontSize: 13 }}>✅</span>
+                  <span style={{ fontSize: 11, color: '#166534', fontWeight: 600 }}>{tr.smart_all_done}</span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
