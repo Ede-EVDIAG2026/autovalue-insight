@@ -827,6 +827,26 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </span>
               )}
             </div>
+
+            {/* Valuation readiness progress */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: readinessPct >= 80 ? '#166534' : readinessPct >= 50 ? '#92400e' : '#6b7280' }}>
+                  {tr.readiness}
+                </span>
+                <span style={{ fontSize: 11, color: '#6b7280' }}>
+                  {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
+                </span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: '#e5e7eb', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 3, transition: 'width 0.4s ease, background 0.4s ease',
+                  width: `${readinessPct}%`,
+                  background: readinessPct >= 80 ? '#22c55e' : readinessPct >= 50 ? '#f59e0b' : '#d1d5db',
+                }} />
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
               <div>
