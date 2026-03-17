@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FrontendSummary, AutoValueContext, MarketSignal } from '@/types/marketIntelligence';
 
-const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 export interface VehicleParams {
   make: string;

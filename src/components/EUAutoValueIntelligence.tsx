@@ -101,7 +101,7 @@ async function fetchValuation(formData: FormState): Promise<any | null> {
       mileage_km: formData.km,
       ...(formData.country && { country: formData.country }),
     });
-    const res = await fetchWithTimeout(`${MARKET_API}/market/valuation?${params}`);
+    const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/valuation?${params}`);
     if (!res.ok) throw new Error(`API ${res.status}`);
     return await res.json();
   } catch (e) {
