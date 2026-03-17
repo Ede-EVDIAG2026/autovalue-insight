@@ -258,8 +258,17 @@ function PercentileBar({ p10, p25, p50, p75, p90 }: { p10: number; p25: number; 
     </div>
   );
 }
+function VinBadge() {
+  return (
+    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 9, fontWeight: 600, background: '#dcfce7', color: '#166534', marginLeft: 4, verticalAlign: 'middle' }}>
+      VIN ✓
+    </span>
+  );
+}
 
-const CSS = `
+const vinHighlight: React.CSSProperties = { borderColor: '#86efac', background: '#f0fdf4' };
+
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 .av-inp:focus { border-color: #2880c4 !important; }
 .av-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
