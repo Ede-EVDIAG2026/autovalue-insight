@@ -480,9 +480,37 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const vi = rawResult?.vehicle_identity;
     const agents = rawResult?.agents?.vin_decode;
     const trim = rawResult?.agents?.trim_intelligence;
+    const evSpec = rawResult?.agents?.ev_specialist;
+    const summary = rawResult?.summary;
+    const recallSafety = rawResult?.agents?.recall_safety;
+
     const make = vi?.make || '';
     const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+
+    // Normalize model: split "Passat / GTE" → main model + trim
+    const rawModel = vi?.model || '';
+    let mainModel = rawModel;
+    let trimFromModel = '';
+    if (rawModel.includes('/')) {
+      const parts = rawModel.split('/').map((s: string) => s.trim());
+      mainModel = parts[0];
+      trimFromModel = parts.slice(1).join(' ').trim();
+    } else if (rawModel.includes(' ')) {
+      // Handle "Model 3" vs "ID.4 Pro" - only split if last word looks like a trim
+      const words = rawModel.split(' ');
+      const trimKeywords = ['pro', 'performance', 'gte', 'gtx', 'sport', 'line', 'edition', 'plus', 'max', 'premium', 'launch', 'first', 'style', 'life', 'elegance', 'amg', 'luxury'];
+      if (words.length > 1 && trimKeywords.includes(words[words.length - 1].toLowerCase())) {
+        mainModel = words.slice(0, -1).join(' ');
+        trimFromModel = words[words.length - 1];
+      }
+    }
+
     const powertrain = (() => {
+      const evType = (evSpec?.ev_type || summary?.ev_type || '').toUpperCase();
+      if (evType === 'BEV') return 'BEV';
+      if (evType.includes('PHEV')) return 'PHEV';
+      if (evType.includes('MHEV')) return 'MHEV';
+      if (evType.includes('HEV')) return 'HEV';
       const e = (vi?.electrification || '').toUpperCase();
       if (e === 'BEV') return 'BEV';
       if (e.includes('PHEV')) return 'PHEV';
@@ -490,29 +518,58 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       if (e.includes('HEV')) return 'HEV';
       return '';
     })();
+
     const updates: Partial<FormState> = {};
-    let count = 0;
-    if (normMake) { updates.brand = normMake; count++; }
-    if (vi?.model) { updates.model = vi.model; count++; }
-    if (vi?.year) { updates.year = String(vi.year); count++; }
-    if (powertrain) { updates.fuel = powertrain; count++; }
-    if (vi?.body_class) { updates.body = vi.body_class; count++; }
-    if (agents?.engine_power_kw) { updates.enginePowerKw = String(agents.engine_power_kw); count++; }
-    if (agents?.engine_displacement) { updates.engineDisplacement = String(agents.engine_displacement); count++; }
-    if (agents?.drive_type) { updates.driveType = agents.drive_type; count++; }
-    if (agents?.transmission) { updates.transmission = agents.transmission; count++; }
-    if (agents?.doors) { updates.doors = String(agents.doors); count++; }
-    if (agents?.seats) { updates.seats = String(agents.seats); count++; }
-    if (agents?.battery_kwh && (powertrain === 'BEV' || powertrain === 'PHEV')) { updates.batteryKwh = String(agents.battery_kwh); count++; }
-    if (trim?.trim_level) { updates.trimLevel = trim.trim_level; count++; }
+    const filled = new Set<string>();
+
+    const set = (key: keyof FormState, val: string | number | undefined | null) => {
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        updates[key] = String(val);
+        filled.add(key);
+      }
+    };
+
+    // Primary identity
+    set('brand', normMake);
+    set('model', mainModel);
+    set('year', vi?.year);
+    set('fuel', powertrain);
+
+    // Trim: prefer summary, then trim_intelligence, then model-derived
+    const bestTrim = summary?.trim_identified || summary?.trim_level || trim?.trim_level || trimFromModel;
+    set('trimLevel', bestTrim);
+
+    // Body
+    set('body', vi?.body_class || vi?.body);
+
+    // Technical from agents
+    set('enginePowerKw', agents?.engine_power_kw);
+    set('engineDisplacement', agents?.engine_displacement);
+    set('driveType', agents?.drive_type);
+    set('transmission', agents?.transmission);
+    set('doors', agents?.doors);
+    set('seats', agents?.seats);
+
+    // Battery from summary or ev_specialist
+    const battKwh = summary?.battery_kwh || evSpec?.battery?.capacity_kwh;
+    if (battKwh && (powertrain === 'BEV' || powertrain === 'PHEV')) {
+      set('batteryKwh', battKwh);
+    }
+    const acKw = evSpec?.charging?.ac_kw;
+    if (acKw && (powertrain === 'BEV' || powertrain === 'PHEV')) {
+      set('chargingPowerAc', acKw);
+    }
+
     setForm(prev => ({ ...prev, ...updates }));
+    setVinFilledFields(filled);
     setVinIdentity({
       manufacturer: vi?.manufacturer,
       plantCountry: vi?.plant_country,
       vin: rawResult.vin || undefined,
-      recallCount: rawResult.safety?.recall_count,
+      recallCount: recallSafety?.recall_count ?? rawResult.safety?.recall_count,
     });
     setVinIdOpen(true);
+    const count = filled.size;
     if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }, []);
