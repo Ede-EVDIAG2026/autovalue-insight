@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, Layers, TrendingUp, Gauge, AlertTriangle, Loader2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { BarChart3, Layers, TrendingUp, Gauge, AlertTriangle, Loader2, ChevronDown, ExternalLink } from 'lucide-react';
 
 const MARKET_API = import.meta?.env?.VITE_MARKET_API ?? 'https://market.evdiag.hu';
+
+interface ComparableListing {
+  source: string | null;
+  title: string | null;
+  listing_url: string | null;
+  price_eur: number | null;
+  mileage_km: number | null;
+  first_reg_year: number | null;
+}
 
 interface MarketContextData {
   market_depth: string;
@@ -14,6 +24,7 @@ interface MarketContextData {
   source_coverage: number;
   fallback_mode: boolean;
   year_match_mode: string;
+  comparable_listings?: ComparableListing[];
 }
 
 interface Props {
@@ -35,6 +46,7 @@ export default function MarketContextCard({ make, model, year, mileageKm, fuelTy
   const [data, setData] = useState<MarketContextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [comparablesOpen, setComparablesOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -53,6 +65,10 @@ export default function MarketContextCard({ make, model, year, mileageKm, fuelTy
       .then(json => {
         const m = json?.market ?? json?.market_context ?? json;
         if (m?.sample_size != null || m?.price_stats) {
+          // comparable_listings may live at top level or inside market
+          if (!m.comparable_listings && json?.comparable_listings) {
+            m.comparable_listings = json.comparable_listings;
+          }
           setData(m);
         } else {
           setError(true);
@@ -80,6 +96,7 @@ export default function MarketContextCard({ make, model, year, mileageKm, fuelTy
   const vsPct = data.price_position?.vs_median_pct;
   const milBand = data.mileage_position?.band ?? 'unknown';
   const deltaKm = data.mileage_position?.delta_km;
+  const comparables = data.comparable_listings?.filter(c => c.title || c.price_eur) ?? [];
 
   return (
     <div className="glass-card p-6">
@@ -151,6 +168,55 @@ export default function MarketContextCard({ make, model, year, mileageKm, fuelTy
           <AlertTriangle className="h-4 w-4 text-destructive/70 shrink-0 mt-0.5" />
           {tr('mc_fallback')}
         </div>
+      )}
+
+      {/* Comparable listings collapsible */}
+      {comparables.length > 0 && (
+        <Collapsible open={comparablesOpen} onOpenChange={setComparablesOpen} className="mt-4">
+          <CollapsibleTrigger className="flex items-center gap-2 w-full text-sm font-semibold text-foreground hover:text-primary transition-colors">
+            <ChevronDown className={`h-4 w-4 transition-transform ${comparablesOpen ? 'rotate-180' : ''}`} />
+            {tr('mc_comparables')} ({comparables.length})
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3">
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <th className="text-left px-3 py-2 font-medium">{tr('mc_col_source')}</th>
+                    <th className="text-left px-3 py-2 font-medium">{tr('mc_col_title')}</th>
+                    <th className="text-right px-3 py-2 font-medium">{tr('mc_col_year')}</th>
+                    <th className="text-right px-3 py-2 font-medium">{tr('mc_col_mileage')}</th>
+                    <th className="text-right px-3 py-2 font-medium">{tr('mc_col_price')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparables.map((c, i) => (
+                    <tr key={i} className="border-t border-border hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2 text-muted-foreground">{c.source ?? '–'}</td>
+                      <td className="px-3 py-2 text-foreground max-w-[200px] truncate">
+                        {c.listing_url ? (
+                          <a href={c.listing_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary inline-flex items-center gap-1">
+                            {c.title ?? '–'}
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        ) : (
+                          c.title ?? '–'
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right text-foreground">{c.first_reg_year ?? '–'}</td>
+                      <td className="px-3 py-2 text-right text-foreground">
+                        {c.mileage_km != null ? `${(c.mileage_km / 1000).toFixed(0)}k km` : '–'}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-foreground">
+                        {c.price_eur != null ? `€${c.price_eur.toLocaleString('de-DE')}` : '–'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
