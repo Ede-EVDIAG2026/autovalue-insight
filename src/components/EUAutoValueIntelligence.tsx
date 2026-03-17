@@ -495,6 +495,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     'mfgYear', 'regYear', 'batteryKwh', 'color',
   ];
   const filledCount = READINESS_FIELDS.filter(k => form[k] && String(form[k]).trim() !== '').length;
+  const missingFields = READINESS_FIELDS.filter(k => !form[k] || String(form[k]).trim() === '');
   const totalCount = READINESS_FIELDS.length;
   const readinessPct = Math.round((filledCount / totalCount) * 100);
 
