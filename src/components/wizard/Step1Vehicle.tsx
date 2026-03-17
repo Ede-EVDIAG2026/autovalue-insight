@@ -79,7 +79,8 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
     }
     const fetchMakes = async () => {
       try {
-        const res = await fetch('http://46.224.176.213:8890/market/makes');
+        const { MARKET_API } = await import('@/lib/marketApi');
+        const res = await fetch(`${MARKET_API}/api/v1/market/makes`);
         if (!res.ok) throw new Error('fail');
         const json = await res.json();
         const data: MakeEntry[] = json.makes || [];
@@ -108,7 +109,8 @@ const Step1Vehicle = ({ onNext }: { onNext: (data: VehicleData) => void }) => {
       setModelsLoading(true);
       setModelsFailed(false);
       try {
-        const res = await fetch(`http://46.224.176.213:8890/market/models?make=${encodeURIComponent(make)}`);
+        const { MARKET_API } = await import('@/lib/marketApi');
+        const res = await fetch(`${MARKET_API}/api/v1/market/models?make=${encodeURIComponent(make)}`);
         if (!res.ok) throw new Error('fail');
         const json = await res.json();
         const data: ModelEntry[] = json.models || [];

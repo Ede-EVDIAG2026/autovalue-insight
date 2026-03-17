@@ -5,7 +5,7 @@ import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
 import PdfDownloadButton from './results/PdfDownloadButton';
 
-const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
@@ -101,7 +101,7 @@ async function fetchValuation(formData: FormState): Promise<any | null> {
       mileage_km: formData.km,
       ...(formData.country && { country: formData.country }),
     });
-    const res = await fetchWithTimeout(`${MARKET_API}/market/valuation?${params}`);
+    const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/valuation?${params}`);
     if (!res.ok) throw new Error(`API ${res.status}`);
     return await res.json();
   } catch (e) {
@@ -112,16 +112,18 @@ async function fetchValuation(formData: FormState): Promise<any | null> {
 
 function mapApiToResult(api: any, form: FormState): Result {
   const ps = api.price_stats || {};
-  const p50 = ps.median || ps.p50 || 0;
-  const p10 = (ps.p10 && ps.p10 > 0) ? ps.p10 : Math.round(p50 * 0.74);
-  const p25 = (ps.p25 && ps.p25 > 0) ? ps.p25 : Math.round(p50 * 0.87);
-  const p75 = (ps.p75 && ps.p75 > 0) ? ps.p75 : Math.round(p50 * 1.13);
-  const p90 = (ps.p90 && ps.p90 > 0) ? ps.p90 : Math.round(p50 * 1.26);
+  // Support both new (median_eur, p25_eur) and legacy (median, p25) field names
+  const p50 = ps.median_eur ?? ps.median ?? ps.p50 ?? 0;
+  const p10 = (ps.min_eur && ps.min_eur > 0) ? ps.min_eur : ((ps.p10 && ps.p10 > 0) ? ps.p10 : Math.round(p50 * 0.74));
+  const p25 = (ps.p25_eur && ps.p25_eur > 0) ? ps.p25_eur : ((ps.p25 && ps.p25 > 0) ? ps.p25 : Math.round(p50 * 0.87));
+  const p75 = (ps.p75_eur && ps.p75_eur > 0) ? ps.p75_eur : ((ps.p75 && ps.p75 > 0) ? ps.p75 : Math.round(p50 * 1.13));
+  const p90 = (ps.max_eur && ps.max_eur > 0) ? ps.max_eur : ((ps.p90 && ps.p90 > 0) ? ps.p90 : Math.round(p50 * 1.26));
   const finalP25 = p25 === p75 ? Math.round(p50 * 0.90) : p25;
   const finalP75 = p25 === p75 ? Math.round(p50 * 1.10) : p75;
   let riskScore = 50;
-  if (api.price_position?.label === 'ALULERTEKELT') riskScore = 25;
-  else if (api.price_position?.label === 'TULARAZOTT') riskScore = 75;
+  const band = api.price_position?.band || api.price_position?.label;
+  if (band === 'below_market' || band === 'ALULERTEKELT') riskScore = 25;
+  else if (band === 'above_market' || band === 'TULARAZOTT') riskScore = 75;
   const yearDist: { year: string; count: number }[] = api.year_distribution || [];
   const dataPoints = api.data_points || 0;
   let velocityScore: number;
@@ -427,7 +429,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     makesLoaded.current = true;
     (async () => {
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/market/makes`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/makes`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
         const makes: string[] = (json.makes || []).map((m: any) => m.make || m);
@@ -446,7 +448,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     (async () => {
       setModelsLoading(true);
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
         const models: string[] = (json.models || []).map((m: any) => m.model || m);

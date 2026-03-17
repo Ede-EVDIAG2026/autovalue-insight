@@ -5,35 +5,38 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Info, AlertTriangle } from 'lucide-react';
-
-/* ─── API Config ─── */
-export const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 /* ─── Types ─── */
 export interface PriceStats {
-  p10: number;
-  p25: number;
-  median: number;
-  p75: number;
-  p90: number;
-  avg: number;
-  currency: string;
-}
-
-export interface ComparableListing {
-  year: number;
-  first_registration: string;
-  mileage_km: number;
-  powertrain: string;
-  price_eur: number;
-  country: string;
-  url: string;
+  min_eur: number | null;
+  p25_eur: number | null;
+  median_eur: number | null;
+  p75_eur: number | null;
+  max_eur: number | null;
+  avg_eur: number | null;
 }
 
 export interface PricePosition {
-  label: 'ALULÉRTÉKELT' | 'PIACI AR' | 'TULARAZOTT';
-  diff_eur: number;
-  diff_pct: number;
+  input_price_eur: number | null;
+  vs_median_pct: number | null;
+  band: 'below_market' | 'at_market' | 'above_market' | 'unknown';
+}
+
+export interface MileagePosition {
+  input_mileage_km: number | null;
+  market_avg_mileage_km: number | null;
+  delta_km: number | null;
+  band: 'lower_mileage' | 'average_mileage' | 'higher_mileage' | 'unknown';
+}
+
+export interface ComparableListing {
+  source: string | null;
+  title: string | null;
+  listing_url: string | null;
+  price_eur: number | null;
+  mileage_km: number | null;
+  first_reg_year: number | null;
 }
 
 export interface YearDistribution {
@@ -45,7 +48,7 @@ export interface MarketValuationResponse {
   price_stats: PriceStats;
   data_points: number;
   price_position: PricePosition;
-  mileage_position: 'ALACSONY FUTAS' | 'ATLAGOS FUTAS' | 'MAGAS FUTAS';
+  mileage_position: MileagePosition;
   comparable_listings: ComparableListing[];
   year_distribution: YearDistribution[];
   fallback_mode: boolean;
@@ -77,7 +80,7 @@ async function fetchMarketValuation(params: VehicleQueryParams): Promise<MarketV
   }
 
   try {
-    const res = await fetch(`${MARKET_API}/market/valuation?${qs.toString()}`, {
+    const res = await fetch(`${MARKET_API}/api/v1/market/valuation?${qs.toString()}`, {
       mode: 'cors',
       headers: { Accept: 'application/json' },
       signal: controller.signal,
@@ -90,27 +93,44 @@ async function fetchMarketValuation(params: VehicleQueryParams): Promise<MarketV
 }
 
 /* ─── Helpers ─── */
-const fmt = (v: number) =>
-  new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+const fmt = (v: number | null | undefined) =>
+  v != null
+    ? new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+    : '–';
 
-const fmtKm = (v: number) =>
-  new Intl.NumberFormat('hu-HU').format(v) + ' km';
+const fmtKm = (v: number | null | undefined) =>
+  v != null ? new Intl.NumberFormat('hu-HU').format(v) + ' km' : '–';
+
+/* ─── Band label maps ─── */
+const PRICE_BAND_LABELS: Record<string, string> = {
+  below_market: 'ALULÁRAZOTT',
+  at_market: 'PIACI ÁR',
+  above_market: 'TÚLÁRAZOTT',
+  unknown: 'NINCS ADAT',
+};
+
+const MILEAGE_BAND_LABELS: Record<string, string> = {
+  lower_mileage: 'ALACSONY FUTÁS',
+  average_mileage: 'ÁTLAGOS FUTÁS',
+  higher_mileage: 'MAGAS FUTÁS',
+  unknown: 'NINCS ADAT',
+};
 
 /* ─── Sub-components ─── */
 
-const PriceBand = ({ p10, median, p90, priceEur }: { p10: number; median: number; p90: number; priceEur: number }) => {
-  const range = p90 - p10;
+const PriceBand = ({ p25, median, p75, priceEur }: { p25: number; median: number; p75: number; priceEur: number }) => {
+  const range = p75 - p25;
   let pct: number;
   let isOutOfRange = false;
 
-  if (priceEur < p10) {
+  if (priceEur < p25) {
     pct = 0;
     isOutOfRange = true;
-  } else if (priceEur > p90) {
+  } else if (priceEur > p75) {
     pct = 100;
     isOutOfRange = true;
   } else {
-    pct = range > 0 ? ((priceEur - p10) / range) * 100 : 50;
+    pct = range > 0 ? ((priceEur - p25) / range) * 100 : 50;
   }
 
   return (
@@ -126,29 +146,34 @@ const PriceBand = ({ p10, median, p90, priceEur }: { p10: number; median: number
         />
       </div>
       <div className="flex justify-between text-xs" style={{ color: '#6b6b6b' }}>
-        <span>p10: {fmt(p10)}</span>
+        <span>P25: {fmt(p25)}</span>
         <span className="font-semibold">Medián: {fmt(median)}</span>
-        <span>p90: {fmt(p90)}</span>
+        <span>P75: {fmt(p75)}</span>
       </div>
     </div>
   );
 };
 
 const PositionBadge = ({ pos }: { pos: PricePosition }) => {
+  const label = PRICE_BAND_LABELS[pos.band] || 'NINCS ADAT';
   const styles: Record<string, { bg: string; text: string }> = {
-    'ALULÉRTÉKELT': { bg: '#00875A', text: '#fff' },
-    'PIACI AR': { bg: '#3b82f6', text: '#fff' },
-    'TULARAZOTT': { bg: '#f97316', text: '#fff' },
+    'ALULÁRAZOTT': { bg: '#00875A', text: '#fff' },
+    'PIACI ÁR': { bg: '#3b82f6', text: '#fff' },
+    'TÚLÁRAZOTT': { bg: '#f97316', text: '#fff' },
+    'NINCS ADAT': { bg: '#9ca3af', text: '#fff' },
   };
-  const s = styles[pos.label] || styles['PIACI AR'];
+  const s = styles[label] || styles['NINCS ADAT'];
 
   let detail = '';
-  if (pos.label === 'ALULÉRTÉKELT') {
-    detail = `▼ ${fmt(Math.abs(pos.diff_eur))} / ${Math.abs(pos.diff_pct).toFixed(1)}% a mediánhoz képest`;
-  } else if (pos.label === 'TULARAZOTT') {
-    detail = `▲ ${fmt(Math.abs(pos.diff_eur))} / ${Math.abs(pos.diff_pct).toFixed(1)}% a mediánhoz képest`;
-  } else {
-    detail = '≈ piaci áron';
+  if (pos.vs_median_pct != null && pos.band !== 'unknown') {
+    const pct = Math.abs(pos.vs_median_pct).toFixed(1);
+    if (pos.band === 'below_market') {
+      detail = `▼ ${pct}% a mediánhoz képest`;
+    } else if (pos.band === 'above_market') {
+      detail = `▲ ${pct}% a mediánhoz képest`;
+    } else {
+      detail = '≈ piaci áron';
+    }
   }
 
   return (
@@ -157,27 +182,29 @@ const PositionBadge = ({ pos }: { pos: PricePosition }) => {
         className="inline-flex items-center rounded-full px-3 py-1 text-sm font-bold"
         style={{ backgroundColor: s.bg, color: s.text }}
       >
-        {pos.label}
+        {label}
       </span>
-      <span className="text-sm" style={{ color: '#4a4a4a' }}>{detail}</span>
+      {detail && <span className="text-sm" style={{ color: '#4a4a4a' }}>{detail}</span>}
     </div>
   );
 };
 
-const MileageBadge = ({ position }: { position: string }) => {
+const MileageBadge = ({ position }: { position: MileagePosition }) => {
+  const label = MILEAGE_BAND_LABELS[position.band] || 'NINCS ADAT';
   const map: Record<string, { bg: string; color: string }> = {
-    'ALACSONY FUTAS': { bg: '#00875A', color: '#fff' },
-    'ATLAGOS FUTAS': { bg: '#9ca3af', color: '#fff' },
-    'MAGAS FUTAS': { bg: '#f97316', color: '#fff' },
+    'ALACSONY FUTÁS': { bg: '#00875A', color: '#fff' },
+    'ÁTLAGOS FUTÁS': { bg: '#9ca3af', color: '#fff' },
+    'MAGAS FUTÁS': { bg: '#f97316', color: '#fff' },
+    'NINCS ADAT': { bg: '#9ca3af', color: '#fff' },
   };
-  const s = map[position] || map['ATLAGOS FUTAS'];
+  const s = map[label] || map['NINCS ADAT'];
 
   return (
     <span
       className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
       style={{ backgroundColor: s.bg, color: s.color }}
     >
-      {position}
+      {label}
     </span>
   );
 };
@@ -190,7 +217,6 @@ interface MarketValueCardProps {
   error?: string | null;
   priceEur: number;
   queryYear: number;
-  /** Optional: if provided, MarketValueCard fetches data internally */
   vehicleQuery?: VehicleQueryParams;
 }
 
@@ -202,7 +228,6 @@ const MarketValueCard = ({ data: externalData, loading: externalLoading, error: 
   const [internalLoading, setInternalLoading] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
 
-  // Self-fetch when vehicleQuery is provided and no external data is being managed
   useEffect(() => {
     if (!vehicleQuery) return;
 
@@ -226,7 +251,6 @@ const MarketValueCard = ({ data: externalData, loading: externalLoading, error: 
     doFetch();
   }, [vehicleQuery?.make, vehicleQuery?.model, vehicleQuery?.year, vehicleQuery?.powertrain, vehicleQuery?.mileage_km, vehicleQuery?.price_eur]);
 
-  // Resolve which data source to use (external props take priority)
   const data = externalData !== undefined ? externalData : internalData;
   const loading = externalLoading !== undefined ? externalLoading : internalLoading;
   const error = externalError !== undefined ? externalError : internalError;
@@ -281,9 +305,6 @@ const MarketValueCard = ({ data: externalData, loading: externalLoading, error: 
 
   const ps = data.price_stats;
   const listings = (data.comparable_listings || []).slice(0, 5);
-  const closestListing = listings.length > 0
-    ? listings.reduce((prev, curr) => Math.abs(curr.price_eur - priceEur) < Math.abs(prev.price_eur - priceEur) ? curr : prev)
-    : null;
 
   const chartData = (data.year_distribution || []).map(d => ({
     year: d.year.toString(),
@@ -305,17 +326,19 @@ const MarketValueCard = ({ data: externalData, loading: externalLoading, error: 
         {data.fallback_mode && (
           <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: '#7c7c7c' }}>
             <Info className="h-3.5 w-3.5" />
-            Tágabb keresési tartomány alapján
+            Kevés azonos évjáratú találat, ezért a piaci kontextus modellszintű mintából készült.
           </div>
         )}
       </CardHeader>
 
       <CardContent className="space-y-6 pt-6">
         {/* Price band */}
-        <div>
-          <p className="text-xs font-semibold mb-3" style={{ color: '#1a1a1a' }}>Ár elhelyezkedés a piacon</p>
-          <PriceBand p10={ps.p10} median={ps.median} p90={ps.p90} priceEur={priceEur} />
-        </div>
+        {ps.p25_eur != null && ps.median_eur != null && ps.p75_eur != null && (
+          <div>
+            <p className="text-xs font-semibold mb-3" style={{ color: '#1a1a1a' }}>Ár elhelyezkedés a piacon</p>
+            <PriceBand p25={ps.p25_eur} median={ps.median_eur} p75={ps.p75_eur} priceEur={priceEur} />
+          </div>
+        )}
 
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-3">
@@ -331,33 +354,27 @@ const MarketValueCard = ({ data: externalData, loading: externalLoading, error: 
               <Table>
                 <TableHeader>
                   <TableRow style={{ backgroundColor: HEADER_BG }}>
+                    <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Forrás</TableHead>
+                    <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Cím</TableHead>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Évjárat</TableHead>
-                    <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Első forg.</TableHead>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Km</TableHead>
-                    <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Hajtáslánc</TableHead>
                     <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Ár EUR</TableHead>
-                    <TableHead className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Ország</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listings.map((l, i) => {
-                    const isClosest = closestListing && l.url === closestListing.url;
-                    return (
-                      <TableRow
-                        key={i}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                        style={isClosest ? { borderLeft: '3px solid #00875A', backgroundColor: '#f0fdf4' } : {}}
-                        onClick={() => window.open(l.url, '_blank', 'noopener')}
-                      >
-                        <TableCell className="text-sm">{l.year}</TableCell>
-                        <TableCell className="text-sm">{l.first_registration}</TableCell>
-                        <TableCell className="text-sm">{fmtKm(l.mileage_km)}</TableCell>
-                        <TableCell className="text-sm">{l.powertrain}</TableCell>
-                        <TableCell className="text-sm font-semibold">{fmt(l.price_eur)}</TableCell>
-                        <TableCell className="text-sm">{l.country}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {listings.map((l, i) => (
+                    <TableRow
+                      key={i}
+                      className={l.listing_url ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
+                      onClick={() => l.listing_url && window.open(l.listing_url, '_blank', 'noopener')}
+                    >
+                      <TableCell className="text-sm">{l.source ?? '–'}</TableCell>
+                      <TableCell className="text-sm max-w-[200px] truncate">{l.title ?? '–'}</TableCell>
+                      <TableCell className="text-sm">{l.first_reg_year ?? '–'}</TableCell>
+                      <TableCell className="text-sm">{fmtKm(l.mileage_km)}</TableCell>
+                      <TableCell className="text-sm font-semibold">{fmt(l.price_eur)}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

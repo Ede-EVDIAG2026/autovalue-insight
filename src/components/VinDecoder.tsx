@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 
-const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 // ── Types ──
 interface VinDecoderProps {

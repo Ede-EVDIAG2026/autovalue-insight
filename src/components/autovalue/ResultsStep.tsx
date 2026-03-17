@@ -42,8 +42,9 @@ const ResultsStep = ({ result, vehicleData, priceEur, children }: ResultsStepPro
           params.set('price_eur', String(effectivePriceEur));
         }
 
+        const { MARKET_API } = await import('@/lib/marketApi');
         const res = await fetch(
-          `http://46.224.176.213:8890/market/valuation?${params.toString()}`
+          `${MARKET_API}/api/v1/market/valuation?${params.toString()}`
         );
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
