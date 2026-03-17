@@ -5,7 +5,7 @@ import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
 import PdfDownloadButton from './results/PdfDownloadButton';
 
-const MARKET_API = 'https://market.evdiag.hu';
+import { MARKET_API } from '@/lib/marketApi';
 
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
