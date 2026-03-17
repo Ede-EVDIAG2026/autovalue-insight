@@ -727,10 +727,15 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
           <div ref={formRef} style={{ ...S.card, maxWidth: 680, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <span style={{ fontSize: 20 }}>📊</span>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 16, color: '#1a1a2a' }}>{tr.vehicle_data}</div>
                 <div style={{ fontSize: 12, color: '#6b7280' }}>{tr.vehicle_sub}</div>
               </div>
+              {vinFilledFields.size > 0 && (
+                <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: '#dcfce7', color: '#166534', whiteSpace: 'nowrap' }}>
+                  🤖 {vinFilledFields.size} mező kitöltve VIN alapján
+                </span>
+              )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
