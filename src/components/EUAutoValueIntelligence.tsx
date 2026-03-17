@@ -372,6 +372,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_mfg_before_model: '⚠️ A gyártási év korábbi, mint a modellév – ellenőrizze!',
       warn_reg_before_mfg: '⚠️ Az üzembehelyezés éve korábbi, mint a gyártási év – ellenőrizze!',
       warn_reg_month_before_mfg: '⚠️ Az üzembehelyezés hónapja korábbi, mint a gyártási hónap (azonos évben) – ellenőrizze!',
+      readiness: 'Értékbecslés készültség',
+      readiness_fields: 'mező kitöltve',
     },
     EN: {
       vehicle_data: 'Vehicle data', vehicle_sub: 'Enter the main parameters of the vehicle',
@@ -413,6 +415,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_mfg_before_model: '⚠️ Manufacturing year is earlier than model year – please verify!',
       warn_reg_before_mfg: '⚠️ Registration year is before manufacturing year – please verify!',
       warn_reg_month_before_mfg: '⚠️ Registration month is before manufacturing month (same year) – please verify!',
+      readiness: 'Valuation readiness',
+      readiness_fields: 'fields filled',
     },
     DE: {
       vehicle_data: 'Fahrzeugdaten', vehicle_sub: 'Geben Sie die wichtigsten Fahrzeugparameter ein',
@@ -454,9 +458,21 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
       warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
       warn_reg_month_before_mfg: '⚠️ Zulassungsmonat liegt vor dem Herstellungsmonat (gleiches Jahr) – bitte prüfen!',
+      readiness: 'Bewertungsbereitschaft',
+      readiness_fields: 'Felder ausgefüllt',
     },
   };
   const tr = ui[lang] || ui['HU'];
+
+  // ── Valuation readiness calculation ──
+  const READINESS_FIELDS: (keyof FormState)[] = [
+    'brand', 'model', 'year', 'fuel', 'km', 'country',
+    'body', 'trimLevel', 'enginePowerKw', 'driveType', 'transmission',
+    'mfgYear', 'regYear', 'batteryKwh', 'color',
+  ];
+  const filledCount = READINESS_FIELDS.filter(k => form[k] && String(form[k]).trim() !== '').length;
+  const totalCount = READINESS_FIELDS.length;
+  const readinessPct = Math.round((filledCount / totalCount) * 100);
 
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
@@ -811,6 +827,26 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </span>
               )}
             </div>
+
+            {/* Valuation readiness progress */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: readinessPct >= 80 ? '#166534' : readinessPct >= 50 ? '#92400e' : '#6b7280' }}>
+                  {tr.readiness}
+                </span>
+                <span style={{ fontSize: 11, color: '#6b7280' }}>
+                  {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
+                </span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: '#e5e7eb', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 3, transition: 'width 0.4s ease, background 0.4s ease',
+                  width: `${readinessPct}%`,
+                  background: readinessPct >= 80 ? '#22c55e' : readinessPct >= 50 ? '#f59e0b' : '#d1d5db',
+                }} />
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
               <div>
