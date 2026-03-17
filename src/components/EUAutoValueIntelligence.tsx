@@ -448,6 +448,8 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       hero_title: 'Professionelle Fahrzeugbewertung',
       hero_desc: 'Bayesianisches Wahrscheinlichkeitsmodell · 27 EU-Länder + Schweiz · 3-Jahres-Preistrend',
       result_gen: 'Ergebnisse werden generiert…',
+      warn_mfg_before_model: '⚠️ Herstellungsjahr liegt vor dem Modelljahr – bitte prüfen!',
+      warn_reg_before_mfg: '⚠️ Erstzulassung liegt vor dem Herstellungsjahr – bitte prüfen!',
     },
   };
   const tr = ui[lang] || ui['HU'];
