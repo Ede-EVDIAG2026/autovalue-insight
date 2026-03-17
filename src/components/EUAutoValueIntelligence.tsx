@@ -14,6 +14,9 @@ type FormState = {
   body: string; trimLevel: string; enginePowerKw: string; engineDisplacement: string;
   driveType: string; transmission: string; doors: string; seats: string;
   batteryKwh: string; chargingPowerAc: string; color: string; equipmentNote: string;
+  mfgYear: string; mfgMonth: string; regYear: string; regMonth: string;
+  optionalPackages: string; standardEquipment: string;
+  priorUsage: string; priorUsageConfidence: 'confirmed' | 'estimated' | '';
 };
 type VinIdentity = { manufacturer?: string; plantCountry?: string; vin?: string; recallCount?: number } | null;
 type VinFilledFields = Set<string>;
@@ -44,6 +47,23 @@ const FALLBACK_MODELS: Record<string, string[]> = {
   "Volvo": ["XC40","XC60","C40 Recharge","EX30","EX90"],
   "Seat": ["Ibiza","Leon","Ateca","Cupra Born"],
 };
+
+const MONTHS = [
+  { value: '1', label: 'Január' }, { value: '2', label: 'Február' }, { value: '3', label: 'Március' },
+  { value: '4', label: 'Április' }, { value: '5', label: 'Május' }, { value: '6', label: 'Június' },
+  { value: '7', label: 'Július' }, { value: '8', label: 'Augusztus' }, { value: '9', label: 'Szeptember' },
+  { value: '10', label: 'Október' }, { value: '11', label: 'November' }, { value: '12', label: 'December' },
+];
+
+const PRIOR_USAGES = [
+  { value: 'taxi', label: 'Taxi' },
+  { value: 'ambulance', label: 'Mentő' },
+  { value: 'police', label: 'Rendőrségi' },
+  { value: 'driving_school', label: 'Oktatóautó' },
+  { value: 'rental', label: 'Bérautó / Rental' },
+  { value: 'fleet', label: 'Flottás intenzív használat' },
+  { value: 'other', label: 'Egyéb különleges használat' },
+];
 
 const COUNTRIES = ["HU","DE","AT","FR","IT","ES","PL","CZ","SK","RO","NL","BE","SE","DK","FI","NO","PT","GR","HR","BG","SI","LT","LV","EE","LU","MT","CY","CH"];
 const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹',FR:'🇫🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',CZ:'🇨🇿',SK:'🇸🇰',RO:'🇷🇴',NL:'🇳🇱',BE:'🇧🇪',SE:'🇸🇪',DK:'🇩🇰',FI:'🇫🇮',NO:'🇳🇴',PT:'🇵🇹',GR:'🇬🇷',HR:'🇭🇷',BG:'🇧🇬',SI:'🇸🇮',LT:'🇱🇹',LV:'🇱🇻',EE:'🇪🇪',LU:'🇱🇺',MT:'🇲🇹',CY:'🇨🇾',CH:'🇨🇭' };
@@ -293,7 +313,7 @@ interface EUAutoValueIntelligenceProps {
 export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoValueIntelligenceProps = {}) {
   const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
-  const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '' });
+  const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '', mfgYear: '', mfgMonth: '', regYear: '', regMonth: '', optionalPackages: '', standardEquipment: '', priorUsage: '', priorUsageConfidence: '' });
   const [vinIdentity, setVinIdentity] = useState<VinIdentity>(null);
   const [vinRawResult, setVinRawResult] = useState<any>(null);
   const [vinModalOpen, setVinModalOpen] = useState(false);
@@ -533,7 +553,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
     const set = (key: keyof FormState, val: string | number | undefined | null) => {
       if (val !== undefined && val !== null && String(val).trim() !== '') {
-        updates[key] = String(val);
+        (updates as any)[key] = String(val);
         filled.add(key);
       }
     };
@@ -567,6 +587,32 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const acKw = evSpec?.charging?.ac_kw;
     if (acKw && (powertrain === 'BEV' || powertrain === 'PHEV')) {
       set('chargingPowerAc', acKw);
+    }
+
+    // ── Manufacturing date ──
+    set('mfgYear', vi?.manufacturing_year || summary?.manufacturing_year);
+    set('mfgMonth', vi?.manufacturing_month || summary?.manufacturing_month);
+
+    // ── First registration ──
+    set('regYear', vi?.first_registration_year || summary?.first_registration_year);
+    set('regMonth', vi?.first_registration_month || summary?.first_registration_month);
+
+    // ── Equipment / packages ──
+    const stdEq = trim?.standard_equipment;
+    if (Array.isArray(stdEq) && stdEq.length > 0) {
+      set('standardEquipment', stdEq.join(', '));
+    }
+    const optPkg = trim?.optional_packages;
+    if (Array.isArray(optPkg) && optPkg.length > 0) {
+      set('optionalPackages', optPkg.join(', '));
+    }
+
+    // ── Prior special usage ──
+    const usageHint = summary?.prior_usage || vi?.prior_usage || agents?.prior_usage;
+    if (usageHint) {
+      set('priorUsage', usageHint);
+      updates.priorUsageConfidence = summary?.prior_usage_confidence === 'confirmed' ? 'confirmed' : 'estimated';
+      filled.add('priorUsage');
     }
 
     setForm(prev => ({ ...prev, ...updates }));
@@ -881,6 +927,75 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               <div>
                 <label style={S.label}>Felszereltség megjegyzés</label>
                 <input className="av-inp" style={S.input} placeholder="pl. panorámatető, bőr, HUD..." value={form.equipmentNote} onChange={e => setField('equipmentNote', e.target.value)} />
+              </div>
+
+              {/* ── Separator: Dátumok ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Manufacturing date */}
+              <div>
+                <label style={S.label}>Gyártási év {vinFilledFields.has('mfgYear') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgYear') ? vinHighlight : {}) }} value={form.mfgYear} onChange={e => setField('mfgYear', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Gyártási hónap {vinFilledFields.has('mfgMonth') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgMonth') ? vinHighlight : {}) }} value={form.mfgMonth} onChange={e => setField('mfgMonth', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+
+              {/* First registration */}
+              <div>
+                <label style={S.label}>Első üzembehelyezés éve {vinFilledFields.has('regYear') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regYear') ? vinHighlight : {}) }} value={form.regYear} onChange={e => setField('regYear', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={S.label}>Első üzembehelyezés hónapja {vinFilledFields.has('regMonth') && <VinBadge />}</label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regMonth') ? vinHighlight : {}) }} value={form.regMonth} onChange={e => setField('regMonth', e.target.value)}>
+                  <option value="">{tr.select}</option>
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+
+              {/* ── Separator: Felszereltség ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Standard equipment */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Alapfelszereltség {vinFilledFields.has('standardEquipment') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('standardEquipment') ? vinHighlight : {}) }} placeholder="pl. LED fényszóró, tolatókamera, klíma..." value={form.standardEquipment} onChange={e => setField('standardEquipment', e.target.value)} />
+              </div>
+
+              {/* Optional packages */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>Extra csomagok / opciók {vinFilledFields.has('optionalPackages') && <VinBadge />}</label>
+                <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('optionalPackages') ? vinHighlight : {}) }} placeholder="pl. Premium csomag, Sport csomag, Tech csomag..." value={form.optionalPackages} onChange={e => setField('optionalPackages', e.target.value)} />
+              </div>
+
+              {/* ── Separator: Korábbi használat ── */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
+
+              {/* Prior special usage */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={S.label}>
+                  Korábbi különleges használat {vinFilledFields.has('priorUsage') && <VinBadge />}
+                  {form.priorUsageConfidence === 'estimated' && (
+                    <span style={{ display: 'inline-block', padding: '1px 6px', borderRadius: 8, fontSize: 9, fontWeight: 600, background: '#fef3c7', color: '#92400e', marginLeft: 4, verticalAlign: 'middle' }}>
+                      becsült
+                    </span>
+                  )}
+                </label>
+                <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('priorUsage') ? vinHighlight : {}) }} value={form.priorUsage} onChange={e => setField('priorUsage', e.target.value)}>
+                  <option value="">Nincs ismert különleges használat</option>
+                  {PRIOR_USAGES.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                </select>
               </div>
             </div>
 
