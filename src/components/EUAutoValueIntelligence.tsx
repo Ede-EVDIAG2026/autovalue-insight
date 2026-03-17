@@ -854,14 +854,44 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
             </div>
 
             {/* Valuation readiness progress */}
-            <div style={{ marginBottom: 18 }}>
+            <div style={{ marginBottom: 18, position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: readinessPct >= 80 ? '#166534' : readinessPct >= 50 ? '#92400e' : '#6b7280' }}>
                   {tr.readiness}
                 </span>
-                <span style={{ fontSize: 11, color: '#6b7280' }}>
-                  {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
-                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      style={{
+                        fontSize: 11, color: missingFields.length > 0 ? '#2563eb' : '#166534',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        textDecoration: 'underline', textDecorationStyle: 'dotted',
+                        padding: 0,
+                      }}
+                    >
+                      {filledCount}/{totalCount} {tr.readiness_fields} · {readinessPct}%
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" side="bottom" align="end">
+                    {missingFields.length === 0 ? (
+                      <p style={{ fontSize: 12, color: '#166534', fontWeight: 600, margin: 0 }}>
+                        ✅ {tr.readiness_complete}
+                      </p>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 6px 0', color: '#1a1a2a' }}>
+                          {tr.readiness_missing} ({missingFields.length})
+                        </p>
+                        <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: '#6b7280', lineHeight: 1.8 }}>
+                          {missingFields.map(f => (
+                            <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <div style={{ height: 6, borderRadius: 3, background: '#e5e7eb', overflow: 'hidden' }}>
                 <div style={{
