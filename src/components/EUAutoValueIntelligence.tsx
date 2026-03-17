@@ -536,7 +536,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
     const set = (key: keyof FormState, val: string | number | undefined | null) => {
       if (val !== undefined && val !== null && String(val).trim() !== '') {
-        updates[key] = String(val);
+        (updates as any)[key] = String(val);
         filled.add(key);
       }
     };
@@ -570,6 +570,32 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const acKw = evSpec?.charging?.ac_kw;
     if (acKw && (powertrain === 'BEV' || powertrain === 'PHEV')) {
       set('chargingPowerAc', acKw);
+    }
+
+    // ── Manufacturing date ──
+    set('mfgYear', vi?.manufacturing_year || summary?.manufacturing_year);
+    set('mfgMonth', vi?.manufacturing_month || summary?.manufacturing_month);
+
+    // ── First registration ──
+    set('regYear', vi?.first_registration_year || summary?.first_registration_year);
+    set('regMonth', vi?.first_registration_month || summary?.first_registration_month);
+
+    // ── Equipment / packages ──
+    const stdEq = trim?.standard_equipment;
+    if (Array.isArray(stdEq) && stdEq.length > 0) {
+      set('standardEquipment', stdEq.join(', '));
+    }
+    const optPkg = trim?.optional_packages;
+    if (Array.isArray(optPkg) && optPkg.length > 0) {
+      set('optionalPackages', optPkg.join(', '));
+    }
+
+    // ── Prior special usage ──
+    const usageHint = summary?.prior_usage || vi?.prior_usage || agents?.prior_usage;
+    if (usageHint) {
+      set('priorUsage', usageHint);
+      updates.priorUsageConfidence = summary?.prior_usage_confidence === 'confirmed' ? 'confirmed' : 'estimated';
+      filled.add('priorUsage');
     }
 
     setForm(prev => ({ ...prev, ...updates }));
