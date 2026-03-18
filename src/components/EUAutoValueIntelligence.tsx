@@ -1169,7 +1169,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* First registration */}
-              <div>
+              <div data-field="regYear">
                 <label style={S.label}>Első üzembehelyezés éve {vinFilledFields.has('regYear') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regYear') ? vinHighlight : {}) }} value={form.regYear} onChange={e => setField('regYear', e.target.value)}>
                   <option value="">{tr.select}</option>
