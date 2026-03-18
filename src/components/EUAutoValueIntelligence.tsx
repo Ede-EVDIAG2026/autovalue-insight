@@ -445,6 +445,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: '',
       smart_impact: 'accuracy boost',
       smart_all_done: 'Maximum accuracy reached!',
+      smart_click_hint: 'Click to fill →',
       field_brand: 'Make', field_model: 'Model', field_year: 'Year', field_fuel: 'Powertrain',
       field_km: 'Mileage', field_country: 'Country', field_body: 'Body type',
       field_trimLevel: 'Trim level', field_enginePowerKw: 'Power (kW)',
