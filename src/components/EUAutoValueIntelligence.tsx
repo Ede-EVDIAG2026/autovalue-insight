@@ -975,15 +975,22 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
               {/* Smart suggestion */}
               {smartSuggestion ? (
-                <div style={{
-                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '6px 10px', borderRadius: 8,
-                  background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
-                }}>
+                <div
+                  onClick={() => scrollToField(smartSuggestion)}
+                  style={{
+                    marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 10px', borderRadius: 8,
+                    background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
+                    cursor: 'pointer', transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.12)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.06)')}
+                >
                   <span style={{ fontSize: 14 }}>💡</span>
                   <span style={{ fontSize: 11, color: '#1e40af', flex: 1 }}>
                     <strong>{tr.smart_next}:</strong>{' '}
                     {tr.smart_next_prefix} <strong>{(tr as any)[`field_${smartSuggestion}`] || smartSuggestion}</strong> {tr.smart_next_suffix}
+                    <span style={{ marginLeft: 6, fontSize: 10, color: '#3b82f6', fontWeight: 500 }}>{tr.smart_click_hint}</span>
                   </span>
                   <span style={{
                     fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
