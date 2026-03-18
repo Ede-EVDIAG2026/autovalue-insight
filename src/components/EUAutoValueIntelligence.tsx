@@ -1140,7 +1140,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* Row 8: Color, Equipment note */}
-              <div>
+              <div data-field="color">
                 <label style={S.label}>Szín</label>
                 <input className="av-inp" style={S.input} placeholder="pl. Fehér, Fekete..." value={form.color} onChange={e => setField('color', e.target.value)} />
               </div>
