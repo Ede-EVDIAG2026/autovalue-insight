@@ -504,6 +504,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: 'aus',
       smart_impact: 'Genauigkeit',
       smart_all_done: 'Maximale Genauigkeit erreicht!',
+      smart_click_hint: 'Klicken zum Ausfüllen →',
       field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
       field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
       field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
