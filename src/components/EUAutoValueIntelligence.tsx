@@ -298,6 +298,8 @@ const CSS = `
 .av-stat:hover { border-color: #d1d5db !important; }
 @keyframes avFadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
 @keyframes avPulse { 0%,100% { transform:scale(1); opacity:0.6; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes avFieldHighlight { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.5); } 50% { box-shadow: 0 0 0 4px rgba(37,99,235,0.25); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }
+.av-field-highlight { animation: avFieldHighlight 1.5s ease-out 2; }
 `;
 
 export interface VehicleEvaluation {
