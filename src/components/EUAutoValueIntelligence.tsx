@@ -1059,20 +1059,20 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
 
               {/* Row 3: Body, Trim */}
-              <div>
+              <div data-field="body">
                 <label style={S.label}>Karosszéria {vinFilledFields.has('body') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('body') ? vinHighlight : {}) }} value={form.body} onChange={e => setField('body', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Sedan','Kombi','SUV','Crossover','Hatchback','Coupe','Cabrio','Van','Pickup','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="trimLevel">
                 <label style={S.label}>Trim szint {vinFilledFields.has('trimLevel') && <VinBadge />}</label>
                 <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('trimLevel') ? vinHighlight : {}) }} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
               </div>
 
               {/* Row 4: Engine power, Displacement */}
-              <div>
+              <div data-field="enginePowerKw">
                 <label style={S.label}>Motor teljesítmény {vinFilledFields.has('enginePowerKw') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
                   <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('enginePowerKw') ? vinHighlight : {}), paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
@@ -1088,14 +1088,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* Row 5: Drive, Transmission */}
-              <div>
+              <div data-field="driveType">
                 <label style={S.label}>Meghajtás {vinFilledFields.has('driveType') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('driveType') ? vinHighlight : {}) }} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Első kerék','Hátsó kerék','Összkerék','4x4'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="transmission">
                 <label style={S.label}>Váltó {vinFilledFields.has('transmission') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('transmission') ? vinHighlight : {}) }} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
                   <option value="">{tr.select}</option>
