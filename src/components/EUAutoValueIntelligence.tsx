@@ -1106,7 +1106,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               {/* Row 6: Battery fields (BEV/PHEV only) */}
               {(form.fuel === 'BEV' || form.fuel === 'PHEV') && (
                 <>
-                  <div>
+                  <div data-field="batteryKwh">
                     <label style={S.label}>Akkumulátor kapacitás {vinFilledFields.has('batteryKwh') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
                       <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('batteryKwh') ? vinHighlight : {}), paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
