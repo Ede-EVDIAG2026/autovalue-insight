@@ -955,7 +955,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                               </span>
                               <ul style={{ margin: '2px 0 0', paddingLeft: 16, fontSize: 11, color: '#92400e', lineHeight: 1.8 }}>
                                 {optionalMissing.map(f => (
-                                  <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
+                                  <li key={f} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' as const }} onClick={() => scrollToField(f)}>{(tr as any)[`field_${f}`] || f}</li>
                                 ))}
                               </ul>
                             </>
