@@ -537,6 +537,17 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     : null;
   const smartImpact = smartSuggestion ? (FIELD_IMPACT[smartSuggestion] || 0) : 0;
 
+  const scrollToField = useCallback((fieldKey: string) => {
+    const el = formRef.current?.querySelector(`[data-field="${fieldKey}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('av-field-highlight');
+    void el.offsetWidth;
+    el.classList.add('av-field-highlight');
+    const inp = el.querySelector('input, select') as HTMLElement | null;
+    if (inp) setTimeout(() => inp.focus(), 400);
+  }, []);
+
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
     { value: 'PHEV', label: tr.fuel_phev },
