@@ -1014,14 +1014,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
-              <div>
+              <div data-field="brand">
                 <label style={S.label}>{tr.make} {vinFilledFields.has('brand') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('brand') ? vinHighlight : {}) }} value={form.brand} onChange={e => setField('brand', e.target.value)}>
                   <option value="">{makesLoading ? tr.loading : tr.select}</option>
                   {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="model">
                 <label style={S.label}>{tr.model} {vinFilledFields.has('model') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('model') ? vinHighlight : {}), opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
                   <option value="">{modelsLoading ? tr.loading : tr.select}</option>
@@ -1029,14 +1029,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </select>
               </div>
               {/* Row 2: Year, Fuel */}
-              <div>
+              <div data-field="year">
                 <label style={S.label}>{tr.year} {vinFilledFields.has('year') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('year') ? vinHighlight : {}) }} value={form.year} onChange={e => setField('year', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="fuel">
                 <label style={S.label}>{tr.fuel} {vinFilledFields.has('fuel') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('fuel') ? vinHighlight : {}) }} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
                   <option value="">{tr.select}</option>
@@ -1044,11 +1044,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </select>
               </div>
               {/* Row 2.5: Mileage, Country */}
-              <div>
+              <div data-field="km">
                 <label style={S.label}>{tr.mileage}</label>
                 <input className="av-inp" type="number" style={S.input} placeholder="pl. 85000" value={form.km} onChange={e => setField('km', e.target.value)} />
               </div>
-              <div>
+              <div data-field="country">
                 <label style={S.label}>{tr.country}</label>
                 <select className="av-inp" style={S.input} value={form.country} onChange={e => setField('country', e.target.value)}>
                   {COUNTRIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
