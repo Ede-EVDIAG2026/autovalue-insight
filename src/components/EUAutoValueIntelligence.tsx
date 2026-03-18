@@ -298,6 +298,8 @@ const CSS = `
 .av-stat:hover { border-color: #d1d5db !important; }
 @keyframes avFadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
 @keyframes avPulse { 0%,100% { transform:scale(1); opacity:0.6; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes avFieldHighlight { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.5); } 50% { box-shadow: 0 0 0 4px rgba(37,99,235,0.25); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }
+.av-field-highlight { animation: avFieldHighlight 1.5s ease-out 2; }
 `;
 
 export interface VehicleEvaluation {
@@ -384,6 +386,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: 'mezőt',
       smart_impact: 'pontosság javulás',
       smart_all_done: 'Maximális pontosság elérve!',
+      smart_click_hint: 'Kattints a kitöltéshez →',
       field_brand: 'Márka', field_model: 'Modell', field_year: 'Évjárat', field_fuel: 'Hajtáslánc',
       field_km: 'Futásteljesítmény', field_country: 'Ország', field_body: 'Karosszéria',
       field_trimLevel: 'Felszereltség', field_enginePowerKw: 'Teljesítmény (kW)',
@@ -442,6 +445,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: '',
       smart_impact: 'accuracy boost',
       smart_all_done: 'Maximum accuracy reached!',
+      smart_click_hint: 'Click to fill →',
       field_brand: 'Make', field_model: 'Model', field_year: 'Year', field_fuel: 'Powertrain',
       field_km: 'Mileage', field_country: 'Country', field_body: 'Body type',
       field_trimLevel: 'Trim level', field_enginePowerKw: 'Power (kW)',
@@ -500,6 +504,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: 'aus',
       smart_impact: 'Genauigkeit',
       smart_all_done: 'Maximale Genauigkeit erreicht!',
+      smart_click_hint: 'Klicken zum Ausfüllen →',
       field_brand: 'Marke', field_model: 'Modell', field_year: 'Baujahr', field_fuel: 'Antrieb',
       field_km: 'Kilometerstand', field_country: 'Land', field_body: 'Karosserie',
       field_trimLevel: 'Ausstattung', field_enginePowerKw: 'Leistung (kW)',
@@ -531,6 +536,17 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     ? [...missingFields].sort((a, b) => (FIELD_IMPACT[b] || 0) - (FIELD_IMPACT[a] || 0))[0]
     : null;
   const smartImpact = smartSuggestion ? (FIELD_IMPACT[smartSuggestion] || 0) : 0;
+
+  const scrollToField = useCallback((fieldKey: string) => {
+    const el = formRef.current?.querySelector(`[data-field="${fieldKey}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('av-field-highlight');
+    void el.offsetWidth;
+    el.classList.add('av-field-highlight');
+    const inp = el.querySelector('input, select') as HTMLElement | null;
+    if (inp) setTimeout(() => inp.focus(), 400);
+  }, []);
 
   const FUELS = [
     { value: 'BEV', label: tr.fuel_bev },
@@ -927,7 +943,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                               </span>
                               <ul style={{ margin: '2px 0 8px', paddingLeft: 16, fontSize: 11, color: '#dc2626', lineHeight: 1.8 }}>
                                 {criticalMissing.map(f => (
-                                  <li key={f} style={{ fontWeight: 500 }}>{(tr as any)[`field_${f}`] || f}</li>
+                                  <li key={f} style={{ fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' as const }} onClick={() => scrollToField(f)}>{(tr as any)[`field_${f}`] || f}</li>
                                 ))}
                               </ul>
                             </>
@@ -939,7 +955,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                               </span>
                               <ul style={{ margin: '2px 0 0', paddingLeft: 16, fontSize: 11, color: '#92400e', lineHeight: 1.8 }}>
                                 {optionalMissing.map(f => (
-                                  <li key={f}>{(tr as any)[`field_${f}`] || f}</li>
+                                  <li key={f} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' as const }} onClick={() => scrollToField(f)}>{(tr as any)[`field_${f}`] || f}</li>
                                 ))}
                               </ul>
                             </>
@@ -959,15 +975,22 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
               {/* Smart suggestion */}
               {smartSuggestion ? (
-                <div style={{
-                  marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '6px 10px', borderRadius: 8,
-                  background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
-                }}>
+                <div
+                  onClick={() => scrollToField(smartSuggestion)}
+                  style={{
+                    marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 10px', borderRadius: 8,
+                    background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.12)',
+                    cursor: 'pointer', transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.12)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.06)')}
+                >
                   <span style={{ fontSize: 14 }}>💡</span>
                   <span style={{ fontSize: 11, color: '#1e40af', flex: 1 }}>
                     <strong>{tr.smart_next}:</strong>{' '}
                     {tr.smart_next_prefix} <strong>{(tr as any)[`field_${smartSuggestion}`] || smartSuggestion}</strong> {tr.smart_next_suffix}
+                    <span style={{ marginLeft: 6, fontSize: 10, color: '#3b82f6', fontWeight: 500 }}>{tr.smart_click_hint}</span>
                   </span>
                   <span style={{
                     fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
@@ -991,14 +1014,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Row 1: Make, Model */}
-              <div>
+              <div data-field="brand">
                 <label style={S.label}>{tr.make} {vinFilledFields.has('brand') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('brand') ? vinHighlight : {}) }} value={form.brand} onChange={e => setField('brand', e.target.value)}>
                   <option value="">{makesLoading ? tr.loading : tr.select}</option>
                   {makesList.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="model">
                 <label style={S.label}>{tr.model} {vinFilledFields.has('model') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('model') ? vinHighlight : {}), opacity: form.brand ? 1 : 0.5 }} value={form.model} onChange={e => setField('model', e.target.value)} disabled={!form.brand || modelsLoading}>
                   <option value="">{modelsLoading ? tr.loading : tr.select}</option>
@@ -1006,14 +1029,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </select>
               </div>
               {/* Row 2: Year, Fuel */}
-              <div>
+              <div data-field="year">
                 <label style={S.label}>{tr.year} {vinFilledFields.has('year') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('year') ? vinHighlight : {}) }} value={form.year} onChange={e => setField('year', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="fuel">
                 <label style={S.label}>{tr.fuel} {vinFilledFields.has('fuel') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('fuel') ? vinHighlight : {}) }} value={form.fuel} onChange={e => setField('fuel', e.target.value)}>
                   <option value="">{tr.select}</option>
@@ -1021,11 +1044,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
                 </select>
               </div>
               {/* Row 2.5: Mileage, Country */}
-              <div>
+              <div data-field="km">
                 <label style={S.label}>{tr.mileage}</label>
                 <input className="av-inp" type="number" style={S.input} placeholder="pl. 85000" value={form.km} onChange={e => setField('km', e.target.value)} />
               </div>
-              <div>
+              <div data-field="country">
                 <label style={S.label}>{tr.country}</label>
                 <select className="av-inp" style={S.input} value={form.country} onChange={e => setField('country', e.target.value)}>
                   {COUNTRIES.map(c => <option key={c} value={c}>{FLAGS[c]} {c}</option>)}
@@ -1036,20 +1059,20 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
 
               {/* Row 3: Body, Trim */}
-              <div>
+              <div data-field="body">
                 <label style={S.label}>Karosszéria {vinFilledFields.has('body') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('body') ? vinHighlight : {}) }} value={form.body} onChange={e => setField('body', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Sedan','Kombi','SUV','Crossover','Hatchback','Coupe','Cabrio','Van','Pickup','Egyéb'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="trimLevel">
                 <label style={S.label}>Trim szint {vinFilledFields.has('trimLevel') && <VinBadge />}</label>
                 <input className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('trimLevel') ? vinHighlight : {}) }} placeholder="pl. Titanium, R-Line, AMG..." value={form.trimLevel} onChange={e => setField('trimLevel', e.target.value)} />
               </div>
 
               {/* Row 4: Engine power, Displacement */}
-              <div>
+              <div data-field="enginePowerKw">
                 <label style={S.label}>Motor teljesítmény {vinFilledFields.has('enginePowerKw') && <VinBadge />}</label>
                 <div style={{ position: 'relative' }}>
                   <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('enginePowerKw') ? vinHighlight : {}), paddingRight: 40 }} placeholder="pl. 110" value={form.enginePowerKw} onChange={e => setField('enginePowerKw', e.target.value)} />
@@ -1065,14 +1088,14 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* Row 5: Drive, Transmission */}
-              <div>
+              <div data-field="driveType">
                 <label style={S.label}>Meghajtás {vinFilledFields.has('driveType') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('driveType') ? vinHighlight : {}) }} value={form.driveType} onChange={e => setField('driveType', e.target.value)}>
                   <option value="">{tr.select}</option>
                   {['Első kerék','Hátsó kerék','Összkerék','4x4'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
-              <div>
+              <div data-field="transmission">
                 <label style={S.label}>Váltó {vinFilledFields.has('transmission') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('transmission') ? vinHighlight : {}) }} value={form.transmission} onChange={e => setField('transmission', e.target.value)}>
                   <option value="">{tr.select}</option>
@@ -1083,7 +1106,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               {/* Row 6: Battery fields (BEV/PHEV only) */}
               {(form.fuel === 'BEV' || form.fuel === 'PHEV') && (
                 <>
-                  <div>
+                  <div data-field="batteryKwh">
                     <label style={S.label}>Akkumulátor kapacitás {vinFilledFields.has('batteryKwh') && <VinBadge />}</label>
                     <div style={{ position: 'relative' }}>
                       <input className="av-inp" type="number" style={{ ...S.input, ...(vinFilledFields.has('batteryKwh') ? vinHighlight : {}), paddingRight: 44 }} placeholder="pl. 79.5" value={form.batteryKwh} onChange={e => setField('batteryKwh', e.target.value)} />
@@ -1117,7 +1140,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* Row 8: Color, Equipment note */}
-              <div>
+              <div data-field="color">
                 <label style={S.label}>Szín</label>
                 <input className="av-inp" style={S.input} placeholder="pl. Fehér, Fekete..." value={form.color} onChange={e => setField('color', e.target.value)} />
               </div>
@@ -1130,7 +1153,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
 
               {/* Manufacturing date */}
-              <div>
+              <div data-field="mfgYear">
                 <label style={S.label}>Gyártási év {vinFilledFields.has('mfgYear') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgYear') ? vinHighlight : {}) }} value={form.mfgYear} onChange={e => setField('mfgYear', e.target.value)}>
                   <option value="">{tr.select}</option>
@@ -1146,7 +1169,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               </div>
 
               {/* First registration */}
-              <div>
+              <div data-field="regYear">
                 <label style={S.label}>Első üzembehelyezés éve {vinFilledFields.has('regYear') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('regYear') ? vinHighlight : {}) }} value={form.regYear} onChange={e => setField('regYear', e.target.value)}>
                   <option value="">{tr.select}</option>
