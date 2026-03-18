@@ -386,6 +386,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       smart_next_suffix: 'mezőt',
       smart_impact: 'pontosság javulás',
       smart_all_done: 'Maximális pontosság elérve!',
+      smart_click_hint: 'Kattints a kitöltéshez →',
       field_brand: 'Márka', field_model: 'Modell', field_year: 'Évjárat', field_fuel: 'Hajtáslánc',
       field_km: 'Futásteljesítmény', field_country: 'Ország', field_body: 'Karosszéria',
       field_trimLevel: 'Felszereltség', field_enginePowerKw: 'Teljesítmény (kW)',
