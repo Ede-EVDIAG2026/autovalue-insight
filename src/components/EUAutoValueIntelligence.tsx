@@ -1153,7 +1153,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e5e7eb', margin: '4px 0' }} />
 
               {/* Manufacturing date */}
-              <div>
+              <div data-field="mfgYear">
                 <label style={S.label}>Gyártási év {vinFilledFields.has('mfgYear') && <VinBadge />}</label>
                 <select className="av-inp" style={{ ...S.input, ...(vinFilledFields.has('mfgYear') ? vinHighlight : {}) }} value={form.mfgYear} onChange={e => setField('mfgYear', e.target.value)}>
                   <option value="">{tr.select}</option>
