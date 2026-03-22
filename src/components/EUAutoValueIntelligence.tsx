@@ -616,17 +616,25 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     return () => { cancelled = true; };
   }, [form.brand]);
 
-  // Auto-set powertrain when model has exactly one
+  // Auto-set powertrain when model has exactly one (uses merged data computed below)
+  const catalogPtsForModel = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const cm = catalogModels.find(m => m.model === form.model);
+    const catalogPts = cm?.powertrains || [];
+    // API data takes priority
+    const apiPts = apiModelPowertrains[form.model];
+    return apiPts && apiPts.length > 0 ? apiPts : catalogPts;
+  })();
+
   useEffect(() => {
     if (!form.model) return;
-    const pts = apiModelPowertrains[form.model];
+    const pts = catalogPtsForModel;
     if (pts && pts.length === 1) {
       setForm(prev => ({ ...prev, fuel: pts[0] }));
     } else if (pts && pts.length > 1 && form.fuel && !pts.includes(form.fuel)) {
-      // Current fuel invalid for this model, clear it
       setForm(prev => ({ ...prev, fuel: '' }));
     }
-  }, [form.model, apiModelPowertrains]);
+  }, [form.model, apiModelPowertrains, form.brand]);
 
   // Merge: API makes ∪ catalog makes, sorted, de-duplicated
   const makesList = (() => {
