@@ -31,23 +31,35 @@ type Result = {
   isFallback?: boolean; dataPoints?: number;
 };
 
-const FALLBACK_MODELS: Record<string, string[]> = {
-  "Audi": ["A3","A4","A6","Q3","Q5","e-tron","Q4 e-tron"],
-  "BMW": ["116i","318i","520d","X1","X3","iX3","i4"],
-  "Mercedes-Benz": ["A180","C220","E300","GLC","EQA","EQB","EQC"],
-  "Volkswagen": ["Golf","Passat","Tiguan","Polo","ID.3","ID.4","ID.5"],
-  "Tesla": ["Model 3","Model Y","Model S","Model X"],
-  "Toyota": ["Yaris","Corolla","RAV4","C-HR","bZ4X","Prius"],
-  "Hyundai": ["i30","Tucson","IONIQ 5","IONIQ 6","Kona Electric"],
-  "Kia": ["Ceed","Sportage","EV6","EV9","Niro EV"],
-  "Skoda": ["Octavia","Superb","Kodiaq","Enyaq iV"],
-  "Renault": ["Clio","Megane","Zoe","Megane E-Tech","Arkana"],
-  "Peugeot": ["208","308","e-208","e-2008","3008"],
-  "Ford": ["Focus","Fiesta","Puma","Kuga","Mustang Mach-E"],
-  "Opel": ["Astra","Insignia","Mokka-e","Corsa-e"],
-  "Volvo": ["XC40","XC60","C40 Recharge","EX30","EX90"],
-  "Seat": ["Ibiza","Leon","Ateca","Cupra Born"],
+const FALLBACK_MAKES: string[] = [
+  "Audi","BMW","Mercedes-Benz","Volkswagen","Tesla","Toyota","Hyundai","Kia",
+  "Skoda","Renault","Peugeot","Ford","Opel","Volvo","Seat","Citroën","Alfa Romeo",
+  "DS","Fiat","Jeep",
+];
+
+// ── Canonical make alias map for VIN normalization ──
+const MAKE_ALIASES: Record<string, string> = {
+  'citroen': 'Citroën', 'citroën': 'Citroën',
+  'alfa romeo': 'Alfa Romeo', 'alfa-romeo': 'Alfa Romeo', 'alfaromeo': 'Alfa Romeo',
+  'ds automobiles': 'DS', 'ds': 'DS',
+  'mercedes-benz': 'Mercedes-Benz', 'mercedes benz': 'Mercedes-Benz', 'mercedes': 'Mercedes-Benz',
+  'bmw': 'BMW', 'vw': 'Volkswagen', 'volkswagen': 'Volkswagen',
+  'peugeot': 'Peugeot', 'opel': 'Opel', 'fiat': 'Fiat', 'jeep': 'Jeep',
+  'tesla': 'Tesla', 'toyota': 'Toyota', 'hyundai': 'Hyundai', 'kia': 'Kia',
+  'skoda': 'Skoda', 'škoda': 'Skoda', 'renault': 'Renault', 'ford': 'Ford',
+  'volvo': 'Volvo', 'seat': 'Seat', 'cupra': 'Cupra', 'audi': 'Audi',
+  'nissan': 'Nissan', 'honda': 'Honda', 'mazda': 'Mazda', 'subaru': 'Subaru',
+  'porsche': 'Porsche', 'jaguar': 'Jaguar', 'land rover': 'Land Rover',
+  'mini': 'MINI', 'smart': 'Smart', 'dacia': 'Dacia',
 };
+
+function canonicalizeMake(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+  if (MAKE_ALIASES[lower]) return MAKE_ALIASES[lower];
+  return trimmed;
+}
 
 const MONTHS = [
   { value: '1', label: 'Január' }, { value: '2', label: 'Február' }, { value: '3', label: 'Március' },
@@ -330,6 +342,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const [apiMakes, setApiMakes] = useState<string[]>([]);
   const [makesLoading, setMakesLoading] = useState(true);
   const [apiModels, setApiModels] = useState<string[]>([]);
+  const [apiModelPowertrains, setApiModelPowertrains] = useState<Record<string, string[]>>({});
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
   const formRef = useRef<HTMLDivElement>(null);
@@ -560,13 +573,13 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     makesLoaded.current = true;
     (async () => {
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/makes`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/vehicle-registry/makes`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        const makes: string[] = (json.makes || []).map((m: any) => m.make || m);
+        const makes: string[] = (json.makes || []).map((m: any) => typeof m === 'string' ? m : m.make).filter(Boolean);
         if (makes.length > 0) setApiMakes(makes);
       } catch (e) {
-        console.warn('Makes API failed, using fallback:', e);
+        console.warn('Vehicle registry makes failed, using fallback:', e);
       } finally {
         setMakesLoading(false);
       }
@@ -574,19 +587,29 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   }, []);
 
   useEffect(() => {
-    if (!form.brand) { setApiModels([]); return; }
+    if (!form.brand) { setApiModels([]); setApiModelPowertrains({}); return; }
     let cancelled = false;
     (async () => {
       setModelsLoading(true);
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/vehicle-registry/models?make=${encodeURIComponent(form.brand)}`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        const models: string[] = (json.models || []).map((m: any) => m.model || m);
-        if (!cancelled && models.length > 0) setApiModels(models);
+        const modelsArr: { model: string; powertrains?: string[] }[] = json.models || [];
+        const models: string[] = modelsArr.map(m => typeof m === 'string' ? m : m.model).filter(Boolean);
+        const ptMap: Record<string, string[]> = {};
+        modelsArr.forEach(m => {
+          if (typeof m !== 'string' && m.model && Array.isArray(m.powertrains)) {
+            ptMap[m.model] = m.powertrains;
+          }
+        });
+        if (!cancelled) {
+          setApiModels(models);
+          setApiModelPowertrains(ptMap);
+        }
       } catch (e) {
-        console.warn('Models API failed, using fallback:', e);
-        if (!cancelled) setApiModels([]);
+        console.warn('Vehicle registry models failed:', e);
+        if (!cancelled) { setApiModels([]); setApiModelPowertrains({}); }
       } finally {
         if (!cancelled) setModelsLoading(false);
       }
@@ -594,8 +617,20 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     return () => { cancelled = true; };
   }, [form.brand]);
 
-  const makesList = apiMakes.length > 0 ? apiMakes : Object.keys(FALLBACK_MODELS);
-  const modelsList = apiModels.length > 0 ? apiModels : (FALLBACK_MODELS[form.brand] || []);
+  // Auto-set powertrain when model has exactly one
+  useEffect(() => {
+    if (!form.model) return;
+    const pts = apiModelPowertrains[form.model];
+    if (pts && pts.length === 1) {
+      setForm(prev => ({ ...prev, fuel: pts[0] }));
+    } else if (pts && pts.length > 1 && form.fuel && !pts.includes(form.fuel)) {
+      // Current fuel invalid for this model, clear it
+      setForm(prev => ({ ...prev, fuel: '' }));
+    }
+  }, [form.model, apiModelPowertrains]);
+
+  const makesList = apiMakes.length > 0 ? apiMakes : FALLBACK_MAKES;
+  const modelsList = apiModels;
   const setField = (k: keyof FormState, v: string) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
@@ -614,7 +649,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const recallSafety = rawResult?.agents?.recall_safety;
 
     const make = vi?.make || '';
-    const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+    const normMake = canonicalizeMake(make);
 
     // Normalize model: split "Passat / GTE" → main model + trim
     const rawModel = vi?.model || '';
@@ -745,7 +780,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       applyVinToForm(rawResult);
     } else {
       // Fallback: basic fields only
-      const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+      const normMake = canonicalizeMake(make);
       const updates: Partial<FormState> = {};
       let count = 0;
       if (normMake) { updates.brand = normMake; count++; }
