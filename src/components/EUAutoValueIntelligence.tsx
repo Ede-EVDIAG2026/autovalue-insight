@@ -7,6 +7,7 @@ import PdfDownloadButton from './results/PdfDownloadButton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { MARKET_API } from '@/lib/marketApi';
+import { EV_HYBRID_CATALOG, buildCatalogMap, type CatalogModel } from '@/data/evHybridCatalog';
 
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
@@ -31,11 +32,9 @@ type Result = {
   isFallback?: boolean; dataPoints?: number;
 };
 
-const FALLBACK_MAKES: string[] = [
-  "Audi","BMW","Mercedes-Benz","Volkswagen","Tesla","Toyota","Hyundai","Kia",
-  "Skoda","Renault","Peugeot","Ford","Opel","Volvo","Seat","Citroën","Alfa Romeo",
-  "DS","Fiat","Jeep",
-];
+// Built from the comprehensive EV/Hybrid catalog
+const CATALOG_MAP = buildCatalogMap(EV_HYBRID_CATALOG);
+const CATALOG_MAKES: string[] = Array.from(CATALOG_MAP.keys()).sort((a, b) => a.localeCompare(b));
 
 // ── Canonical make alias map for VIN normalization ──
 const MAKE_ALIASES: Record<string, string> = {
@@ -46,11 +45,27 @@ const MAKE_ALIASES: Record<string, string> = {
   'bmw': 'BMW', 'vw': 'Volkswagen', 'volkswagen': 'Volkswagen',
   'peugeot': 'Peugeot', 'opel': 'Opel', 'fiat': 'Fiat', 'jeep': 'Jeep',
   'tesla': 'Tesla', 'toyota': 'Toyota', 'hyundai': 'Hyundai', 'kia': 'Kia',
-  'skoda': 'Skoda', 'škoda': 'Skoda', 'renault': 'Renault', 'ford': 'Ford',
-  'volvo': 'Volvo', 'seat': 'Seat', 'cupra': 'Cupra', 'audi': 'Audi',
+  'skoda': 'Škoda', 'škoda': 'Škoda', 'renault': 'Renault', 'ford': 'Ford',
+  'volvo': 'Volvo', 'seat': 'SEAT', 'cupra': 'CUPRA', 'audi': 'Audi',
   'nissan': 'Nissan', 'honda': 'Honda', 'mazda': 'Mazda', 'subaru': 'Subaru',
   'porsche': 'Porsche', 'jaguar': 'Jaguar', 'land rover': 'Land Rover',
   'mini': 'MINI', 'smart': 'Smart', 'dacia': 'Dacia',
+  'byd': 'BYD', 'nio': 'NIO', 'xpeng': 'XPENG', 'zeekr': 'Zeekr',
+  'leapmotor': 'Leapmotor', 'aiways': 'Aiways', 'geely': 'Geely',
+  'lynk & co': 'Lynk & Co', 'lynk&co': 'Lynk & Co', 'lynk co': 'Lynk & Co',
+  'hongqi': 'Hongqi', 'voyah': 'Voyah', 'avatr': 'Avatr', 'seres': 'Seres',
+  'maxus': 'Maxus', 'ora': 'ORA', 'gwm': 'GWM', 'great wall': 'GWM',
+  'chery': 'Chery', 'exeed': 'Exeed', 'dongfeng': 'Dongfeng',
+  'rivian': 'Rivian', 'lucid': 'Lucid', 'fisker': 'Fisker',
+  'genesis': 'Genesis', 'polestar': 'Polestar', 'alpine': 'Alpine',
+  'mg': 'MG', 'lotus': 'Lotus', 'maserati': 'Maserati', 'ferrari': 'Ferrari',
+  'bentley': 'Bentley', 'rolls-royce': 'Rolls-Royce', 'rolls royce': 'Rolls-Royce',
+  'lexus': 'Lexus', 'infiniti': 'Infiniti', 'mitsubishi': 'Mitsubishi',
+  'suzuki': 'Suzuki', 'lancia': 'Lancia', 'lamborghini': 'Lamborghini',
+  'cadillac': 'Cadillac', 'chevrolet': 'Chevrolet', 'gmc': 'GMC',
+  'dodge': 'Dodge', 'chrysler': 'Chrysler', 'vinfast': 'VinFast',
+  'li auto': 'Li Auto', 'li': 'Li Auto', 'gac aion': 'GAC Aion', 'aion': 'GAC Aion',
+  'ssangyong': 'SsangYong', 'abarth': 'Abarth',
 };
 
 function canonicalizeMake(raw: string): string {
@@ -617,20 +632,51 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     return () => { cancelled = true; };
   }, [form.brand]);
 
-  // Auto-set powertrain when model has exactly one
+  // Auto-set powertrain when model has exactly one (uses merged data computed below)
+  const catalogPtsForModel = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const cm = catalogModels.find(m => m.model === form.model);
+    const catalogPts = cm?.powertrains || [];
+    // API data takes priority
+    const apiPts = apiModelPowertrains[form.model];
+    return apiPts && apiPts.length > 0 ? apiPts : catalogPts;
+  })();
+
   useEffect(() => {
     if (!form.model) return;
-    const pts = apiModelPowertrains[form.model];
+    const pts = catalogPtsForModel;
     if (pts && pts.length === 1) {
       setForm(prev => ({ ...prev, fuel: pts[0] }));
     } else if (pts && pts.length > 1 && form.fuel && !pts.includes(form.fuel)) {
-      // Current fuel invalid for this model, clear it
       setForm(prev => ({ ...prev, fuel: '' }));
     }
-  }, [form.model, apiModelPowertrains]);
+  }, [form.model, apiModelPowertrains, form.brand]);
 
-  const makesList = apiMakes.length > 0 ? apiMakes : FALLBACK_MAKES;
-  const modelsList = apiModels;
+  // Merge: API makes ∪ catalog makes, sorted, de-duplicated
+  const makesList = (() => {
+    const set = new Set<string>(CATALOG_MAKES);
+    for (const m of apiMakes) set.add(m);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // Merge: API models ∪ catalog models for the selected brand
+  const modelsList = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const catalogNames = catalogModels.map(m => m.model);
+    const set = new Set<string>(apiModels);
+    for (const n of catalogNames) set.add(n);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // Merge powertrain data: API overrides catalog per model
+  const mergedPowertrains = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const result: Record<string, string[]> = {};
+    for (const cm of catalogModels) result[cm.model] = cm.powertrains;
+    // API data takes priority
+    for (const [model, pts] of Object.entries(apiModelPowertrains)) result[model] = pts;
+    return result;
+  })();
   const setField = (k: keyof FormState, v: string) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
