@@ -780,7 +780,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       applyVinToForm(rawResult);
     } else {
       // Fallback: basic fields only
-      const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+      const normMake = canonicalizeMake(make);
       const updates: Partial<FormState> = {};
       let count = 0;
       if (normMake) { updates.brand = normMake; count++; }
