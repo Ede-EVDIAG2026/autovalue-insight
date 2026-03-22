@@ -7,6 +7,7 @@ import PdfDownloadButton from './results/PdfDownloadButton';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { MARKET_API } from '@/lib/marketApi';
+import { EV_HYBRID_CATALOG, buildCatalogMap, type CatalogModel } from '@/data/evHybridCatalog';
 
 // ── Types ──
 type Screen = 'input' | 'loading' | 'result';
