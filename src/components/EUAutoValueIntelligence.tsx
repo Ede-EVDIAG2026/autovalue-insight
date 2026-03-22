@@ -31,23 +31,35 @@ type Result = {
   isFallback?: boolean; dataPoints?: number;
 };
 
-const FALLBACK_MODELS: Record<string, string[]> = {
-  "Audi": ["A3","A4","A6","Q3","Q5","e-tron","Q4 e-tron"],
-  "BMW": ["116i","318i","520d","X1","X3","iX3","i4"],
-  "Mercedes-Benz": ["A180","C220","E300","GLC","EQA","EQB","EQC"],
-  "Volkswagen": ["Golf","Passat","Tiguan","Polo","ID.3","ID.4","ID.5"],
-  "Tesla": ["Model 3","Model Y","Model S","Model X"],
-  "Toyota": ["Yaris","Corolla","RAV4","C-HR","bZ4X","Prius"],
-  "Hyundai": ["i30","Tucson","IONIQ 5","IONIQ 6","Kona Electric"],
-  "Kia": ["Ceed","Sportage","EV6","EV9","Niro EV"],
-  "Skoda": ["Octavia","Superb","Kodiaq","Enyaq iV"],
-  "Renault": ["Clio","Megane","Zoe","Megane E-Tech","Arkana"],
-  "Peugeot": ["208","308","e-208","e-2008","3008"],
-  "Ford": ["Focus","Fiesta","Puma","Kuga","Mustang Mach-E"],
-  "Opel": ["Astra","Insignia","Mokka-e","Corsa-e"],
-  "Volvo": ["XC40","XC60","C40 Recharge","EX30","EX90"],
-  "Seat": ["Ibiza","Leon","Ateca","Cupra Born"],
+const FALLBACK_MAKES: string[] = [
+  "Audi","BMW","Mercedes-Benz","Volkswagen","Tesla","Toyota","Hyundai","Kia",
+  "Skoda","Renault","Peugeot","Ford","Opel","Volvo","Seat","Citroën","Alfa Romeo",
+  "DS","Fiat","Jeep",
+];
+
+// ── Canonical make alias map for VIN normalization ──
+const MAKE_ALIASES: Record<string, string> = {
+  'citroen': 'Citroën', 'citroën': 'Citroën',
+  'alfa romeo': 'Alfa Romeo', 'alfa-romeo': 'Alfa Romeo', 'alfaromeo': 'Alfa Romeo',
+  'ds automobiles': 'DS', 'ds': 'DS',
+  'mercedes-benz': 'Mercedes-Benz', 'mercedes benz': 'Mercedes-Benz', 'mercedes': 'Mercedes-Benz',
+  'bmw': 'BMW', 'vw': 'Volkswagen', 'volkswagen': 'Volkswagen',
+  'peugeot': 'Peugeot', 'opel': 'Opel', 'fiat': 'Fiat', 'jeep': 'Jeep',
+  'tesla': 'Tesla', 'toyota': 'Toyota', 'hyundai': 'Hyundai', 'kia': 'Kia',
+  'skoda': 'Skoda', 'škoda': 'Skoda', 'renault': 'Renault', 'ford': 'Ford',
+  'volvo': 'Volvo', 'seat': 'Seat', 'cupra': 'Cupra', 'audi': 'Audi',
+  'nissan': 'Nissan', 'honda': 'Honda', 'mazda': 'Mazda', 'subaru': 'Subaru',
+  'porsche': 'Porsche', 'jaguar': 'Jaguar', 'land rover': 'Land Rover',
+  'mini': 'MINI', 'smart': 'Smart', 'dacia': 'Dacia',
 };
+
+function canonicalizeMake(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+  if (MAKE_ALIASES[lower]) return MAKE_ALIASES[lower];
+  return trimmed;
+}
 
 const MONTHS = [
   { value: '1', label: 'Január' }, { value: '2', label: 'Február' }, { value: '3', label: 'Március' },
