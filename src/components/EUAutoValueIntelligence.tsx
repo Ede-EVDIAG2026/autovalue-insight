@@ -573,13 +573,13 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     makesLoaded.current = true;
     (async () => {
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/makes`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/vehicle-registry/makes`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        const makes: string[] = (json.makes || []).map((m: any) => m.make || m);
+        const makes: string[] = (json.makes || []).map((m: any) => typeof m === 'string' ? m : m.make).filter(Boolean);
         if (makes.length > 0) setApiMakes(makes);
       } catch (e) {
-        console.warn('Makes API failed, using fallback:', e);
+        console.warn('Vehicle registry makes failed, using fallback:', e);
       } finally {
         setMakesLoading(false);
       }
@@ -587,19 +587,29 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   }, []);
 
   useEffect(() => {
-    if (!form.brand) { setApiModels([]); return; }
+    if (!form.brand) { setApiModels([]); setApiModelPowertrains({}); return; }
     let cancelled = false;
     (async () => {
       setModelsLoading(true);
       try {
-        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/models?make=${encodeURIComponent(form.brand)}`, 8000);
+        const res = await fetchWithTimeout(`${MARKET_API}/api/v1/market/vehicle-registry/models?make=${encodeURIComponent(form.brand)}`, 8000);
         if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        const models: string[] = (json.models || []).map((m: any) => m.model || m);
-        if (!cancelled && models.length > 0) setApiModels(models);
+        const modelsArr: { model: string; powertrains?: string[] }[] = json.models || [];
+        const models: string[] = modelsArr.map(m => typeof m === 'string' ? m : m.model).filter(Boolean);
+        const ptMap: Record<string, string[]> = {};
+        modelsArr.forEach(m => {
+          if (typeof m !== 'string' && m.model && Array.isArray(m.powertrains)) {
+            ptMap[m.model] = m.powertrains;
+          }
+        });
+        if (!cancelled) {
+          setApiModels(models);
+          setApiModelPowertrains(ptMap);
+        }
       } catch (e) {
-        console.warn('Models API failed, using fallback:', e);
-        if (!cancelled) setApiModels([]);
+        console.warn('Vehicle registry models failed:', e);
+        if (!cancelled) { setApiModels([]); setApiModelPowertrains({}); }
       } finally {
         if (!cancelled) setModelsLoading(false);
       }
@@ -607,8 +617,20 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     return () => { cancelled = true; };
   }, [form.brand]);
 
-  const makesList = apiMakes.length > 0 ? apiMakes : Object.keys(FALLBACK_MODELS);
-  const modelsList = apiModels.length > 0 ? apiModels : (FALLBACK_MODELS[form.brand] || []);
+  // Auto-set powertrain when model has exactly one
+  useEffect(() => {
+    if (!form.model) return;
+    const pts = apiModelPowertrains[form.model];
+    if (pts && pts.length === 1) {
+      setForm(prev => ({ ...prev, fuel: pts[0] }));
+    } else if (pts && pts.length > 1 && form.fuel && !pts.includes(form.fuel)) {
+      // Current fuel invalid for this model, clear it
+      setForm(prev => ({ ...prev, fuel: '' }));
+    }
+  }, [form.model, apiModelPowertrains]);
+
+  const makesList = apiMakes.length > 0 ? apiMakes : FALLBACK_MAKES;
+  const modelsList = apiModels;
   const setField = (k: keyof FormState, v: string) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
