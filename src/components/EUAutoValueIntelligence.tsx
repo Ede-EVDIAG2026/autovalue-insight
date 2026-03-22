@@ -342,6 +342,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const [apiMakes, setApiMakes] = useState<string[]>([]);
   const [makesLoading, setMakesLoading] = useState(true);
   const [apiModels, setApiModels] = useState<string[]>([]);
+  const [apiModelPowertrains, setApiModelPowertrains] = useState<Record<string, string[]>>({});
   const [modelsLoading, setModelsLoading] = useState(false);
   const makesLoaded = useRef(false);
   const formRef = useRef<HTMLDivElement>(null);
