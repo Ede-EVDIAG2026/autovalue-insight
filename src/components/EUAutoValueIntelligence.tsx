@@ -32,11 +32,9 @@ type Result = {
   isFallback?: boolean; dataPoints?: number;
 };
 
-const FALLBACK_MAKES: string[] = [
-  "Audi","BMW","Mercedes-Benz","Volkswagen","Tesla","Toyota","Hyundai","Kia",
-  "Skoda","Renault","Peugeot","Ford","Opel","Volvo","Seat","Citroën","Alfa Romeo",
-  "DS","Fiat","Jeep",
-];
+// Built from the comprehensive EV/Hybrid catalog
+const CATALOG_MAP = buildCatalogMap(EV_HYBRID_CATALOG);
+const CATALOG_MAKES: string[] = Array.from(CATALOG_MAP.keys()).sort((a, b) => a.localeCompare(b));
 
 // ── Canonical make alias map for VIN normalization ──
 const MAKE_ALIASES: Record<string, string> = {
