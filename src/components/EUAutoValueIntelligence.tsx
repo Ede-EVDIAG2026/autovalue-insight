@@ -649,7 +649,7 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     const recallSafety = rawResult?.agents?.recall_safety;
 
     const make = vi?.make || '';
-    const normMake = make ? make.charAt(0).toUpperCase() + make.slice(1).toLowerCase() : '';
+    const normMake = canonicalizeMake(make);
 
     // Normalize model: split "Passat / GTE" → main model + trim
     const rawModel = vi?.model || '';
