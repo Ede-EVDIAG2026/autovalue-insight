@@ -628,8 +628,31 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     }
   }, [form.model, apiModelPowertrains]);
 
-  const makesList = apiMakes.length > 0 ? apiMakes : FALLBACK_MAKES;
-  const modelsList = apiModels;
+  // Merge: API makes ∪ catalog makes, sorted, de-duplicated
+  const makesList = (() => {
+    const set = new Set<string>(CATALOG_MAKES);
+    for (const m of apiMakes) set.add(m);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // Merge: API models ∪ catalog models for the selected brand
+  const modelsList = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const catalogNames = catalogModels.map(m => m.model);
+    const set = new Set<string>(apiModels);
+    for (const n of catalogNames) set.add(n);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // Merge powertrain data: API overrides catalog per model
+  const mergedPowertrains = (() => {
+    const catalogModels = CATALOG_MAP.get(form.brand) || [];
+    const result: Record<string, string[]> = {};
+    for (const cm of catalogModels) result[cm.model] = cm.powertrains;
+    // API data takes priority
+    for (const [model, pts] of Object.entries(apiModelPowertrains)) result[model] = pts;
+    return result;
+  })();
   const setField = (k: keyof FormState, v: string) => {
     setForm(prev => {
       const next = { ...prev, [k]: v };
