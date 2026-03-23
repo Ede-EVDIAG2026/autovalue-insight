@@ -108,7 +108,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const [regionsOpen, setRegionsOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
-  const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const leafletLoadedRef = useRef(false);
