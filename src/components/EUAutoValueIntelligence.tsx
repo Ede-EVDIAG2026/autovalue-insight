@@ -1469,59 +1469,173 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
           {tab === 1 && (
             <div style={{ animation: 'avFadeUp 0.4s ease forwards' }}>
-              <div style={S.card}>
-                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a2a' }}>{tr.trend_36m}</div>
-                <svg viewBox="0 0 800 200" preserveAspectRatio="none" style={{ width: '100%', height: 200 }}>
-                  <defs>
-                    <linearGradient id="av-tg" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#2880c4" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#2880c4" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="av-lg" x1="0" x2="1" y1="0" y2="0">
-                      <stop offset="0%" stopColor="#1a4a7a" />
-                      <stop offset="50%" stopColor="#2880c4" />
-                      <stop offset="100%" stopColor="#c9a84c" />
-                    </linearGradient>
-                  </defs>
-                  {[0,1,2,3,4].map(i => <line key={i} x1={0} x2={800} y1={i * 50} y2={i * 50} stroke="#e5e7eb" strokeWidth={1} />)}
-                  {(() => {
-                    const td = result.trendData;
-                    const mn = Math.min(...td); const mx = Math.max(...td);
-                    const pts = td.map((v, i) => `${(i / 35) * 800},${200 - ((v - mn) / (mx - mn || 1)) * 180}`).join(' ');
-                    const area = `0,200 ${pts} 800,200`;
-                    const last = td[td.length - 1];
-                    const ly = 200 - ((last - mn) / (mx - mn || 1)) * 180;
-                    return (
-                      <>
+              {as24HistoryLoading && (
+                <div style={{ ...S.card, textAlign: 'center', padding: 32 }}>
+                  <div style={{ fontSize: 13, color: '#6b7280' }}>📊 AS24 ártrend betöltése…</div>
+                </div>
+              )}
+              {!as24HistoryLoading && (() => {
+                const hasAs24 = as24History && as24History.length >= 2;
+                const historyData = hasAs24 ? as24History! : null;
+                // Use AS24 median prices for chart, or fall back to generated trendData
+                const chartValues: number[] = historyData
+                  ? historyData.map(h => h.median_eur)
+                  : result.trendData;
+                const chartLabels: string[] = historyData
+                  ? historyData.map(h => {
+                      const d = new Date(h.snapshot_date);
+                      return `${d.toLocaleString('default', { month: 'short' })} '${String(d.getFullYear()).slice(2)}`;
+                    })
+                  : ["Jan '23","Jun '23","Jan '24","Jun '24","Jan '25","Dec '25"];
+                // Show only a few labels evenly spaced
+                const labelCount = Math.min(6, chartLabels.length);
+                const labelStep = Math.max(1, Math.floor((chartLabels.length - 1) / (labelCount - 1)));
+                const displayLabels = Array.from({ length: labelCount }, (_, i) => {
+                  const idx = Math.min(i * labelStep, chartLabels.length - 1);
+                  return chartLabels[idx];
+                });
+
+                const mn = Math.min(...chartValues);
+                const mx = Math.max(...chartValues);
+                const len = chartValues.length;
+                const pts = chartValues.map((v, i) => `${(i / (len - 1)) * 800},${200 - ((v - mn) / (mx - mn || 1)) * 180}`).join(' ');
+                const area = `0,200 ${pts} 800,200`;
+                const last = chartValues[chartValues.length - 1];
+                const ly = 200 - ((last - mn) / (mx - mn || 1)) * 180;
+
+                // Stats
+                const lowest = Math.min(...chartValues);
+                const highest = Math.max(...chartValues);
+                const avg = Math.round(chartValues.reduce((a, b) => a + b, 0) / chartValues.length);
+                const current = chartValues[chartValues.length - 1];
+                // 12m change: compare last vs ~12 months ago
+                const twelveAgo = chartValues.length > 12 ? chartValues[chartValues.length - 13] : chartValues[0];
+                const changePct = ((current - twelveAgo) / (twelveAgo || 1) * 100).toFixed(1);
+                const isRising = current > twelveAgo;
+
+                // Listing count data for bar overlay
+                const listingCounts = historyData ? historyData.map(h => h.listing_count || 0) : null;
+                const maxListings = listingCounts ? Math.max(...listingCounts, 1) : 0;
+
+                return (
+                  <>
+                    {/* Data source badge */}
+                    <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {hasAs24 ? (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#166534', background: '#dcfce7', padding: '3px 10px', borderRadius: 10 }}>
+                          ✓ AutoScout24 · {historyData!.length} snapshot
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#92400e', background: '#fef3c7', padding: '3px 10px', borderRadius: 10 }}>
+                          ⚠ AI-becslés (nincs AS24 történeti adat)
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={S.card}>
+                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a2a' }}>{tr.trend_36m}</div>
+                      <svg viewBox="0 0 800 200" preserveAspectRatio="none" style={{ width: '100%', height: 200 }}>
+                        <defs>
+                          <linearGradient id="av-tg" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#2880c4" stopOpacity={0.15} />
+                            <stop offset="100%" stopColor="#2880c4" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="av-lg" x1="0" x2="1" y1="0" y2="0">
+                            <stop offset="0%" stopColor="#1a4a7a" />
+                            <stop offset="50%" stopColor="#2880c4" />
+                            <stop offset="100%" stopColor="#c9a84c" />
+                          </linearGradient>
+                        </defs>
+                        {/* Listing count bars (background) */}
+                        {listingCounts && listingCounts.map((c, i) => (
+                          <rect key={`bar-${i}`} x={(i / (len - 1)) * 800 - 4} y={200 - (c / maxListings) * 60} width={8} height={(c / maxListings) * 60} fill="rgba(201,168,76,0.12)" rx={2} />
+                        ))}
+                        {[0,1,2,3,4].map(i => <line key={i} x1={0} x2={800} y1={i * 50} y2={i * 50} stroke="#e5e7eb" strokeWidth={1} />)}
                         <polygon points={area} fill="url(#av-tg)" />
                         <polyline points={pts} fill="none" stroke="url(#av-lg)" strokeWidth={2.5} />
                         <circle cx={800} cy={ly} r={5} fill="#c9a84c" />
-                      </>
-                    );
-                  })()}
-                </svg>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginTop: 8 }}>
-                  {["Jan '23","Jun '23","Jan '24","Jun '24","Jan '25","Dec '25"].map(l => <span key={l}>{l}</span>)}
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 16 }}>
-                {[
-                  [tr.lowest, Math.min(...result.trendData), '#e05a5a'],
-                  [tr.highest, Math.max(...result.trendData), '#4caf82'],
-                  [tr.average, Math.round(result.trendData.reduce((a, b) => a + b, 0) / 36), '#3b82f6'],
-                  [tr.current, result.trendData[35], '#c9a84c'],
-                ].map(([l, v, c]) => (
-                  <div key={l as string} className="av-stat" style={{ ...S.card, padding: 16, textAlign: 'center', transition: 'border-color 0.2s' }}>
-                    <div style={{ fontSize: 11, color: c as string, fontWeight: 600 }}>{l as string}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2a', marginTop: 4 }}><AnimatedNumber value={v as number} suffix=" €" /></div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ ...S.card, marginTop: 16, background: 'rgba(201,168,76,0.04)', borderColor: 'rgba(201,168,76,0.2)' }}>
-                <div style={{ fontSize: 13, color: '#c9a84c' }}>
-                  📈 {result.trendData[35] > result.trendData[24] ? tr.trend_rising : tr.trend_falling} {tr.trend_change_12m}: <strong>{((result.trendData[35] - result.trendData[24]) / result.trendData[24] * 100).toFixed(1)}%</strong>
-                </div>
-              </div>
+                        {/* Min/Max range if AS24 */}
+                        {historyData && historyData.length > 1 && (() => {
+                          const minPts = historyData.map((h, i) => {
+                            const v = h.min_eur ?? h.median_eur;
+                            return `${(i / (len - 1)) * 800},${200 - ((v - mn) / (mx - mn || 1)) * 180}`;
+                          }).join(' ');
+                          const maxPts = historyData.map((h, i) => {
+                            const v = h.max_eur ?? h.median_eur;
+                            return `${(i / (len - 1)) * 800},${200 - ((v - mn) / (mx - mn || 1)) * 180}`;
+                          }).join(' ');
+                          return (
+                            <>
+                              <polyline points={minPts} fill="none" stroke="#e05a5a" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
+                              <polyline points={maxPts} fill="none" stroke="#4caf82" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
+                            </>
+                          );
+                        })()}
+                      </svg>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginTop: 8 }}>
+                        {displayLabels.map((l, i) => <span key={`${l}-${i}`}>{l}</span>)}
+                      </div>
+                      {/* Legend for AS24 */}
+                      {hasAs24 && (
+                        <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 10, color: '#6b7280' }}>
+                          <span>━ Medián</span>
+                          <span style={{ color: '#4caf82' }}>┅ Max</span>
+                          <span style={{ color: '#e05a5a' }}>┅ Min</span>
+                          <span style={{ color: 'rgba(201,168,76,0.5)' }}>▮ Hirdetések</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Listing count table for AS24 */}
+                    {hasAs24 && (
+                      <div style={{ ...S.card, marginTop: 16, maxHeight: 200, overflowY: 'auto' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: '#1a1a2a' }}>Snapshot részletek</div>
+                        <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                              <th style={{ textAlign: 'left', padding: '4px 8px', color: '#6b7280', fontWeight: 600 }}>Dátum</th>
+                              <th style={{ textAlign: 'right', padding: '4px 8px', color: '#6b7280', fontWeight: 600 }}>Medián €</th>
+                              <th style={{ textAlign: 'right', padding: '4px 8px', color: '#6b7280', fontWeight: 600 }}>Min €</th>
+                              <th style={{ textAlign: 'right', padding: '4px 8px', color: '#6b7280', fontWeight: 600 }}>Max €</th>
+                              <th style={{ textAlign: 'right', padding: '4px 8px', color: '#6b7280', fontWeight: 600 }}>Hirdetések</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...historyData!].reverse().slice(0, 24).map((h, i) => (
+                              <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <td style={{ padding: '4px 8px', color: '#1a1a2a' }}>{h.snapshot_date}</td>
+                                <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600, color: '#2880c4' }}>{h.median_eur?.toLocaleString('hu-HU')} €</td>
+                                <td style={{ padding: '4px 8px', textAlign: 'right', color: '#e05a5a' }}>{h.min_eur != null ? `${h.min_eur.toLocaleString('hu-HU')} €` : '–'}</td>
+                                <td style={{ padding: '4px 8px', textAlign: 'right', color: '#4caf82' }}>{h.max_eur != null ? `${h.max_eur.toLocaleString('hu-HU')} €` : '–'}</td>
+                                <td style={{ padding: '4px 8px', textAlign: 'right', color: '#6b7280' }}>{h.listing_count ?? '–'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginTop: 16 }}>
+                      {[
+                        [tr.lowest, lowest, '#e05a5a'],
+                        [tr.highest, highest, '#4caf82'],
+                        [tr.average, avg, '#3b82f6'],
+                        [tr.current, current, '#c9a84c'],
+                      ].map(([l, v, c]) => (
+                        <div key={l as string} className="av-stat" style={{ ...S.card, padding: 16, textAlign: 'center', transition: 'border-color 0.2s' }}>
+                          <div style={{ fontSize: 11, color: c as string, fontWeight: 600 }}>{l as string}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2a', marginTop: 4 }}><AnimatedNumber value={v as number} suffix=" €" /></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ ...S.card, marginTop: 16, background: 'rgba(201,168,76,0.04)', borderColor: 'rgba(201,168,76,0.2)' }}>
+                      <div style={{ fontSize: 13, color: '#c9a84c' }}>
+                        📈 {isRising ? tr.trend_rising : tr.trend_falling} {tr.trend_change_12m}: <strong>{changePct}%</strong>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
