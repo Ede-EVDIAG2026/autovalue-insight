@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +14,34 @@ const FLAG: Record<string, string> = {
   PT: '🇵🇹', RO: '🇷🇴', LU: '🇱🇺', SK: '🇸🇰', HR: '🇭🇷',
   SI: '🇸🇮', BG: '🇧🇬', IE: '🇮🇪', GR: '🇬🇷', GB: '🇬🇧',
   LT: '🇱🇹', LV: '🇱🇻', EE: '🇪🇪',
+};
+
+const COUNTRY_CENTER: Record<string, { lat: number; lng: number; zoom: number }> = {
+  DE: { lat: 51.1657, lng: 10.4515, zoom: 6 },
+  NL: { lat: 52.1326, lng: 5.2913, zoom: 7 },
+  BE: { lat: 50.5039, lng: 4.4699, zoom: 7 },
+  FR: { lat: 46.2276, lng: 2.2137, zoom: 6 },
+  IT: { lat: 41.8719, lng: 12.5674, zoom: 6 },
+  ES: { lat: 40.4637, lng: -3.7492, zoom: 6 },
+  AT: { lat: 47.5162, lng: 14.5501, zoom: 7 },
+  CH: { lat: 46.8182, lng: 8.2275, zoom: 7 },
+  PL: { lat: 51.9194, lng: 19.1451, zoom: 6 },
+  CZ: { lat: 49.8175, lng: 15.4730, zoom: 7 },
+  HU: { lat: 47.1625, lng: 19.5033, zoom: 7 },
+  SE: { lat: 60.1282, lng: 18.6435, zoom: 5 },
+  DK: { lat: 56.2639, lng: 9.5018, zoom: 7 },
+  NO: { lat: 60.472, lng: 8.4689, zoom: 5 },
+  FI: { lat: 61.9241, lng: 25.7482, zoom: 5 },
+  PT: { lat: 39.3999, lng: -8.2245, zoom: 6 },
+  RO: { lat: 45.9432, lng: 24.9668, zoom: 6 },
+  LU: { lat: 49.8153, lng: 6.1296, zoom: 9 },
+  SK: { lat: 48.669, lng: 19.699, zoom: 7 },
+  HR: { lat: 45.1, lng: 15.2, zoom: 7 },
+  SI: { lat: 46.1512, lng: 14.9955, zoom: 8 },
+  BG: { lat: 42.7339, lng: 25.4858, zoom: 7 },
+  IE: { lat: 53.1424, lng: -7.6921, zoom: 7 },
+  GR: { lat: 39.0742, lng: 21.8243, zoom: 6 },
+  GB: { lat: 55.3781, lng: -3.4360, zoom: 6 },
 };
 
 interface CountryData {
@@ -42,6 +70,9 @@ interface CityData {
   country_code: string;
   listings: number;
   median_eur: number;
+  lat?: number;
+  lng?: number;
+  region?: string;
 }
 
 interface RegionalResponse {
@@ -51,6 +82,18 @@ interface RegionalResponse {
 }
 
 const fmt = (v: number) => `€${v.toLocaleString('hu-HU')}`;
+
+function priceColor(eur: number): string {
+  if (eur < 15000) return '#22c55e';
+  if (eur < 25000) return '#3b82f6';
+  if (eur < 40000) return '#f59e0b';
+  return '#ef4444';
+}
+
+function markerRadius(listings: number, maxListings: number): number {
+  const ratio = Math.sqrt(listings / Math.max(maxListings, 1));
+  return Math.max(6, Math.min(20, 6 + ratio * 14));
+}
 
 interface Props {
   brand: string;
@@ -63,11 +106,18 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [regionsOpen, setRegionsOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const leafletLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!brand || !model) return;
     setLoading(true);
     setError(false);
+    setSelectedCountry(null);
     const p = new URLSearchParams({ brand, model });
     if (year) p.set('year', String(year));
     fetch(`${BASE}/market/as24/regional?${p}`, { signal: AbortSignal.timeout(10000) })
@@ -77,12 +127,123 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       .finally(() => setLoading(false));
   }, [brand, model, year]);
 
+  const loadLeaflet = useCallback((): Promise<void> => {
+    if (leafletLoadedRef.current && (window as any).L) return Promise.resolve();
+    return new Promise((resolve) => {
+      if (!(document.querySelector('link[href*="leaflet"]'))) {
+        const css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(css);
+      }
+      if ((window as any).L) { leafletLoadedRef.current = true; resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      s.onload = () => { leafletLoadedRef.current = true; resolve(); };
+      document.head.appendChild(s);
+    });
+  }, []);
+
+  // Init / update map
+  useEffect(() => {
+    if (loading || error || !data) return;
+    const cities = (data.top_cities || []).filter(c => c.lat != null && c.lng != null);
+    if (!cities.length) return;
+
+    let cancelled = false;
+    loadLeaflet().then(() => {
+      if (cancelled || !mapRef.current) return;
+      const L = (window as any).L;
+      if (!L) return;
+
+      // Destroy previous
+      if (mapInstanceRef.current) {
+        try { mapInstanceRef.current.remove(); } catch (_) {}
+        mapInstanceRef.current = null;
+      }
+      markersRef.current = [];
+
+      const map = L.map(mapRef.current, {
+        center: [51.5, 10.0],
+        zoom: 4,
+        scrollWheelZoom: true,
+        zoomControl: true,
+      });
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenTopoMap',
+        maxZoom: 17,
+      }).addTo(map);
+
+      const maxL = Math.max(...cities.map(c => c.listings));
+
+      const filtered = selectedCountry ? cities.filter(c => c.country_code === selectedCountry) : cities;
+
+      filtered.forEach(c => {
+        const color = priceColor(c.median_eur);
+        const r = markerRadius(c.listings, maxL);
+        const marker = L.circleMarker([c.lat, c.lng], {
+          radius: r,
+          fillColor: color,
+          color: color,
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.55,
+        }).addTo(map);
+
+        marker.bindTooltip(
+          `<strong>${c.city}</strong> (${c.country_code})<br/>Medián: ${fmt(c.median_eur)}<br/>${c.listings} hirdetés`,
+          { direction: 'top', offset: [0, -r] }
+        );
+
+        marker.bindPopup(
+          `<div style="min-width:160px">
+            <div style="font-weight:700;font-size:15px;margin-bottom:4px">${c.city}</div>
+            ${c.region ? `<div style="font-size:12px;color:#888;margin-bottom:6px">${c.region}</div>` : ''}
+            <div style="font-size:18px;font-weight:700;color:${color}">${fmt(c.median_eur)}</div>
+            <div style="font-size:12px;color:#666;margin-top:2px">${c.listings} hirdetés</div>
+          </div>`
+        );
+
+        markersRef.current.push(marker);
+      });
+
+      if (selectedCountry && COUNTRY_CENTER[selectedCountry]) {
+        const cc = COUNTRY_CENTER[selectedCountry];
+        map.flyTo([cc.lat, cc.lng], cc.zoom, { duration: 1.2 });
+      }
+
+      // Fix tile rendering after container becomes visible
+      setTimeout(() => map.invalidateSize(), 200);
+    });
+
+    return () => { cancelled = true; };
+  }, [data, loading, error, selectedCountry, loadLeaflet]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mapInstanceRef.current) {
+        try { mapInstanceRef.current.remove(); } catch (_) {}
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleCountryClick = (code: string) => {
+    setSelectedCountry(prev => prev === code ? null : code);
+  };
+
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-36 rounded-lg" />
-        ))}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-36 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-[500px] rounded-xl" />
       </div>
     );
   }
@@ -102,13 +263,15 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const globalMax = Math.max(...countries.map(c => c.max_eur));
   const globalMin = Math.min(...countries.map(c => c.min_eur));
   const range = globalMax - globalMin || 1;
+  const hasCities = data.top_cities?.some(c => c.lat != null && c.lng != null);
 
   return (
     <div className="space-y-4">
-      {/* Country cards grid */}
+      {/* Country cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {countries.map((c) => {
           const isTop = c.country_code === topCode;
+          const isSelected = c.country_code === selectedCountry;
           const barLeft = ((c.min_eur - globalMin) / range) * 100;
           const barWidth = ((c.max_eur - c.min_eur) / range) * 100;
           const medianPos = ((c.median_eur - globalMin) / range) * 100;
@@ -116,11 +279,20 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
           return (
             <Card
               key={c.country_code}
-              className={`relative overflow-hidden transition-colors ${isTop ? 'border-primary/50 bg-primary/5' : ''}`}
+              onClick={() => handleCountryClick(c.country_code)}
+              className={`relative overflow-hidden transition-all cursor-pointer hover:shadow-md ${
+                isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' :
+                isTop ? 'border-primary/50 bg-primary/5' : ''
+              }`}
             >
-              {isTop && (
+              {isTop && !isSelected && (
                 <Badge className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5">
                   Legtöbb adat
+                </Badge>
+              )}
+              {isSelected && (
+                <Badge variant="secondary" className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5">
+                  Szűrve
                 </Badge>
               )}
               <CardContent className="p-4 space-y-2">
@@ -128,11 +300,8 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
                   <span className="text-lg">{FLAG[c.country_code] || '🏳️'}</span>
                   <span className="text-sm font-semibold text-foreground">{c.country_name}</span>
                 </div>
-
                 <div className="text-xl font-bold text-foreground">{fmt(c.median_eur)}</div>
                 <div className="text-xs text-muted-foreground">{c.listings} hirdetés</div>
-
-                {/* Min-Max bar */}
                 <div className="relative h-2 bg-muted rounded-full mt-2">
                   <div
                     className="absolute h-full bg-primary/30 rounded-full"
@@ -147,7 +316,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
                   <span>{fmt(c.min_eur)}</span>
                   <span>{fmt(c.max_eur)}</span>
                 </div>
-
                 {c.avg_km > 0 && (
                   <div className="text-[10px] text-muted-foreground">
                     Ø {Math.round(c.avg_km / 1000)}k km
@@ -158,6 +326,30 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
           );
         })}
       </div>
+
+      {/* Leaflet Map */}
+      {hasCities && (
+        <div className="relative">
+          <div
+            ref={mapRef}
+            className="w-full border border-border bg-muted"
+            style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
+          />
+          {/* Legend */}
+          <div
+            className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
+            style={{ pointerEvents: 'none' }}
+          >
+            <div className="flex items-center gap-3 flex-wrap">
+              <span><span style={{ color: '#22c55e' }}>●</span> {'< 15K€'}</span>
+              <span><span style={{ color: '#3b82f6' }}>●</span> 15–25K€</span>
+              <span><span style={{ color: '#f59e0b' }}>●</span> 25–40K€</span>
+              <span><span style={{ color: '#ef4444' }}>●</span> {'> 40K€'}</span>
+            </div>
+            <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
+          </div>
+        </div>
+      )}
 
       {/* Regional breakdown */}
       {data.by_region?.length > 0 && (
