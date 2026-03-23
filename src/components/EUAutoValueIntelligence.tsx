@@ -4,6 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
 import PdfDownloadButton from './results/PdfDownloadButton';
+import RegionalPriceMap from './autovalue/RegionalPriceMap';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { MARKET_API } from '@/lib/marketApi';
@@ -1500,49 +1501,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
 
           {tab === 2 && (
             <div style={{ animation: 'avFadeUp 0.4s ease forwards' }}>
-              {result.regional.length === 0 ? (
-                <div style={{ ...S.card, textAlign: 'center', padding: 32 }}>
-                  <div style={{ fontSize: 28, marginBottom: 12 }}>🌍</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>{tr.regional_empty}</div>
-                  <div style={{ fontSize: 12, color: '#9ca3af' }}>{tr.regional_empty_sub}</div>
-                </div>
-              ) : (
-              <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                {result.regional.map((r, i) => {
-                  const diff = ((r.price - result.p50) / result.p50 * 100);
-                  const isUser = r.code === form.country;
-                  const diffColor = diff > 5 ? '#4caf82' : diff < -5 ? '#e05a5a' : '#c9a84c';
-                  return (
-                    <div key={r.code} className="av-stat" style={{ ...S.card, padding: 16, borderColor: isUser ? '#c9a84c44' : '#e5e7eb', animation: `avFadeUp 0.5s ${i * 0.04}s ease both`, transition: 'border-color 0.2s' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 14, color: isUser ? '#c9a84c' : '#1a1a2a', fontWeight: 600 }}>{FLAGS[r.code]} {r.code}{isUser ? ' ★' : ''}</span>
-                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: `${diffColor}11`, color: diffColor, fontWeight: 600 }}>{diff > 0 ? '+' : ''}{diff.toFixed(0)}%</span>
-                      </div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2a' }}><AnimatedNumber value={r.price} suffix=" €" /></div>
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 4 }}>
-                          <span>{tr.speed_label}</span><span>{r.velocity}%</span>
-                        </div>
-                        <div style={{ height: 4, background: '#e5e7eb', borderRadius: 2 }}>
-                          <div style={{ height: '100%', width: `${r.velocity}%`, background: 'linear-gradient(90deg,#1a4a7a,#2880c4)', borderRadius: 2 }} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {(() => {
-                const best = [...result.regional].sort((a, b) => b.price - a.price)[0];
-                const prem = ((best.price - result.p50) / result.p50 * 100).toFixed(0);
-                return (
-                  <div style={{ ...S.card, marginTop: 16, background: 'rgba(40,128,196,0.04)', borderColor: 'rgba(40,128,196,0.15)' }}>
-                    <div style={{ fontSize: 13, color: '#3b82f6' }}>💡 {tr.export_hint} <strong>{best.code}</strong> — <strong>{best.price.toLocaleString('hu-HU')} €</strong> ({prem}% {tr.premium_label})</div>
-                  </div>
-                );
-              })()}
-              </>
-              )}
+              <RegionalPriceMap
+                brand={form.brand}
+                model={form.model}
+                year={form.year ? Number(form.year) : undefined}
+              />
             </div>
           )}
 
