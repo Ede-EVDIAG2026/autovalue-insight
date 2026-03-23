@@ -1,66 +1,58 @@
-import { supabase } from '@/integrations/supabase/client';
+import {
+  createSession as apiCreateSession,
+  runAnalysis as apiRunAnalysis,
+  pollResult as apiPollResult,
+  getSession as apiGetSession,
+  listSessions as apiListSessions,
+  type CreateSessionInput,
+} from '@/lib/avApi';
+import { fetchWithAuth } from '@/lib/apiClient';
 
-export type AutoValueSessionInput = {
-  vehicle_make: string;
-  vehicle_model: string;
-  vehicle_year: number;
-  vehicle_mileage_km: number;
-  vehicle_color?: string;
-  vehicle_fuel_type?: string;
-  service_book?: boolean;
-  owners_count?: number;
-  accident_free?: boolean;
-  target_country?: string;
-  linked_result_id?: string;
-  linked_session_id?: string;
-};
+export type AutoValueSessionInput = CreateSessionInput;
 
 export const useAutoValue = () => {
   const createSession = async (data: AutoValueSessionInput) => {
-    return supabase.from('auto_value_sessions').insert(data as any).select().single();
+    try {
+      const result = await apiCreateSession(data);
+      return { data: result, error: null };
+    } catch (e: any) {
+      return { data: null, error: { message: e.message } };
+    }
   };
 
   const runAnalysis = async (sessionId: string) => {
-    return supabase.functions.invoke('run-auto-value-analysis', {
-      body: { autoValueSessionId: sessionId },
-    });
+    try {
+      const result = await apiRunAnalysis(sessionId);
+      return { data: result, error: null };
+    } catch (e: any) {
+      return { data: null, error: { message: e.message } };
+    }
   };
 
-  const pollResult = (sessionId: string, timeoutMs = 120000): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      const start = Date.now();
-      const interval = setInterval(async () => {
-        if (Date.now() - start > timeoutMs) {
-          clearInterval(interval);
-          reject(new Error('Timeout'));
-          return;
-        }
-        const { data } = await supabase
-          .from('auto_value_results')
-          .select('*')
-          .eq('session_id', sessionId)
-          .eq('status', 'completed')
-          .maybeSingle();
-        if (data) {
-          clearInterval(interval);
-          resolve(data);
-        }
-      }, 2000);
-    });
+  const pollResult = (sessionId: string, timeoutMs = 120000) => {
+    return apiPollResult(sessionId, timeoutMs);
   };
 
   const loadLinkedDamageResult = async (resultId: string) => {
-    // Cross-project table - use type assertion
-    return (supabase as any).from('analysis_results').select('payload').eq('id', resultId).single();
+    try {
+      const res = await fetchWithAuth(`/analysis-results/${resultId}`);
+      if (!res.ok) return { data: null, error: { message: 'Not found' } };
+      const data = await res.json();
+      return { data, error: null };
+    } catch (e: any) {
+      return { data: null, error: { message: e.message } };
+    }
   };
 
   const getRecentScanSessions = async (limit = 5) => {
-    // Cross-project table - use type assertion
-    return (supabase as any)
-      .from('scan_sessions')
-      .select('id, vehicle_make, vehicle_model, vehicle_year, created_at')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    try {
+      const res = await fetchWithAuth(`/scan-sessions?limit=${limit}`);
+      if (!res.ok) return { data: [], error: null };
+      const data = await res.json();
+      return { data: data.sessions || data || [], error: null };
+    } catch {
+      return { data: [], error: null };
+    }
   };
 
   return { createSession, runAnalysis, pollResult, loadLinkedDamageResult, getRecentScanSessions };

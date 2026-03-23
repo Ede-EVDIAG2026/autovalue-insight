@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Car, Calendar, TrendingUp } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { listSessions } from '@/lib/avApi';
 
 const PortalPage = () => {
   const { tr } = useLanguage();
@@ -21,11 +21,8 @@ const PortalPage = () => {
   const loadSessions = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('auto_value_sessions')
-        .select('*, auto_value_results(*)')
-        .order('created_at', { ascending: false });
-      setSessions(data || []);
+      const data = await listSessions();
+      setSessions(data?.sessions || data || []);
     } catch (e) {
       console.error(e);
     }
@@ -89,7 +86,7 @@ const PortalPage = () => {
         ) : (
           <div className="grid gap-4">
             {filtered.map(session => {
-              const result = session.auto_value_results?.[0];
+              const result = session.auto_value_results?.[0] || session.result;
               return (
                 <div key={session.id} className="glass-card p-6 flex items-center gap-6">
                   <div className="flex-1">
