@@ -151,7 +151,9 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
 
     let cancelled = false;
     loadLeaflet().then(() => {
-      if (cancelled || !mapRef.current) return;
+      if (cancelled) return;
+      const container = document.getElementById('eu-price-map');
+      if (!container) return;
       const L = (window as any).L;
       if (!L) return;
 
@@ -162,7 +164,7 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       }
       markersRef.current = [];
 
-      const map = L.map(mapRef.current, {
+      const map = L.map(container, {
         center: [51.5, 10.0],
         zoom: 4,
         scrollWheelZoom: true,
@@ -213,7 +215,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         map.flyTo([cc.lat, cc.lng], cc.zoom, { duration: 1.2 });
       }
 
-      // Fix tile rendering after container becomes visible
       setTimeout(() => map.invalidateSize(), 200);
     });
 
