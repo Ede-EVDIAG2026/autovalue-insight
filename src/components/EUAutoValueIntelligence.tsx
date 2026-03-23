@@ -880,7 +880,29 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
     }, 420);
   }, [canSubmit, form, tr.result_gen]);
 
-  const reset = () => { setScreen('input'); setResult(null); };
+  const reset = () => { setScreen('input'); setResult(null); setAs24History(null); };
+
+  // Fetch AS24 history when result screen is shown
+  useEffect(() => {
+    if (screen !== 'result' || !form.brand || !form.model) return;
+    let cancelled = false;
+    setAs24HistoryLoading(true);
+    const p = new URLSearchParams({ brand: form.brand, model: form.model });
+    if (form.year) p.set('year', form.year);
+    fetch(`https://api.evdiag.hu/market/as24/summary?${p}`, { signal: AbortSignal.timeout(10000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (cancelled) return;
+        if (d?.history && Array.isArray(d.history) && d.history.length > 0) {
+          setAs24History(d.history);
+        } else {
+          setAs24History(null);
+        }
+      })
+      .catch(() => { if (!cancelled) setAs24History(null); })
+      .finally(() => { if (!cancelled) setAs24HistoryLoading(false); });
+    return () => { cancelled = true; };
+  }, [screen, form.brand, form.model, form.year]);
 
   return (
     <div style={S.root}>
