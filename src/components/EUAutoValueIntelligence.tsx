@@ -363,6 +363,10 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
   const makesLoaded = useRef(false);
   const formRef = useRef<HTMLDivElement>(null);
 
+  // AS24 history/trend data
+  const [as24History, setAs24History] = useState<{ snapshot_date: string; median_eur: number; min_eur?: number; max_eur?: number; listing_count?: number }[] | null>(null);
+  const [as24HistoryLoading, setAs24HistoryLoading] = useState(false);
+
   const ui = {
     HU: {
       vehicle_data: 'Jármű adatok megadása', vehicle_sub: 'Adja meg a jármű fő paramétereit',
