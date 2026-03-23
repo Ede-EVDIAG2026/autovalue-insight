@@ -311,6 +311,8 @@ ${linkedData ? `\nLinked condition data:\nCondition score: ${session.linked_cond
     const fullResult = {
       market: agent1, condition: agent2, regional: agent3,
       velocity: agent4, negotiation: agent5, bayesian: agent6, dealer: agent7,
+      as24_market_data: as24,
+      market_data_source: as24?.found ? "autoscout24" : "ai_estimate",
     };
 
     // Save to DB
