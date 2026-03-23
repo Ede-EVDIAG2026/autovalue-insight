@@ -4,6 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import VinDecoder from './VinDecoder';
 import VinResultModal from './VinResultModal';
 import PdfDownloadButton from './results/PdfDownloadButton';
+import RegionalPriceMap from './autovalue/RegionalPriceMap';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 import { MARKET_API } from '@/lib/marketApi';
