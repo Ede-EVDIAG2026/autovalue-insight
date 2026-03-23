@@ -327,14 +327,13 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         })}
       </div>
 
-      {/* Leaflet Map */}
-      {hasCities && (
-        <div className="relative">
-          <div
-            ref={mapRef}
-            className="w-full border border-border bg-muted"
-            style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
-          />
+      {/* Leaflet Map — always rendered */}
+      <div className="relative">
+        <div
+          id="eu-price-map"
+          className="w-full border border-border bg-muted"
+          style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)', display: hasCities ? 'block' : 'none' }}
+        />
           {/* Legend */}
           <div
             className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
