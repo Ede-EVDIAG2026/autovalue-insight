@@ -328,25 +328,24 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       </div>
 
       {/* Leaflet Map — always rendered */}
-      <div className="relative">
+      <div className="relative" style={{ display: hasCities ? 'block' : 'none' }}>
         <div
           id="eu-price-map"
           className="w-full border border-border bg-muted"
-          style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)', display: hasCities ? 'block' : 'none' }}
+          style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
         />
-          {/* Legend */}
-          <div
-            className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
-            style={{ pointerEvents: 'none' }}
-          >
-            <div className="flex items-center gap-3 flex-wrap">
-              <span><span style={{ color: '#22c55e' }}>●</span> {'< 15K€'}</span>
-              <span><span style={{ color: '#3b82f6' }}>●</span> 15–25K€</span>
-              <span><span style={{ color: '#f59e0b' }}>●</span> 25–40K€</span>
-              <span><span style={{ color: '#ef4444' }}>●</span> {'> 40K€'}</span>
-            </div>
-            <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
+        {/* Legend */}
+        <div
+          className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="flex items-center gap-3 flex-wrap">
+            <span><span style={{ color: '#22c55e' }}>●</span> {'< 15K€'}</span>
+            <span><span style={{ color: '#3b82f6' }}>●</span> 15–25K€</span>
+            <span><span style={{ color: '#f59e0b' }}>●</span> 25–40K€</span>
+            <span><span style={{ color: '#ef4444' }}>●</span> {'> 40K€'}</span>
           </div>
+          <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
         </div>
       </div>
 
