@@ -137,6 +137,39 @@ Accident free: ${session.accident_free ? "yes" : "no"}
 Target country: ${session.target_country}
 ${linkedData ? `\nLinked condition data:\nCondition score: ${session.linked_condition_score}/10\nRepair cost EUR: ${session.linked_repair_cost_eur}\nRepair cost HUF: ${session.linked_repair_cost_huf}\nPDR count: ${session.linked_pdr_count}\nValue reduction: ${session.linked_value_reduction_pct}%\nNegotiation summary: ${session.linked_negotiation_summary}` : "No linked damage analysis (standalone mode)"}`;
 
+    // ── AS24 real market data lookup ──
+    let as24: any = null;
+    try {
+      const as24Params = new URLSearchParams({
+        brand: session.vehicle_make,
+        model: session.vehicle_model,
+      });
+      if (session.vehicle_year) as24Params.set("year", String(session.vehicle_year));
+      if (session.target_country) as24Params.set("country", session.target_country);
+      const as24Res = await fetch(
+        `https://api.evdiag.hu/market/as24/lookup?${as24Params}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (as24Res.ok) as24 = await as24Res.json();
+    } catch (e) {
+      console.warn("AS24 lookup failed:", e);
+    }
+
+    const as24Context = as24?.found
+      ? `REAL AUTOSCOUT24 MARKET DATA — use as primary reference:
+     Listings: ${as24.data_points} | Confidence: ${Math.round(as24.confidence * 100)}%
+     Snapshot: ${as24.snapshot_date}
+     P-low  (min): €${as24.market.low_eur}
+     P50 (median): €${as24.market.median_eur}  ← anchor your estimate here
+     P-high (max): €${as24.market.high_eur}
+     Avg mileage:  ${as24.usage?.avg_mileage_km} km
+     Liquidity:    ${as24.liquidity.score}/100 (~${as24.liquidity.days_to_sell} days to sell)
+     DO NOT fabricate market prices. Use the above as ground truth.
+     Your P50 estimate must be within 15% of the AS24 median unless
+     condition/equipment adjustments justify the deviation.`
+      : `WARNING: No real AS24 market data found for this vehicle.
+     Provide conservative AI estimate. Mark as LOW_CONFIDENCE.`;
+
     // AGENT 1 – MarketPriceAggregator
     const agent1Tools = makeTool("market_price", "Return market price distribution", {
       p10_eur: { type: "number" }, p25_eur: { type: "number" },
@@ -156,7 +189,7 @@ ${linkedData ? `\nLinked condition data:\nCondition score: ${session.linked_cond
 
     const agent1 = await callAI(
       LOVABLE_API_KEY,
-      `You are MARKET_PRICE_AGGREGATOR for EU AutoValue Intelligence. Estimate current used EV market price distribution for the given vehicle in the target country. Use realistic EUR values based on actual 2024-2025 EU used EV market data. Never output placeholder zeros. For mileage adjustment: average annual km 15,000-20,000. Below average: +3-5% premium. Above average: -5-10% discount.`,
+      `You are MARKET_PRICE_AGGREGATOR for EU AutoValue Intelligence. ${as24Context}\nEstimate current used EV market price distribution for the given vehicle in the target country. Use realistic EUR values based on actual 2024-2025 EU used EV market data. Never output placeholder zeros. For mileage adjustment: average annual km 15,000-20,000. Below average: +3-5% premium. Above average: -5-10% discount.`,
       vehicleInfo,
       agent1Tools,
       { type: "function", function: { name: "market_price" } }
