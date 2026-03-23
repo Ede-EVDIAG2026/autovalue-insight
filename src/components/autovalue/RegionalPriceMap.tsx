@@ -348,7 +348,7 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
             <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Regional breakdown */}
       {data.by_region?.length > 0 && (
