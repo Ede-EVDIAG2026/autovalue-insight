@@ -304,7 +304,7 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
           {!listingsLoading && listingsData && listingsData.count > 0 && (
             <iframe
               key={`${selectedCountry}-${isDark}`}
-              srcDoc={buildListingsMapHtml(listingsData.listings, selectedCountry, isDark)}
+              srcDoc={buildMapHtml(listingsData.listings, selectedCountry)}
               style={{ width: '100%', height: '480px', border: 'none', borderRadius: '12px', boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}
               sandbox="allow-scripts allow-popups"
             />
