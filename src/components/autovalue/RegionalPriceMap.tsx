@@ -108,7 +108,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const [regionsOpen, setRegionsOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
-  const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const leafletLoadedRef = useRef(false);
@@ -152,7 +151,9 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
 
     let cancelled = false;
     loadLeaflet().then(() => {
-      if (cancelled || !mapRef.current) return;
+      if (cancelled) return;
+      const container = document.getElementById('eu-price-map');
+      if (!container) return;
       const L = (window as any).L;
       if (!L) return;
 
@@ -163,7 +164,7 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       }
       markersRef.current = [];
 
-      const map = L.map(mapRef.current, {
+      const map = L.map(container, {
         center: [51.5, 10.0],
         zoom: 4,
         scrollWheelZoom: true,
@@ -214,7 +215,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         map.flyTo([cc.lat, cc.lng], cc.zoom, { duration: 1.2 });
       }
 
-      // Fix tile rendering after container becomes visible
       setTimeout(() => map.invalidateSize(), 200);
     });
 
@@ -327,29 +327,27 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         })}
       </div>
 
-      {/* Leaflet Map */}
-      {hasCities && (
-        <div className="relative">
-          <div
-            ref={mapRef}
-            className="w-full border border-border bg-muted"
-            style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
-          />
-          {/* Legend */}
-          <div
-            className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
-            style={{ pointerEvents: 'none' }}
-          >
-            <div className="flex items-center gap-3 flex-wrap">
-              <span><span style={{ color: '#22c55e' }}>●</span> {'< 15K€'}</span>
-              <span><span style={{ color: '#3b82f6' }}>●</span> 15–25K€</span>
-              <span><span style={{ color: '#f59e0b' }}>●</span> 25–40K€</span>
-              <span><span style={{ color: '#ef4444' }}>●</span> {'> 40K€'}</span>
-            </div>
-            <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
+      {/* Leaflet Map — always rendered */}
+      <div className="relative" style={{ display: hasCities ? 'block' : 'none' }}>
+        <div
+          id="eu-price-map"
+          className="w-full border border-border bg-muted"
+          style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
+        />
+        {/* Legend */}
+        <div
+          className="absolute bottom-4 left-4 z-[1000] rounded-lg border bg-card/95 backdrop-blur-sm px-3 py-2 text-xs space-y-1"
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className="flex items-center gap-3 flex-wrap">
+            <span><span style={{ color: '#22c55e' }}>●</span> {'< 15K€'}</span>
+            <span><span style={{ color: '#3b82f6' }}>●</span> 15–25K€</span>
+            <span><span style={{ color: '#f59e0b' }}>●</span> 25–40K€</span>
+            <span><span style={{ color: '#ef4444' }}>●</span> {'> 40K€'}</span>
           </div>
+          <div className="text-muted-foreground">○ kör mérete = hirdetések száma</div>
         </div>
-      )}
+      </div>
 
       {/* Regional breakdown */}
       {data.by_region?.length > 0 && (
