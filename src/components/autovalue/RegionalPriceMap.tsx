@@ -83,16 +83,76 @@ interface RegionalResponse {
 
 const fmt = (v: number) => `€${v.toLocaleString('hu-HU')}`;
 
-function priceColor(eur: number): string {
-  if (eur < 15000) return '#22c55e';
-  if (eur < 25000) return '#3b82f6';
-  if (eur < 40000) return '#f59e0b';
-  return '#ef4444';
-}
+function buildMapHtml(cities: any[], filterCountry: string | null, isDark: boolean): string {
+  const filtered = filterCountry
+    ? cities.filter((c: any) => c.country_code === filterCountry && c.lat && c.lng)
+    : cities.filter((c: any) => c.lat && c.lng);
 
-function markerRadius(listings: number, maxListings: number): number {
-  const ratio = Math.sqrt(listings / Math.max(maxListings, 1));
-  return Math.max(6, Math.min(20, 6 + ratio * 14));
+  const countryCenter: Record<string, [number, number, number]> = {
+    DE: [51.1657, 10.4515, 6], NL: [52.1326, 5.2913, 7],
+    BE: [50.5039, 4.4699, 7], FR: [46.2276, 2.2137, 6],
+    IT: [41.8719, 12.5674, 6], ES: [40.4637, -3.7492, 6],
+    AT: [47.5162, 14.5501, 7], CH: [46.8182, 8.2275, 7],
+    PL: [51.9194, 19.1451, 6], CZ: [49.8175, 15.4730, 7],
+    HU: [47.1625, 19.5033, 7], SE: [60.1282, 18.6435, 5],
+    DK: [56.2639, 9.5018, 7], NO: [60.472, 8.4689, 5],
+    FI: [61.9241, 25.7482, 5], PT: [39.3999, -8.2245, 6],
+    RO: [45.9432, 24.9668, 6], GB: [55.3781, -3.436, 6],
+  };
+
+  const center = filterCountry && countryCenter[filterCountry]
+    ? countryCenter[filterCountry]
+    : [51.5, 10.0, 4];
+
+  const tileUrl = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+  const tileAttr = isDark ? '© CartoDB © OpenStreetMap' : '© OpenTopoMap';
+
+  const markers = filtered.map((c: any) => {
+    const color = (c.median_eur || 0) < 15000 ? '#22c55e' :
+                  (c.median_eur || 0) < 25000 ? '#3b82f6' :
+                  (c.median_eur || 0) < 40000 ? '#f59e0b' : '#ef4444';
+    const radius = Math.max(8, Math.min(25, (c.listings || 1) * 3));
+    const cityName = (c.city || '').replace(/'/g, "\\'");
+    const regionLine = c.region ? `<br/><span style="color:#888">${c.region.replace(/'/g, "\\'")}</span>` : '';
+    return `L.circleMarker([${c.lat}, ${c.lng}], {
+      radius: ${radius}, color: '${color}',
+      fillColor: '${color}', fillOpacity: 0.75, weight: 2
+    }).bindTooltip('<b>${cityName} (${c.country_code})</b>${regionLine}<br/>Medián: €${(c.median_eur||0).toLocaleString('hu-HU')}<br/>${c.listings} hirdetés', {permanent: false}).addTo(map);`;
+  }).join('\n');
+
+  const legendBg = isDark ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.95)';
+  const legendColor = isDark ? '#ccc' : '#333';
+
+  return `<!DOCTYPE html><html><head>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+    <style>html,body,#map{margin:0;padding:0;height:100%;width:100%}
+    .legend{background:${legendBg};color:${legendColor};padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+    </style>
+  </head><body>
+    <div id="map"></div>
+    <script>
+      var map = L.map('map').setView([${center[0]}, ${center[1]}], ${center[2]});
+      L.tileLayer('${tileUrl}',{
+        attribution:'${tileAttr}',maxZoom:17
+      }).addTo(map);
+      ${markers}
+      var legend = L.control({position:'bottomleft'});
+      legend.onAdd = function(){
+        var d = L.DomUtil.create('div','legend');
+        d.innerHTML = '<span style="color:#22c55e">●</span> &lt;15K€ &nbsp;' +
+          '<span style="color:#3b82f6">●</span> 15-25K€ &nbsp;' +
+          '<span style="color:#f59e0b">●</span> 25-40K€ &nbsp;' +
+          '<span style="color:#ef4444">●</span> &gt;40K€<br/>' +
+          '<span style="opacity:0.6">○ kör mérete = hirdetések száma</span>';
+        return d;
+      };
+      legend.addTo(map);
+    <\/script>
+  </body></html>`;
 }
 
 interface Props {
