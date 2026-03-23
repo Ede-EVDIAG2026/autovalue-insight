@@ -5,8 +5,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 
-const BASE = 'https://api.evdiag.hu';
-
 const FLAG: Record<string, string> = {
   DE: '🇩🇪', NL: '🇳🇱', BE: '🇧🇪', FR: '🇫🇷', IT: '🇮🇹',
   ES: '🇪🇸', AT: '🇦🇹', CH: '🇨🇭', PL: '🇵🇱', CZ: '🇨🇿',
@@ -14,34 +12,6 @@ const FLAG: Record<string, string> = {
   PT: '🇵🇹', RO: '🇷🇴', LU: '🇱🇺', SK: '🇸🇰', HR: '🇭🇷',
   SI: '🇸🇮', BG: '🇧🇬', IE: '🇮🇪', GR: '🇬🇷', GB: '🇬🇧',
   LT: '🇱🇹', LV: '🇱🇻', EE: '🇪🇪',
-};
-
-const COUNTRY_CENTER: Record<string, { lat: number; lng: number; zoom: number }> = {
-  DE: { lat: 51.1657, lng: 10.4515, zoom: 6 },
-  NL: { lat: 52.1326, lng: 5.2913, zoom: 7 },
-  BE: { lat: 50.5039, lng: 4.4699, zoom: 7 },
-  FR: { lat: 46.2276, lng: 2.2137, zoom: 6 },
-  IT: { lat: 41.8719, lng: 12.5674, zoom: 6 },
-  ES: { lat: 40.4637, lng: -3.7492, zoom: 6 },
-  AT: { lat: 47.5162, lng: 14.5501, zoom: 7 },
-  CH: { lat: 46.8182, lng: 8.2275, zoom: 7 },
-  PL: { lat: 51.9194, lng: 19.1451, zoom: 6 },
-  CZ: { lat: 49.8175, lng: 15.4730, zoom: 7 },
-  HU: { lat: 47.1625, lng: 19.5033, zoom: 7 },
-  SE: { lat: 60.1282, lng: 18.6435, zoom: 5 },
-  DK: { lat: 56.2639, lng: 9.5018, zoom: 7 },
-  NO: { lat: 60.472, lng: 8.4689, zoom: 5 },
-  FI: { lat: 61.9241, lng: 25.7482, zoom: 5 },
-  PT: { lat: 39.3999, lng: -8.2245, zoom: 6 },
-  RO: { lat: 45.9432, lng: 24.9668, zoom: 6 },
-  LU: { lat: 49.8153, lng: 6.1296, zoom: 9 },
-  SK: { lat: 48.669, lng: 19.699, zoom: 7 },
-  HR: { lat: 45.1, lng: 15.2, zoom: 7 },
-  SI: { lat: 46.1512, lng: 14.9955, zoom: 8 },
-  BG: { lat: 42.7339, lng: 25.4858, zoom: 7 },
-  IE: { lat: 53.1424, lng: -7.6921, zoom: 7 },
-  GR: { lat: 39.0742, lng: 21.8243, zoom: 6 },
-  GB: { lat: 55.3781, lng: -3.4360, zoom: 6 },
 };
 
 interface CountryData {
@@ -81,45 +51,90 @@ interface RegionalResponse {
   top_cities: CityData[];
 }
 
+interface ListingItem {
+  url: string;
+  price_eur: number;
+  mileage_km: number;
+  city: string;
+  first_reg: string;
+  variant: string;
+  seller_name: string;
+  seller_type: string;
+  color: string;
+  lat: number;
+  lng: number;
+  google_url: string;
+}
+
+interface ListingsMapResponse {
+  count: number;
+  listings: ListingItem[];
+}
+
 const fmt = (v: number) => `€${v.toLocaleString('hu-HU')}`;
 
-function buildMapHtml(cities: any[], filterCountry: string | null, isDark: boolean): string {
-  const filtered = filterCountry
-    ? cities.filter((c: any) => c.country_code === filterCountry && c.lat && c.lng)
-    : cities.filter((c: any) => c.lat && c.lng);
+function buildListingsMapHtml(listings: ListingItem[], country: string, isDark: boolean): string {
+  const pts = listings.filter(l => l.lat && l.lng);
 
   const countryCenter: Record<string, [number, number, number]> = {
     DE: [51.1657, 10.4515, 6], NL: [52.1326, 5.2913, 7],
     BE: [50.5039, 4.4699, 7], FR: [46.2276, 2.2137, 6],
     IT: [41.8719, 12.5674, 6], ES: [40.4637, -3.7492, 6],
     AT: [47.5162, 14.5501, 7], CH: [46.8182, 8.2275, 7],
-    PL: [51.9194, 19.1451, 6], CZ: [49.8175, 15.4730, 7],
+    PL: [51.9194, 19.1451, 6], CZ: [49.8175, 15.473, 7],
     HU: [47.1625, 19.5033, 7], SE: [60.1282, 18.6435, 5],
     DK: [56.2639, 9.5018, 7], NO: [60.472, 8.4689, 5],
     FI: [61.9241, 25.7482, 5], PT: [39.3999, -8.2245, 6],
     RO: [45.9432, 24.9668, 6], GB: [55.3781, -3.436, 6],
+    LU: [49.8153, 6.1296, 9], SK: [48.669, 19.699, 7],
+    HR: [45.1, 15.2, 7], SI: [46.1512, 14.9955, 8],
+    BG: [42.7339, 25.4858, 7], IE: [53.1424, -7.6921, 7],
+    GR: [39.0742, 21.8243, 6],
   };
 
-  const center = filterCountry && countryCenter[filterCountry]
-    ? countryCenter[filterCountry]
-    : [51.5, 10.0, 4];
+  const c = countryCenter[country] || [51.5, 10.0, 5];
+  const totalCount = pts.length;
+  const radius = totalCount > 30 ? 10 : totalCount > 15 ? 14 : 20;
 
   const tileUrl = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
   const tileAttr = isDark ? '© CartoDB © OpenStreetMap' : '© OpenTopoMap';
 
-  const markers = filtered.map((c: any) => {
-    const color = (c.median_eur || 0) < 15000 ? '#22c55e' :
-                  (c.median_eur || 0) < 25000 ? '#3b82f6' :
-                  (c.median_eur || 0) < 40000 ? '#f59e0b' : '#ef4444';
-    const radius = Math.max(8, Math.min(25, (c.listings || 1) * 3));
-    const cityName = (c.city || '').replace(/'/g, "\\'");
-    const regionLine = c.region ? `<br/><span style="color:#888">${c.region.replace(/'/g, "\\'")}</span>` : '';
-    return `L.circleMarker([${c.lat}, ${c.lng}], {
-      radius: ${radius}, color: '${color}',
-      fillColor: '${color}', fillOpacity: 0.75, weight: 2
-    }).bindTooltip('<b>${cityName} (${c.country_code})</b>${regionLine}<br/>Medián: €${(c.median_eur||0).toLocaleString('hu-HU')}<br/>${c.listings} hirdetés', {permanent: false}).addTo(map);`;
+  const esc = (s: string) => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+  const markers = pts.map(p => {
+    const col = (p.price_eur || 0) < 15000 ? '#16a34a' :
+                (p.price_eur || 0) < 25000 ? '#2563eb' :
+                (p.price_eur || 0) < 40000 ? '#d97706' : '#dc2626';
+    const title = esc(p.variant || 'N/A');
+    const city = esc(p.city || '');
+    const seller = esc(p.seller_name || '');
+    const sellerType = esc(p.seller_type || '');
+    const url = esc(p.url || '');
+    const googleUrl = esc(p.google_url || '');
+    const firstReg = esc(p.first_reg || '');
+    const price = (p.price_eur || 0).toLocaleString('hu-HU');
+    const km = (p.mileage_km || 0).toLocaleString('hu-HU');
+
+    const popupHtml = `<div style="min-width:220px;font-family:system-ui,sans-serif">` +
+      `<div style="font-weight:700;font-size:14px;margin-bottom:4px">${title}</div>` +
+      `<div style="font-size:20px;font-weight:800;color:${col};margin-bottom:6px">€${price}</div>` +
+      `<div style="font-size:12px;color:#666;line-height:1.6">` +
+      `📍 ${city}<br/>` +
+      `🛣️ ${km} km<br/>` +
+      `📅 ${firstReg}<br/>` +
+      `🏪 ${seller} (${sellerType})` +
+      `</div>` +
+      `<div style="display:flex;gap:6px;margin-top:8px">` +
+      `<button onclick="window.open('${url}','_blank')" style="flex:1;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">AS24 hirdetés →</button>` +
+      `<button onclick="window.open('${googleUrl}','_blank')" style="flex:1;padding:6px 10px;background:#6b7280;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">Google keresés →</button>` +
+      `</div></div>`;
+
+    return `L.circleMarker([${p.lat},${p.lng}],{radius:${radius},color:'#ffffff',fillColor:'${col}',fillOpacity:0.9,weight:3})` +
+      `.bindTooltip('${city}',{permanent:true,direction:'top',className:'city-label',offset:[0,-${radius}]})` +
+      `.bindPopup('${popupHtml.replace(/'/g, "\\'")}',{maxWidth:280})` +
+      `.addTo(map);`;
   }).join('\n');
 
   const legendBg = isDark ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.95)';
@@ -129,24 +144,25 @@ function buildMapHtml(cities: any[], filterCountry: string | null, isDark: boole
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
-    <style>html,body,#map{margin:0;padding:0;height:100%;width:100%}
+    <style>
+    html,body,#map{margin:0;padding:0;height:100%;width:100%}
+    .city-label{background:rgba(0,0,0,0.65);color:white;border:none;border-radius:4px;font-size:10px;padding:2px 5px;white-space:nowrap;box-shadow:none}
+    .city-label::before{display:none}
     .legend{background:${legendBg};color:${legendColor};padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
     </style>
   </head><body>
     <div id="map"></div>
     <script>
-      var map = L.map('map').setView([${center[0]}, ${center[1]}], ${center[2]});
-      L.tileLayer('${tileUrl}',{
-        attribution:'${tileAttr}',maxZoom:17
-      }).addTo(map);
+      var map=L.map('map').setView([${c[0]},${c[1]}],${c[2]});
+      L.tileLayer('${tileUrl}',{attribution:'${tileAttr}',maxZoom:17}).addTo(map);
       ${markers}
-      var legend = L.control({position:'bottomleft'});
-      legend.onAdd = function(){
-        var d = L.DomUtil.create('div','legend');
-        d.innerHTML = '<span style="color:#22c55e">●</span> &lt;15K€ &nbsp;' +
-          '<span style="color:#3b82f6">●</span> 15-25K€ &nbsp;' +
-          '<span style="color:#f59e0b">●</span> 25-40K€ &nbsp;' +
-          '<span style="color:#ef4444">●</span> &gt;40K€<br/>' +
+      var legend=L.control({position:'bottomleft'});
+      legend.onAdd=function(){
+        var d=L.DomUtil.create('div','legend');
+        d.innerHTML='<span style="color:#16a34a">●</span> &lt;15K€ &nbsp;'+
+          '<span style="color:#2563eb">●</span> 15-25K€ &nbsp;'+
+          '<span style="color:#d97706">●</span> 25-40K€ &nbsp;'+
+          '<span style="color:#dc2626">●</span> &gt;40K€<br/>'+
           '<span style="opacity:0.6">○ kör mérete = hirdetések száma</span>';
         return d;
       };
@@ -167,9 +183,12 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const [error, setError] = useState(false);
   const [regionsOpen, setRegionsOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [listingsData, setListingsData] = useState<ListingsMapResponse | null>(null);
+  const [listingsLoading, setListingsLoading] = useState(false);
 
   const isDark = document.documentElement.classList.contains('dark');
 
+  // Fetch regional summary
   useEffect(() => {
     if (!brand || !model) return;
     setLoading(true);
@@ -181,10 +200,19 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       .catch(() => { setError(true); setLoading(false); });
   }, [brand, model, year]);
 
-  const mapHtml = useMemo(() => {
-    if (!data?.top_cities?.length) return '';
-    return buildMapHtml(data.top_cities, selectedCountry, isDark);
-  }, [data, selectedCountry, isDark]);
+  // Fetch listings-map when country selected
+  useEffect(() => {
+    if (!selectedCountry || !brand || !model) {
+      setListingsData(null);
+      return;
+    }
+    setListingsLoading(true);
+    const url = `https://api.evdiag.hu/market/as24/listings-map?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}&country=${encodeURIComponent(selectedCountry)}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(d => { setListingsData(d); setListingsLoading(false); })
+      .catch(() => { setListingsData({ count: 0, listings: [] }); setListingsLoading(false); });
+  }, [selectedCountry, brand, model]);
 
   const handleCountryClick = (code: string) => {
     setSelectedCountry(prev => prev === code ? null : code);
@@ -198,7 +226,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
             <Skeleton key={i} className="h-36 rounded-lg" />
           ))}
         </div>
-        <Skeleton className="h-[500px] rounded-xl" />
       </div>
     );
   }
@@ -218,7 +245,6 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
   const globalMax = Math.max(...countries.map(c => c.max_eur));
   const globalMin = Math.min(...countries.map(c => c.min_eur));
   const range = globalMax - globalMin || 1;
-  const hasCities = data.top_cities?.some(c => c.lat != null && c.lng != null);
 
   return (
     <div className="space-y-4">
@@ -282,15 +308,26 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         })}
       </div>
 
-      {/* Map iframe — only when a country is selected */}
-      {selectedCountry && data.top_cities && (
+      {/* Listings map — only when a country is selected */}
+      {selectedCountry && (
         <div style={{ marginTop: '20px' }}>
-          <iframe
-            key={selectedCountry}
-            srcDoc={buildMapHtml(data.top_cities, selectedCountry, isDark)}
-            style={{ width: '100%', height: '480px', border: 'none', borderRadius: '12px', boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}
-            sandbox="allow-scripts"
-          />
+          {listingsLoading && (
+            <Skeleton className="w-full rounded-xl" style={{ height: '480px' }} />
+          )}
+          {!listingsLoading && listingsData && listingsData.count === 0 && (
+            <div className="text-center py-8 border rounded-xl bg-card">
+              <div className="text-2xl mb-2">📭</div>
+              <div className="text-sm font-semibold text-muted-foreground">Ehhez az országhoz nincs részletes hirdetési adat</div>
+            </div>
+          )}
+          {!listingsLoading && listingsData && listingsData.count > 0 && (
+            <iframe
+              key={`${selectedCountry}-${isDark}`}
+              srcDoc={buildListingsMapHtml(listingsData.listings, selectedCountry, isDark)}
+              style={{ width: '100%', height: '480px', border: 'none', borderRadius: '12px', boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}
+              sandbox="allow-scripts allow-popups"
+            />
+          )}
         </div>
       )}
 
