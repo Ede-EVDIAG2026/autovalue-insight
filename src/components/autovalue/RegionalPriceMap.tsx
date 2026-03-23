@@ -163,12 +163,23 @@ interface Props {
 
 export default function RegionalPriceMap({ brand, model, year }: Props) {
   const [data, setData] = useState<RegionalResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [regionsOpen, setRegionsOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   const isDark = document.documentElement.classList.contains('dark');
+
+  useEffect(() => {
+    if (!brand || !model) return;
+    setLoading(true);
+    setError(false);
+    const url = `https://api.evdiag.hu/market/as24/regional?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}${year ? `&year=${year}` : ''}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
+  }, [brand, model, year]);
 
   const mapHtml = useMemo(() => {
     if (!data?.top_cities?.length) return '';
