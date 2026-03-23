@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { VehicleData } from '@/pages/AutoValuePage';
 import { Check, Loader2, Circle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { createSession, runAnalysis } from '@/lib/avApi';
 
 const AGENTS = [
   'agent_market',
@@ -36,7 +36,7 @@ const Step2Analysis = ({
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    runAnalysis();
+    runFullAnalysis();
   }, []);
 
   useEffect(() => {
@@ -64,48 +64,42 @@ const Step2Analysis = ({
     });
   };
 
-  const runAnalysis = async () => {
+  const runFullAnalysis = async () => {
     try {
-      // Create session
-      const { data: session, error: sessionErr } = await supabase
-        .from('auto_value_sessions')
-        .insert({
-          user_id: user?.dealer_id || null,
-          vehicle_make: vehicleData.vehicle_make,
-          vehicle_model: vehicleData.vehicle_model,
-          vehicle_year: vehicleData.vehicle_year,
-          vehicle_mileage_km: vehicleData.vehicle_mileage_km,
-          vehicle_color: vehicleData.vehicle_color || null,
-          vehicle_fuel_type: vehicleData.vehicle_fuel_type,
-          service_book: vehicleData.service_book,
-          owners_count: vehicleData.owners_count,
-          accident_free: vehicleData.accident_free,
-          target_country: vehicleData.target_country,
-          linked_result_id: vehicleData.linked_result_id || null,
-        } as any)
-        .select()
-        .single();
+      // Create session via API
+      const session = await createSession({
+        vehicle_make: vehicleData.vehicle_make,
+        vehicle_model: vehicleData.vehicle_model,
+        vehicle_year: vehicleData.vehicle_year,
+        vehicle_mileage_km: vehicleData.vehicle_mileage_km,
+        vehicle_color: vehicleData.vehicle_color || undefined,
+        vehicle_fuel_type: vehicleData.vehicle_fuel_type,
+        service_book: vehicleData.service_book,
+        owners_count: vehicleData.owners_count,
+        accident_free: vehicleData.accident_free,
+        target_country: vehicleData.target_country,
+        linked_result_id: vehicleData.linked_result_id || undefined,
+      });
 
-      if (sessionErr) {
-        console.error('Session creation error:', sessionErr);
+      if (!session?.id) {
+        console.error('Session creation failed:', session);
         toast.error('Hiba történt a munkamenet létrehozásakor.');
         return;
       }
 
+      console.log('Session created:', session.id);
+
       // Simulate agent progress while waiting for real analysis
       const progressPromises = AGENTS.map((_, i) => simulateAgentProgress(i, i * 2000));
       
-      // Call edge function
-      const { data: result, error: fnErr } = await supabase.functions.invoke(
-        'run-auto-value-analysis',
-        { body: { autoValueSessionId: session.id } }
-      );
+      // Call edge function for analysis
+      const result = await runAnalysis(session.id);
 
       // Wait for all visual progress to complete
       await Promise.all(progressPromises);
 
-      if (fnErr) {
-        console.error('Analysis error:', fnErr);
+      if (!result) {
+        console.error('Analysis returned no result');
         toast.error('Hiba történt az elemzés során.');
         return;
       }
