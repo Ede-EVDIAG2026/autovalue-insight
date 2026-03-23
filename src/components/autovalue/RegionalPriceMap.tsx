@@ -164,6 +164,8 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       }
       markersRef.current = [];
 
+      const isDark = document.documentElement.classList.contains('dark');
+
       const map = L.map(container, {
         center: [51.5, 10.0],
         zoom: 4,
@@ -172,9 +174,14 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
       });
       mapInstanceRef.current = map;
 
-      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenTopoMap',
-        maxZoom: 17,
+      const tileUrl = isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+      const tileAttr = isDark ? '© CartoDB © OpenStreetMap' : '© OpenTopoMap';
+
+      L.tileLayer(tileUrl, {
+        attribution: tileAttr,
+        maxZoom: 19,
       }).addTo(map);
 
       const maxL = Math.max(...cities.map(c => c.listings));
