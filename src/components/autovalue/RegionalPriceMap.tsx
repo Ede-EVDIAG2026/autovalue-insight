@@ -282,19 +282,14 @@ export default function RegionalPriceMap({ brand, model, year }: Props) {
         })}
       </div>
 
-      {/* Map iframe */}
-      {hasCities && mapHtml && (
-        <div className="relative">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Piaci térkép
-          </div>
+      {/* Map iframe — only when a country is selected */}
+      {selectedCountry && data.top_cities && (
+        <div style={{ marginTop: '20px' }}>
           <iframe
-            key={`${selectedCountry || 'all'}-${isDark ? 'dark' : 'light'}`}
-            srcDoc={mapHtml}
-            className="w-full border border-border"
-            style={{ height: 500, borderRadius: 12, boxShadow: '0 4px 16px hsl(224 71% 40% / 0.08)' }}
+            key={selectedCountry}
+            srcDoc={buildMapHtml(data.top_cities, selectedCountry, isDark)}
+            style={{ width: '100%', height: '480px', border: 'none', borderRadius: '12px', boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}
             sandbox="allow-scripts"
-            title="EU piaci térkép"
           />
         </div>
       )}
