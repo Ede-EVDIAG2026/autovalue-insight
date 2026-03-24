@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Lang } from '@/i18n/translations';
 
 const FLAG: Record<string, string> = {
   DE: '🇩🇪', NL: '🇳🇱', BE: '🇧🇪', FR: '🇫🇷', IT: '🇮🇹',
@@ -10,15 +12,6 @@ const FLAG: Record<string, string> = {
   PT: '🇵🇹', RO: '🇷🇴', LU: '🇱🇺', SK: '🇸🇰', HR: '🇭🇷',
   SI: '🇸🇮', BG: '🇧🇬', IE: '🇮🇪', GR: '🇬🇷', GB: '🇬🇧',
   LT: '🇱🇹', LV: '🇱🇻', EE: '🇪🇪',
-};
-
-const COUNTRY_NAME: Record<string, string> = {
-  DE: 'Deutschland', NL: 'Nederland', BE: 'België', FR: 'France', IT: 'Italia',
-  ES: 'España', AT: 'Österreich', CH: 'Schweiz', PL: 'Polska', CZ: 'Česko',
-  HU: 'Magyarország', SE: 'Sverige', DK: 'Danmark', NO: 'Norge', FI: 'Suomi',
-  PT: 'Portugal', RO: 'România', LU: 'Luxembourg', SK: 'Slovensko', HR: 'Hrvatska',
-  SI: 'Slovenija', BG: 'България', IE: 'Ireland', GR: 'Ελλάδα', GB: 'United Kingdom',
-  LT: 'Lietuva', LV: 'Latvija', EE: 'Eesti',
 };
 
 /* ── Types ── */
@@ -61,8 +54,22 @@ interface MapResponse {
 
 const fmt = (v: number) => `€${v.toLocaleString('hu-HU')}`;
 
+/* ── i18n labels for iframe (passed as JSON) ── */
+interface MapLabels {
+  openAd: string;
+  year: string;
+  mileage: string;
+  dealer: string;
+  private_: string;
+  priceBand: string;
+  below15k: string;
+  p15to25k: string;
+  p25to40k: string;
+  above40k: string;
+}
+
 /* ── Map HTML builder ── */
-function buildMapHtml(listings: MapListing[]): string {
+function buildMapHtml(listings: MapListing[], labels: MapLabels): string {
   const esc = (s: string) => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, "'");
 
   const markers = listings.filter(p => p.lat && p.lon).map(p => {
@@ -73,18 +80,18 @@ function buildMapHtml(listings: MapListing[]): string {
     const variant = esc(p.variant || 'N/A');
     const city = esc(p.city || '');
     const seller = esc(p.seller_name || '');
-    const sellerType = esc(p.seller_type || '');
+    const sellerType = p.seller_type === 'Dealer' ? esc(labels.dealer) : esc(labels.private_);
     const url = esc(p.url || '');
     const priceStr = price.toLocaleString('hu-HU');
 
-    const sellerHtml = seller ? `<div style="font-size:11px;color:#666;margin-top:2px">🏪 ${seller} (${sellerType})</div>` : '';
+    const sellerHtml = seller ? `<div style="font-size:11px;color:#666;margin-top:2px">🏪 ${seller} — ${sellerType}</div>` : '';
     const cityHtml = city ? `<div style="font-size:11px;color:#666;margin-top:2px">📍 ${city}</div>` : '';
-    const as24Btn = url ? `<a href="${url}" target="_blank" style="display:block;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-top:8px">AS24 hirdetés →</a>` : '';
+    const as24Btn = url ? `<a href="${url}" target="_blank" style="display:block;padding:6px 10px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-top:8px">${esc(labels.openAd)}</a>` : '';
 
     const popup = `<div style="min-width:220px;font-family:system-ui,sans-serif">` +
       `<div style="font-size:22px;font-weight:800;color:${col};margin-bottom:4px">€${priceStr}</div>` +
       `<div style="font-weight:700;font-size:13px;margin-bottom:6px">${variant}</div>` +
-      `<div style="font-size:11px;color:#666">📅 ${year} &nbsp; 🚗 ${km}</div>` +
+      `<div style="font-size:11px;color:#666">📅 ${esc(labels.year)}: ${year} &nbsp; 🚗 ${esc(labels.mileage)}: ${km}</div>` +
       `${cityHtml}${sellerHtml}` +
       `${as24Btn}` +
       `</div>`;
@@ -125,11 +132,11 @@ map.addLayer(clusters);
 var legend=L.control({position:'bottomleft'});
 legend.onAdd=function(){
   var d=L.DomUtil.create('div','legend');
-  d.innerHTML='<b style="font-size:11px;color:#374151">Ár sáv</b><br>'+
-    '<span style="color:#16a34a">●<\/span> &lt;15K€<br>'+
-    '<span style="color:#2563eb">●<\/span> 15–25K€<br>'+
-    '<span style="color:#d97706">●<\/span> 25–40K€<br>'+
-    '<span style="color:#dc2626">●<\/span> &gt;40K€';
+  d.innerHTML='<b style="font-size:11px;color:#374151">${esc(labels.priceBand)}</b><br>'+
+    '<span style="color:#16a34a">●<\/span> ${esc(labels.below15k)}<br>'+
+    '<span style="color:#2563eb">●<\/span> ${esc(labels.p15to25k)}<br>'+
+    '<span style="color:#d97706">●<\/span> ${esc(labels.p25to40k)}<br>'+
+    '<span style="color:#dc2626">●<\/span> ${esc(labels.above40k)}';
   return d;
 };
 legend.addTo(map);
@@ -145,6 +152,8 @@ interface Props {
 }
 
 export default function RegionalPriceMap({ brand, model }: Props) {
+  const { tr } = useLanguage();
+
   const [data, setData] = useState<RegionalResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -153,7 +162,9 @@ export default function RegionalPriceMap({ brand, model }: Props) {
   const [mapData, setMapData] = useState<MapResponse | null>(null);
   const [mapLoading, setMapLoading] = useState(false);
 
-  // Fetch regional summary (no year filter — all records)
+  const countryName = (code: string) => tr(`country_${code}`) !== `country_${code}` ? tr(`country_${code}`) : code;
+
+  // Fetch regional summary (no year filter)
   useEffect(() => {
     if (!brand || !model) return;
     setLoading(true);
@@ -180,9 +191,23 @@ export default function RegionalPriceMap({ brand, model }: Props) {
     setSelectedCountry(prev => prev === code ? null : code);
   };
 
+  const mapLabels: MapLabels = {
+    openAd: tr('map_openAd'),
+    year: tr('map_year'),
+    mileage: tr('map_mileage'),
+    dealer: tr('map_dealer'),
+    private_: tr('map_private'),
+    priceBand: tr('map_priceBand'),
+    below15k: tr('map_priceBelow15k'),
+    p15to25k: tr('map_price15to25k'),
+    p25to40k: tr('map_price25to40k'),
+    above40k: tr('map_priceAbove40k'),
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
+        <div className="text-sm text-muted-foreground text-center py-2">{tr('regional_loading')}</div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-36 rounded-lg" />
@@ -196,8 +221,7 @@ export default function RegionalPriceMap({ brand, model }: Props) {
     return (
       <div className="text-center py-8">
         <div className="text-3xl mb-3">🌍</div>
-        <div className="text-sm font-semibold text-muted-foreground">Nincs elegendő regionális adat</div>
-        <div className="text-xs text-muted-foreground/70 mt-1">Ehhez a járműhöz jelenleg nem áll rendelkezésre regionális piaci adat.</div>
+        <div className="text-sm font-semibold text-muted-foreground">{tr('regional_noData')}</div>
       </div>
     );
   }
@@ -208,13 +232,15 @@ export default function RegionalPriceMap({ brand, model }: Props) {
   const globalMin = Math.min(...countries.map(c => c.min_price_eur));
   const range = globalMax - globalMin || 1;
 
+  const totalText = tr('regional_total')
+    .replace('{count}', String(data.total_listings))
+    .replace('{countries}', String(data.countries.length));
+
   return (
     <div className="space-y-4">
       {/* Summary header */}
       <div className="flex items-center justify-between px-1">
-        <div className="text-sm font-semibold text-foreground">
-          Összesen: {data.total_listings} hirdetés, {data.countries.length} ország
-        </div>
+        <div className="text-sm font-semibold text-foreground">{totalText}</div>
       </div>
 
       {/* Country cards */}
@@ -237,21 +263,21 @@ export default function RegionalPriceMap({ brand, model }: Props) {
             >
               {isTop && !isSelected && (
                 <Badge className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5">
-                  Legtöbb adat
+                  {tr('regional_mostData')}
                 </Badge>
               )}
               {isSelected && (
                 <Badge variant="secondary" className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5">
-                  Szűrve
+                  {tr('regional_filtered')}
                 </Badge>
               )}
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{FLAG[c.country] || '🏳️'}</span>
-                  <span className="text-sm font-semibold text-foreground">{COUNTRY_NAME[c.country] || c.country}</span>
+                  <span className="text-sm font-semibold text-foreground">{countryName(c.country)}</span>
                 </div>
                 <div className="text-xl font-bold text-foreground">{fmt(c.median_price_eur)}</div>
-                <div className="text-xs text-muted-foreground">{c.listing_count} hirdetés</div>
+                <div className="text-xs text-muted-foreground">{c.listing_count} {tr('regional_listings')}</div>
                 <div className="relative h-2 bg-muted rounded-full mt-2">
                   <div
                     className="absolute h-full bg-primary/30 rounded-full"
@@ -268,7 +294,7 @@ export default function RegionalPriceMap({ brand, model }: Props) {
                 </div>
                 {c.avg_mileage_km > 0 && (
                   <div className="text-[10px] text-muted-foreground">
-                    Ø {Math.round(c.avg_mileage_km / 1000)}k km
+                    {tr('regional_avgMileage')}: {Math.round(c.avg_mileage_km / 1000)}k km
                   </div>
                 )}
               </CardContent>
@@ -280,18 +306,21 @@ export default function RegionalPriceMap({ brand, model }: Props) {
       {/* EU Map */}
       <div style={{ marginTop: '20px' }}>
         {mapLoading && (
-          <Skeleton className="w-full rounded-xl" style={{ height: '520px' }} />
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground text-center py-2">{tr('map_loading')}</div>
+            <Skeleton className="w-full rounded-xl" style={{ height: '520px' }} />
+          </div>
         )}
         {!mapLoading && (!mapData || mapData.count === 0) && (
           <div className="text-center py-8 border rounded-xl bg-card">
             <div className="text-2xl mb-2">🗺️</div>
-            <div className="text-sm font-semibold text-muted-foreground">Részletes hirdetési térkép hamarosan</div>
+            <div className="text-sm font-semibold text-muted-foreground">{tr('map_noData')}</div>
           </div>
         )}
         {!mapLoading && mapData && mapData.count > 0 && (
           <iframe
             key={`map-${brand}-${model}`}
-            srcDoc={buildMapHtml(mapData.listings)}
+            srcDoc={buildMapHtml(mapData.listings, mapLabels)}
             style={{ width: '100%', height: '520px', border: 'none', borderRadius: '12px', boxShadow: '0 2px 16px rgba(0,0,0,0.12)' }}
             sandbox="allow-scripts allow-popups"
           />
