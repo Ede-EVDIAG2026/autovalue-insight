@@ -70,7 +70,7 @@ interface MapLabels {
 
 /* ── Map HTML builder ── */
 function buildMapHtml(listings: MapListing[], labels: MapLabels): string {
-  const esc = (s: string) => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/`/g, "'");
+  const esc = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const markers = listings.filter(p => p.lat && p.lon).map(p => {
     const price = p.price_eur || 0;
