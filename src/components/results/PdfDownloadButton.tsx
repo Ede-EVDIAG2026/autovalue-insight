@@ -15,7 +15,8 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
   const handleDownload = () => {
     if (!vin) return;
     const pdfLang = lang?.toLowerCase() || 'hu';
-    const pdfUrl = `https://api.evdiag.hu/autovalue/pdf/report?lang=${pdfLang}`;
+    const datum = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const pdfUrl = `https://api.evdiag.hu/autovalue/pdf/report?lang=${pdfLang}&vin=${encodeURIComponent(vin)}&date=${datum}`;
     window.open(pdfUrl, '_blank');
   };
 
