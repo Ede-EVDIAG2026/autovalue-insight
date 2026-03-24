@@ -96,7 +96,8 @@ function buildMapHtml(listings: MapListing[], labels: MapLabels): string {
       `${as24Btn}` +
       `</div>`;
 
-    return `L.circleMarker([${p.lat},${p.lon}],{radius:10,color:'#ffffff',weight:3,fillColor:'${col}',fillOpacity:0.92}).bindPopup('${popup.replace(/'/g, "\\'")}',{maxWidth:260}).addTo(clusters);`;
+    const popupSafe = popup.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '');
+    return `L.circleMarker([${p.lat},${p.lon}],{radius:10,color:'#ffffff',weight:3,fillColor:'${col}',fillOpacity:0.92}).bindPopup('${popupSafe}',{maxWidth:260}).addTo(clusters);`;
   }).join('\n');
 
   return `<!DOCTYPE html><html><head>
