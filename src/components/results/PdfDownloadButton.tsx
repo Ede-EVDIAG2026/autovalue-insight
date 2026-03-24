@@ -14,13 +14,9 @@ const PdfDownloadButton = ({ vin, inline }: PdfDownloadButtonProps) => {
 
   const handleDownload = () => {
     if (!vin) return;
-    const datum = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const url = `https://api.evdiag.hu/autovalue/pdf/sample`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.download = `evdiag_riport_${vin}_${datum}.pdf`;
-    link.click();
+    const pdfLang = lang?.toLowerCase() || 'hu';
+    const pdfUrl = `https://api.evdiag.hu/autovalue/pdf/report?lang=${pdfLang}`;
+    window.open(pdfUrl, '_blank');
   };
 
   if (!vin) return null;
