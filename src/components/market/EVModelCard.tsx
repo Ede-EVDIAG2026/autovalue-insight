@@ -83,7 +83,7 @@ export default function EVModelCard({
         {/* Confidence bar */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Adatminőség</span>
+            <span>{l('data_quality')}</span>
             <span className="font-semibold">{confPct}%</span>
           </div>
           <Progress value={confPct} className="h-1.5" />
@@ -96,7 +96,7 @@ export default function EVModelCard({
           className="w-full justify-between text-xs text-primary group-hover:bg-primary/5"
           onClick={(e) => { e.stopPropagation(); onClick(); }}
         >
-          Részletek
+          {l('details')}
           <ArrowRight className="h-3 w-3" />
         </Button>
       </CardContent>
