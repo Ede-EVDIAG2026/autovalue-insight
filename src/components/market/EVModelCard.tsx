@@ -3,6 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Lang } from '@/i18n/translations';
+
+const tx: Record<string, Record<Lang, string>> = {
+  data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
+  details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+};
 
 export interface EVModelCardProps {
   make: string;
@@ -34,6 +41,8 @@ export default function EVModelCard({
   make, model, variant, battery_kwh, range_km_wltp,
   fast_charge_kw, cell_chemistry, data_confidence, model_type, onClick,
 }: EVModelCardProps) {
+  const { lang } = useLanguage();
+  const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
   const confPct = Math.round((data_confidence ?? 0) * 100);
   const chemClass = chemistryStyle[cell_chemistry?.toUpperCase()] || 'bg-muted text-muted-foreground';
 
@@ -74,7 +83,7 @@ export default function EVModelCard({
         {/* Confidence bar */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Adatminőség</span>
+            <span>{l('data_quality')}</span>
             <span className="font-semibold">{confPct}%</span>
           </div>
           <Progress value={confPct} className="h-1.5" />
@@ -87,7 +96,7 @@ export default function EVModelCard({
           className="w-full justify-between text-xs text-primary group-hover:bg-primary/5"
           onClick={(e) => { e.stopPropagation(); onClick(); }}
         >
-          Részletek
+          {l('details')}
           <ArrowRight className="h-3 w-3" />
         </Button>
       </CardContent>
