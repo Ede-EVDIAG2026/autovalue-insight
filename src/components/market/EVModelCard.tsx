@@ -3,6 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Lang } from '@/i18n/translations';
+
+const tx: Record<string, Record<Lang, string>> = {
+  data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
+  details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+};
 
 export interface EVModelCardProps {
   make: string;
