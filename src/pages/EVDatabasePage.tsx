@@ -49,6 +49,12 @@ const tx: Record<string, Record<Lang, string>> = {
   data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
   warranty_format: { HU: 'év', EN: 'yr', DE: 'J.' },
   details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+  compare: { HU: 'Összehasonlítás', EN: 'Compare', DE: 'Vergleichen' },
+  compare_models: { HU: 'Modellek összehasonlítása', EN: 'Compare models', DE: 'Modelle vergleichen' },
+  compare_select: { HU: 'Válassz 2-3 modellt', EN: 'Select 2-3 models', DE: 'Wähle 2-3 Modelle' },
+  compare_selected: { HU: 'kiválasztva', EN: 'selected', DE: 'ausgewählt' },
+  compare_clear: { HU: 'Törlés', EN: 'Clear', DE: 'Löschen' },
+  compare_no_data: { HU: 'n/a', EN: 'n/a', DE: 'n/v' },
 };
 
 interface EVModel {
