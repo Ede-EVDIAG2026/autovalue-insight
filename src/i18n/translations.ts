@@ -121,6 +121,7 @@ export const t: Record<string, TranslationValue> = {
   nav_valuation: { HU: "Értékbecslés", EN: "Valuation", DE: "Bewertung" },
   nav_portal: { HU: "Becsléseim", EN: "My Valuations", DE: "Meine Bewertungen" },
   nav_dashboard: { HU: 'Értékbecslés', EN: 'Valuation', DE: 'Bewertung' },
+  nav_ev_database: { HU: 'EV Adatbázis', EN: 'EV Database', DE: 'EV-Datenbank' },
 
   // Misc
   copied: { HU: "Másolva!", EN: "Copied!", DE: "Kopiert!" },
