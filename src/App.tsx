@@ -14,6 +14,7 @@ import ResultPage from "./pages/ResultPage";
 import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
 import DashboardPage from "./pages/DashboardPage";
+import EVDatabasePage from "./pages/EVDatabasePage";
 import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 

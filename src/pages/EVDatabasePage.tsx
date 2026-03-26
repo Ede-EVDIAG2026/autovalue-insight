@@ -1,0 +1,354 @@
+import { useState, useEffect, useMemo } from 'react';
+import AppHeader from '@/components/AppHeader';
+import EVModelCard from '@/components/market/EVModelCard';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, X } from 'lucide-react';
+
+interface EVModel {
+  make: string;
+  model: string;
+  variant: string;
+  battery_kwh: number;
+  range_km_wltp: number;
+  fast_charge_kw: number;
+  cell_chemistry: string;
+  data_confidence: number;
+}
+
+interface EVModelDetail {
+  battery_kwh: number;
+  range_km_wltp: number;
+  real_range_80pct_km: number;
+  warranty_battery_years: number;
+  warranty_battery_km: number;
+  connector_type: string;
+  ota_updates: string;
+  adas_level: string;
+  degradation_risk: string;
+  rental_battery: boolean;
+  fault_codes: { dtc_code: string; severity: string; component: string; known_fix?: string; dtc_description?: string }[];
+  data_confidence: number;
+  [key: string]: any;
+}
+
+interface Filters {
+  make: string;
+  region: string;
+  minBattery: number;
+  minRange: number;
+  search: string;
+}
+
+const regions = ['EU', 'CN', 'US'];
+const batteryOptions = [0, 40, 60, 80];
+const rangeOptions = [0, 200, 300, 400];
+
+const degradationColor: Record<string, string> = {
+  LOW: 'bg-green-100 text-green-800',
+  MEDIUM: 'bg-orange-100 text-orange-800',
+  HIGH: 'bg-red-100 text-red-800',
+};
+
+const severityColor: Record<string, string> = {
+  HIGH: 'text-red-600',
+  CRITICAL: 'text-red-700 font-bold',
+  MEDIUM: 'text-orange-600',
+  LOW: 'text-muted-foreground',
+};
+
+export default function EVDatabasePage() {
+  const [models, setModels] = useState<EVModel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '' });
+  const [selectedModel, setSelectedModel] = useState<{ make: string; model: string } | null>(null);
+  const [detail, setDetail] = useState<EVModelDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Fetch models on region change
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${filters.region}&limit=200`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { if (!cancelled) setModels(Array.isArray(d) ? d : d.models || []); })
+      .catch(() => { if (!cancelled) setModels([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [filters.region]);
+
+  // Unique makes
+  const makes = useMemo(() => {
+    const set = new Set(models.map(m => m.make));
+    return Array.from(set).sort();
+  }, [models]);
+
+  // Filtered list
+  const filtered = useMemo(() => {
+    return models.filter(m => {
+      if (filters.make && m.make !== filters.make) return false;
+      if (filters.minBattery && m.battery_kwh < filters.minBattery) return false;
+      if (filters.minRange && m.range_km_wltp < filters.minRange) return false;
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        if (!`${m.make} ${m.model}`.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [models, filters]);
+
+  // Fetch detail
+  useEffect(() => {
+    if (!selectedModel) { setDetail(null); return; }
+    let cancelled = false;
+    setDetailLoading(true);
+    fetch(`https://api.evdiag.hu/api/v1/ev-kb/model/${encodeURIComponent(selectedModel.make)}/${encodeURIComponent(selectedModel.model)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled) setDetail(d); })
+      .catch(() => { if (!cancelled) setDetail(null); })
+      .finally(() => { if (!cancelled) setDetailLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedModel]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-display font-bold text-foreground">⚡ EV Tudásbázis</h1>
+          <p className="text-muted-foreground mt-1">
+            {loading ? '…' : `${models.length} modell`} · EU/CN/US adatok
+          </p>
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-6 border border-border bg-card">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-wrap gap-3 items-end">
+              {/* Search */}
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Keresés</label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Gyártó vagy modell..."
+                    className="pl-9 h-9"
+                    value={filters.search}
+                    onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Make */}
+              <div className="min-w-[140px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Gyártó</label>
+                <Select value={filters.make || 'all'} onValueChange={v => setFilters(f => ({ ...f, make: v === 'all' ? '' : v }))}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Összes</SelectItem>
+                    {makes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Region toggle */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Régió</label>
+                <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
+                  {regions.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setFilters(f => ({ ...f, region: r }))}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        filters.region === r
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Min battery */}
+              <div className="min-w-[110px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Min akksi</label>
+                <Select value={String(filters.minBattery)} onValueChange={v => setFilters(f => ({ ...f, minBattery: Number(v) }))}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {batteryOptions.map(b => <SelectItem key={b} value={String(b)}>{b === 0 ? 'Mind' : `${b}+ kWh`}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Min range */}
+              <div className="min-w-[110px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Min hatótáv</label>
+                <Select value={String(filters.minRange)} onValueChange={v => setFilters(f => ({ ...f, minRange: Number(v) }))}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {rangeOptions.map(r => <SelectItem key={r} value={String(r)}>{r === 0 ? 'Mind' : `${r}+ km`}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Results count */}
+        <div className="text-sm text-muted-foreground mb-4">
+          {filtered.length} modell{filters.make || filters.search || filters.minBattery || filters.minRange ? ' (szűrt)' : ''}
+        </div>
+
+        {/* Grid */}
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="border border-border">
+                <CardContent className="pt-5 pb-4 space-y-3">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-4 w-52" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-1.5 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            Nincs találat a megadott szűrőkre.
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((m, i) => (
+              <EVModelCard
+                key={`${m.make}-${m.model}-${m.variant}-${i}`}
+                {...m}
+                onClick={() => setSelectedModel({ make: m.make, model: m.model })}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-10 text-center text-xs text-muted-foreground">
+          Forrás: ev-database.org + AI · Frissítve: 2026.03
+        </div>
+      </div>
+
+      {/* Detail modal */}
+      <Dialog open={!!selectedModel} onOpenChange={open => { if (!open) setSelectedModel(null); }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {selectedModel ? `${selectedModel.make} ${selectedModel.model}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          {detailLoading ? (
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          ) : !detail ? (
+            <p className="text-muted-foreground py-4">Nincs elérhető részletes adat.</p>
+          ) : (
+            <div className="space-y-4 py-2">
+              {/* Specs */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                <DetailRow label="🔋 Akkumulátor" value={`${detail.battery_kwh} kWh`} />
+                <DetailRow label="📍 WLTP hatótáv" value={`${detail.range_km_wltp} km`} />
+                <DetailRow label="🛣 Reális hatótáv" value={`${detail.real_range_80pct_km} km`} />
+                <DetailRow label="🛡 Garancia" value={`${detail.warranty_battery_years} év / ${(detail.warranty_battery_km || 0).toLocaleString('hu-HU')} km`} />
+                <DetailRow label="🔌 Csatlakozó" value={detail.connector_type} />
+                <DetailRow label="📡 OTA" value={detail.ota_updates} />
+                <DetailRow label="🤖 ADAS" value={detail.adas_level} />
+              </div>
+
+              {/* Degradation */}
+              {detail.degradation_risk && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Degradáció:</span>
+                  <Badge className={`text-xs border ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}>
+                    {detail.degradation_risk}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Rental battery warning */}
+              {detail.rental_battery === true && (
+                <Alert variant="destructive" className="py-2 px-3">
+                  <AlertDescription className="text-xs font-semibold">
+                    ⚠ Bérletes akksi opció létezett ehhez a modellhez!
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Fault codes table */}
+              {detail.fault_codes && detail.fault_codes.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-bold text-foreground mb-2">Ismert hibakódok</h4>
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">DTC</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Súlyosság</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Komponens</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Javítás</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.fault_codes.map((fc, i) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-3 py-2 font-mono">{fc.dtc_code}</td>
+                            <td className={`px-3 py-2 font-semibold ${severityColor[fc.severity?.toUpperCase()] || ''}`}>
+                              {fc.severity}
+                            </td>
+                            <td className="px-3 py-2">{fc.component}</td>
+                            <td className="px-3 py-2 text-muted-foreground">{fc.known_fix || '–'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Confidence */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Adatminőség</span>
+                  <span>{Math.round((detail.data_confidence ?? 0) * 100)}%</span>
+                </div>
+                <Progress value={Math.round((detail.data_confidence ?? 0) * 100)} className="h-1.5" />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string | undefined }) {
+  if (!value) return null;
+  return (
+    <>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground font-medium">{value}</span>
+    </>
+  );
+}
