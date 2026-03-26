@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { EVKBPanel } from './autovalue/EVKBPanel';
 
 interface VinResultModalProps {
   data: any;
