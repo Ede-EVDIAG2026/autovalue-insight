@@ -11,6 +11,45 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, X } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Lang } from '@/i18n/translations';
+
+const tx: Record<string, Record<Lang, string>> = {
+  title: { HU: '⚡ EV Tudásbázis', EN: '⚡ EV Knowledge Base', DE: '⚡ EV-Wissensdatenbank' },
+  subtitle_models: { HU: 'modell', EN: 'models', DE: 'Modelle' },
+  subtitle_data: { HU: 'EU/CN/US adatok', EN: 'EU/CN/US data', DE: 'EU/CN/US Daten' },
+  filter_search: { HU: 'Keresés', EN: 'Search', DE: 'Suche' },
+  filter_search_placeholder: { HU: 'Gyártó vagy modell...', EN: 'Make or model...', DE: 'Hersteller oder Modell...' },
+  filter_make: { HU: 'Gyártó', EN: 'Make', DE: 'Hersteller' },
+  filter_all: { HU: 'Összes', EN: 'All', DE: 'Alle' },
+  filter_region: { HU: 'Régió', EN: 'Region', DE: 'Region' },
+  filter_drive_type: { HU: 'Hajtás típus', EN: 'Drive type', DE: 'Antriebsart' },
+  filter_min_battery: { HU: 'Min akksi', EN: 'Min battery', DE: 'Min Batterie' },
+  filter_min_range: { HU: 'Min hatótáv', EN: 'Min range', DE: 'Min Reichweite' },
+  filter_all_short: { HU: 'Mind', EN: 'All', DE: 'Alle' },
+  results_model: { HU: 'modell', EN: 'models', DE: 'Modelle' },
+  results_filtered: { HU: '(szűrt)', EN: '(filtered)', DE: '(gefiltert)' },
+  no_results: { HU: 'Nincs találat a megadott szűrőkre.', EN: 'No results for the selected filters.', DE: 'Keine Ergebnisse für die gewählten Filter.' },
+  footer: { HU: 'Forrás: ev-database.org + AI · Frissítve: 2026.03', EN: 'Source: ev-database.org + AI · Updated: 2026.03', DE: 'Quelle: ev-database.org + AI · Aktualisiert: 2026.03' },
+  no_detail: { HU: 'Nincs elérhető részletes adat.', EN: 'No detailed data available.', DE: 'Keine detaillierten Daten verfügbar.' },
+  spec_battery: { HU: '🔋 Akkumulátor', EN: '🔋 Battery', DE: '🔋 Batterie' },
+  spec_wltp: { HU: '📍 WLTP hatótáv', EN: '📍 WLTP range', DE: '📍 WLTP-Reichweite' },
+  spec_real_range: { HU: '🛣 Reális hatótáv', EN: '🛣 Real range', DE: '🛣 Reale Reichweite' },
+  spec_warranty: { HU: '🛡 Garancia', EN: '🛡 Warranty', DE: '🛡 Garantie' },
+  spec_connector: { HU: '🔌 Csatlakozó', EN: '🔌 Connector', DE: '🔌 Anschluss' },
+  spec_ota: { HU: '📡 OTA', EN: '📡 OTA', DE: '📡 OTA' },
+  spec_adas: { HU: '🤖 ADAS', EN: '🤖 ADAS', DE: '🤖 ADAS' },
+  degradation: { HU: 'Degradáció:', EN: 'Degradation:', DE: 'Degradation:' },
+  rental_battery_warn: { HU: '⚠ Bérletes akksi opció létezett ehhez a modellhez!', EN: '⚠ Rental battery option existed for this model!', DE: '⚠ Mietbatterie-Option existierte für dieses Modell!' },
+  fault_codes_title: { HU: 'Ismert hibakódok', EN: 'Known fault codes', DE: 'Bekannte Fehlercodes' },
+  th_dtc: { HU: 'DTC', EN: 'DTC', DE: 'DTC' },
+  th_severity: { HU: 'Súlyosság', EN: 'Severity', DE: 'Schweregrad' },
+  th_component: { HU: 'Komponens', EN: 'Component', DE: 'Komponente' },
+  th_fix: { HU: 'Javítás', EN: 'Fix', DE: 'Reparatur' },
+  data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
+  warranty_format: { HU: 'év', EN: 'yr', DE: 'J.' },
+  details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+};
 
 interface EVModel {
   make: string;
@@ -70,6 +109,9 @@ const severityColor: Record<string, string> = {
 };
 
 export default function EVDatabasePage() {
+  const { language } = useLanguage();
+  const l = (key: string) => tx[key]?.[language] ?? tx[key]?.HU ?? key;
+
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '', model_type: '' });
