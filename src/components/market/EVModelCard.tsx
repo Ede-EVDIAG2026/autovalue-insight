@@ -16,7 +16,7 @@ export interface EVModelCardProps {
   ac_charge_kw?: number | null;
   motor_kw?: number | null;
   cell_chemistry: string | null;
-  model_type: string;
+  model_type?: string;
   data_confidence: number | null;
   onClick: () => void;
   isCompareSelected?: boolean;
