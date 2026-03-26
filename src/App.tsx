@@ -14,6 +14,7 @@ import ResultPage from "./pages/ResultPage";
 import PortalPage from "./pages/PortalPage";
 import AccountPage from "./pages/AccountPage";
 import DashboardPage from "./pages/DashboardPage";
+import EVDatabasePage from "./pages/EVDatabasePage";
 import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 
@@ -73,6 +74,7 @@ const App = () => (
               <Route path="/portal" element={<ProtectedRoute><PortalPage /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/ev-database" element={<EVDatabasePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
