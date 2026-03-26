@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface EVKBPanelProps {
   make: string;
@@ -67,12 +68,26 @@ export function EVKBPanel({ make, model, year }: EVKBPanelProps) {
     return () => { cancelled = true; };
   }, [make, model, year]);
 
-  if (loading) return null;
-  if (!data) return null;
+  if (loading) return (
+    <Card className="border border-border bg-card mt-4">
+      <CardContent className="pt-4 pb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-32 rounded-full" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-5 w-28 rounded-full" />
+      </CardContent>
+    </Card>
+  );
 
   const confPct = Math.round((data.data_confidence ?? 0) * 100);
   const confColor = confPct >= 70 ? 'text-green-600' : 'text-orange-500';
   const faults = (data.fault_codes || []).slice(0, 3);
+
+  if (!data) return null;
 
   return (
     <Card className="border border-border bg-card mt-4">
