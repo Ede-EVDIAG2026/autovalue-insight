@@ -458,6 +458,140 @@ export default function EVDatabasePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating compare bar */}
+      {compareList.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-7xl">
+            <div className="flex items-center gap-3">
+              <GitCompareArrows className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {compareList.length} {l('compare_selected')}
+              </span>
+              <div className="flex gap-1.5">
+                {compareList.map(key => {
+                  const [make, model] = key.split('::');
+                  return (
+                    <Badge key={key} variant="secondary" className="text-xs gap-1">
+                      {make} {model}
+                      <button
+                        onClick={() => setCompareList(prev => prev.filter(k => k !== key))}
+                        className="ml-0.5 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setCompareList([])}>
+                {l('compare_clear')}
+              </Button>
+              <Button size="sm" disabled={compareList.length < 2} onClick={openCompare}>
+                <GitCompareArrows className="h-4 w-4 mr-1.5" />
+                {l('compare')} ({compareList.length})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compare modal */}
+      <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <GitCompareArrows className="h-5 w-5" />
+              {l('compare_models')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {compareLoading ? (
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-muted-foreground font-medium min-w-[140px]" />
+                    {compareList.map(key => {
+                      const [make, model] = key.split('::');
+                      return (
+                        <th key={key} className="text-left py-2 px-3 font-display font-bold text-foreground min-w-[160px]">
+                          {make} {model}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ['spec_battery', 'battery_kwh', ' kWh'],
+                    ['spec_wltp', 'range_km_wltp', ' km'],
+                    ['spec_real_range', 'real_range_80pct_km', ' km'],
+                    ['spec_warranty', 'warranty_battery_years', ` ${l('warranty_format')}`],
+                    ['spec_connector', 'connector_type', ''],
+                    ['spec_ota', 'ota_updates', ''],
+                    ['spec_adas', 'adas_level', ''],
+                    ['degradation', 'degradation_risk', ''],
+                  ] as [string, string, string][]).map(([labelKey, field, suffix]) => (
+                    <tr key={field} className="border-b border-border/50">
+                      <td className="py-2 px-3 text-muted-foreground">{l(labelKey)}</td>
+                      {compareList.map(key => {
+                        const d = compareDetails[key];
+                        const val = d?.[field];
+                        return (
+                          <td key={key} className="py-2 px-3 font-medium text-foreground">
+                            {val != null ? `${val}${suffix}` : l('compare_no_data')}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  {/* Rental battery row */}
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 text-muted-foreground">🔋 Rental</td>
+                    {compareList.map(key => {
+                      const d = compareDetails[key];
+                      return (
+                        <td key={key} className="py-2 px-3">
+                          {d?.rental_battery ? (
+                            <Badge variant="destructive" className="text-xs">⚠</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">–</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {/* Confidence row */}
+                  <tr>
+                    <td className="py-2 px-3 text-muted-foreground">{l('data_quality')}</td>
+                    {compareList.map(key => {
+                      const d = compareDetails[key];
+                      const pct = Math.round((d?.data_confidence ?? 0) * 100);
+                      return (
+                        <td key={key} className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            <Progress value={pct} className="h-1.5 flex-1" />
+                            <span className="text-xs font-semibold text-muted-foreground">{pct}%</span>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
