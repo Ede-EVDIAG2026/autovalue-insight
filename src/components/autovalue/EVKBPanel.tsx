@@ -87,6 +87,8 @@ export function EVKBPanel({ make, model, year }: EVKBPanelProps) {
   const confColor = confPct >= 70 ? 'text-green-600' : 'text-orange-500';
   const faults = (data.fault_codes || []).slice(0, 3);
 
+  if (!data) return null;
+
   return (
     <Card className="border border-border bg-card mt-4">
       <CardContent className="pt-4 pb-4 space-y-3">
