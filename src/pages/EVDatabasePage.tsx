@@ -327,7 +327,7 @@ export default function EVDatabasePage() {
 
         {/* Grid */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="border border-border">
                 <CardContent className="pt-5 pb-4 space-y-3">
@@ -344,7 +344,7 @@ export default function EVDatabasePage() {
             {l('no_results')}
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {filtered.map((m, i) => (
               <EVModelCard
                 key={`${m.make}-${m.model}-${m.variant}-${i}`}
