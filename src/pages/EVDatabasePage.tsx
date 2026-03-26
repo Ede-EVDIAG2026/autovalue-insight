@@ -11,6 +11,45 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, X } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
+import type { Lang } from '@/i18n/translations';
+
+const tx: Record<string, Record<Lang, string>> = {
+  title: { HU: '⚡ EV Tudásbázis', EN: '⚡ EV Knowledge Base', DE: '⚡ EV-Wissensdatenbank' },
+  subtitle_models: { HU: 'modell', EN: 'models', DE: 'Modelle' },
+  subtitle_data: { HU: 'EU/CN/US adatok', EN: 'EU/CN/US data', DE: 'EU/CN/US Daten' },
+  filter_search: { HU: 'Keresés', EN: 'Search', DE: 'Suche' },
+  filter_search_placeholder: { HU: 'Gyártó vagy modell...', EN: 'Make or model...', DE: 'Hersteller oder Modell...' },
+  filter_make: { HU: 'Gyártó', EN: 'Make', DE: 'Hersteller' },
+  filter_all: { HU: 'Összes', EN: 'All', DE: 'Alle' },
+  filter_region: { HU: 'Régió', EN: 'Region', DE: 'Region' },
+  filter_drive_type: { HU: 'Hajtás típus', EN: 'Drive type', DE: 'Antriebsart' },
+  filter_min_battery: { HU: 'Min akksi', EN: 'Min battery', DE: 'Min Batterie' },
+  filter_min_range: { HU: 'Min hatótáv', EN: 'Min range', DE: 'Min Reichweite' },
+  filter_all_short: { HU: 'Mind', EN: 'All', DE: 'Alle' },
+  results_model: { HU: 'modell', EN: 'models', DE: 'Modelle' },
+  results_filtered: { HU: '(szűrt)', EN: '(filtered)', DE: '(gefiltert)' },
+  no_results: { HU: 'Nincs találat a megadott szűrőkre.', EN: 'No results for the selected filters.', DE: 'Keine Ergebnisse für die gewählten Filter.' },
+  footer: { HU: 'Forrás: ev-database.org + AI · Frissítve: 2026.03', EN: 'Source: ev-database.org + AI · Updated: 2026.03', DE: 'Quelle: ev-database.org + AI · Aktualisiert: 2026.03' },
+  no_detail: { HU: 'Nincs elérhető részletes adat.', EN: 'No detailed data available.', DE: 'Keine detaillierten Daten verfügbar.' },
+  spec_battery: { HU: '🔋 Akkumulátor', EN: '🔋 Battery', DE: '🔋 Batterie' },
+  spec_wltp: { HU: '📍 WLTP hatótáv', EN: '📍 WLTP range', DE: '📍 WLTP-Reichweite' },
+  spec_real_range: { HU: '🛣 Reális hatótáv', EN: '🛣 Real range', DE: '🛣 Reale Reichweite' },
+  spec_warranty: { HU: '🛡 Garancia', EN: '🛡 Warranty', DE: '🛡 Garantie' },
+  spec_connector: { HU: '🔌 Csatlakozó', EN: '🔌 Connector', DE: '🔌 Anschluss' },
+  spec_ota: { HU: '📡 OTA', EN: '📡 OTA', DE: '📡 OTA' },
+  spec_adas: { HU: '🤖 ADAS', EN: '🤖 ADAS', DE: '🤖 ADAS' },
+  degradation: { HU: 'Degradáció:', EN: 'Degradation:', DE: 'Degradation:' },
+  rental_battery_warn: { HU: '⚠ Bérletes akksi opció létezett ehhez a modellhez!', EN: '⚠ Rental battery option existed for this model!', DE: '⚠ Mietbatterie-Option existierte für dieses Modell!' },
+  fault_codes_title: { HU: 'Ismert hibakódok', EN: 'Known fault codes', DE: 'Bekannte Fehlercodes' },
+  th_dtc: { HU: 'DTC', EN: 'DTC', DE: 'DTC' },
+  th_severity: { HU: 'Súlyosság', EN: 'Severity', DE: 'Schweregrad' },
+  th_component: { HU: 'Komponens', EN: 'Component', DE: 'Komponente' },
+  th_fix: { HU: 'Javítás', EN: 'Fix', DE: 'Reparatur' },
+  data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
+  warranty_format: { HU: 'év', EN: 'yr', DE: 'J.' },
+  details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+};
 
 interface EVModel {
   make: string;
@@ -70,6 +109,9 @@ const severityColor: Record<string, string> = {
 };
 
 export default function EVDatabasePage() {
+  const { lang } = useLanguage();
+  const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
+
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '', model_type: '' });
@@ -129,9 +171,9 @@ export default function EVDatabasePage() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-foreground">⚡ EV Tudásbázis</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">{l('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? '…' : `${models.length} modell`} · BEV + PHEV + HEV + MHEV · EU/CN/US adatok
+            {loading ? '…' : `${models.length} ${l('subtitle_models')}`} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
           </p>
         </div>
 
@@ -141,11 +183,11 @@ export default function EVDatabasePage() {
             <div className="flex flex-wrap gap-3 items-end">
               {/* Search */}
               <div className="flex-1 min-w-[180px]">
-                <label className="text-xs text-muted-foreground mb-1 block">Keresés</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_search')}</label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Gyártó vagy modell..."
+                    placeholder={l('filter_search_placeholder')}
                     className="pl-9 h-9"
                     value={filters.search}
                     onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
@@ -155,11 +197,11 @@ export default function EVDatabasePage() {
 
               {/* Make */}
               <div className="min-w-[140px]">
-                <label className="text-xs text-muted-foreground mb-1 block">Gyártó</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_make')}</label>
                 <Select value={filters.make || 'all'} onValueChange={v => setFilters(f => ({ ...f, make: v === 'all' ? '' : v }))}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Összes</SelectItem>
+                    <SelectItem value="all">{l('filter_all')}</SelectItem>
                     {makes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -167,7 +209,7 @@ export default function EVDatabasePage() {
 
               {/* Region toggle */}
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Régió</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_region')}</label>
                 <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
                   {regions.map(r => (
                     <button
@@ -187,7 +229,7 @@ export default function EVDatabasePage() {
 
               {/* Model type toggle */}
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Hajtás típus</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_drive_type')}</label>
                 <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
                   <button
                     onClick={() => setFilters(f => ({ ...f, model_type: '' }))}
@@ -197,7 +239,7 @@ export default function EVDatabasePage() {
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    Összes
+                    {l('filter_all')}
                   </button>
                   {modelTypes.map(t => (
                     <button
@@ -217,22 +259,22 @@ export default function EVDatabasePage() {
 
               {/* Min battery */}
               <div className="min-w-[110px]">
-                <label className="text-xs text-muted-foreground mb-1 block">Min akksi</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_min_battery')}</label>
                 <Select value={String(filters.minBattery)} onValueChange={v => setFilters(f => ({ ...f, minBattery: Number(v) }))}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {batteryOptions.map(b => <SelectItem key={b} value={String(b)}>{b === 0 ? 'Mind' : `${b}+ kWh`}</SelectItem>)}
+                    {batteryOptions.map(b => <SelectItem key={b} value={String(b)}>{b === 0 ? l('filter_all_short') : `${b}+ kWh`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Min range */}
               <div className="min-w-[110px]">
-                <label className="text-xs text-muted-foreground mb-1 block">Min hatótáv</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{l('filter_min_range')}</label>
                 <Select value={String(filters.minRange)} onValueChange={v => setFilters(f => ({ ...f, minRange: Number(v) }))}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {rangeOptions.map(r => <SelectItem key={r} value={String(r)}>{r === 0 ? 'Mind' : `${r}+ km`}</SelectItem>)}
+                    {rangeOptions.map(r => <SelectItem key={r} value={String(r)}>{r === 0 ? l('filter_all_short') : `${r}+ km`}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -242,7 +284,7 @@ export default function EVDatabasePage() {
 
         {/* Results count */}
         <div className="text-sm text-muted-foreground mb-4">
-          {filtered.length} modell{filters.make || filters.search || filters.minBattery || filters.minRange || filters.model_type ? ' (szűrt)' : ''}
+          {filtered.length} {l('results_model')}{filters.make || filters.search || filters.minBattery || filters.minRange || filters.model_type ? ` ${l('results_filtered')}` : ''}
         </div>
 
         {/* Grid */}
@@ -261,7 +303,7 @@ export default function EVDatabasePage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
-            Nincs találat a megadott szűrőkre.
+            {l('no_results')}
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -277,7 +319,7 @@ export default function EVDatabasePage() {
 
         {/* Footer */}
         <div className="mt-10 text-center text-xs text-muted-foreground">
-          Forrás: ev-database.org + AI · Frissítve: 2026.03
+           {l('footer')}
         </div>
       </div>
 
@@ -299,24 +341,24 @@ export default function EVDatabasePage() {
               <Skeleton className="h-4 w-2/3" />
             </div>
           ) : !detail ? (
-            <p className="text-muted-foreground py-4">Nincs elérhető részletes adat.</p>
+            <p className="text-muted-foreground py-4">{l('no_detail')}</p>
           ) : (
             <div className="space-y-4 py-2">
               {/* Specs */}
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                <DetailRow label="🔋 Akkumulátor" value={`${detail.battery_kwh} kWh`} />
-                <DetailRow label="📍 WLTP hatótáv" value={`${detail.range_km_wltp} km`} />
-                <DetailRow label="🛣 Reális hatótáv" value={`${detail.real_range_80pct_km} km`} />
-                <DetailRow label="🛡 Garancia" value={`${detail.warranty_battery_years} év / ${(detail.warranty_battery_km || 0).toLocaleString('hu-HU')} km`} />
-                <DetailRow label="🔌 Csatlakozó" value={detail.connector_type} />
-                <DetailRow label="📡 OTA" value={detail.ota_updates} />
-                <DetailRow label="🤖 ADAS" value={detail.adas_level} />
+                <DetailRow label={l('spec_battery')} value={`${detail.battery_kwh} kWh`} />
+                <DetailRow label={l('spec_wltp')} value={`${detail.range_km_wltp} km`} />
+                <DetailRow label={l('spec_real_range')} value={`${detail.real_range_80pct_km} km`} />
+                <DetailRow label={l('spec_warranty')} value={`${detail.warranty_battery_years} ${l('warranty_format')} / ${(detail.warranty_battery_km || 0).toLocaleString(lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-US' : 'hu-HU')} km`} />
+                <DetailRow label={l('spec_connector')} value={detail.connector_type} />
+                <DetailRow label={l('spec_ota')} value={detail.ota_updates} />
+                <DetailRow label={l('spec_adas')} value={detail.adas_level} />
               </div>
 
               {/* Degradation */}
               {detail.degradation_risk && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Degradáció:</span>
+                  <span className="text-sm text-muted-foreground">{l('degradation')}</span>
                   <Badge className={`text-xs border ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}>
                     {detail.degradation_risk}
                   </Badge>
@@ -327,7 +369,7 @@ export default function EVDatabasePage() {
               {detail.rental_battery === true && (
                 <Alert variant="destructive" className="py-2 px-3">
                   <AlertDescription className="text-xs font-semibold">
-                    ⚠ Bérletes akksi opció létezett ehhez a modellhez!
+                    ⚠ {l('rental_battery_warn')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -335,15 +377,15 @@ export default function EVDatabasePage() {
               {/* Fault codes table */}
               {detail.fault_codes && detail.fault_codes.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-bold text-foreground mb-2">Ismert hibakódok</h4>
+                  <h4 className="text-sm font-bold text-foreground mb-2">{l('fault_codes_title')}</h4>
                   <div className="border border-border rounded-lg overflow-hidden">
                     <table className="w-full text-xs">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">DTC</th>
-                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Súlyosság</th>
-                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Komponens</th>
-                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Javítás</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{l('th_dtc')}</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{l('th_severity')}</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{l('th_component')}</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{l('th_fix')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -366,7 +408,7 @@ export default function EVDatabasePage() {
               {/* Confidence */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Adatminőség</span>
+                  <span>{l('data_quality')}</span>
                   <span>{Math.round((detail.data_confidence ?? 0) * 100)}%</span>
                 </div>
                 <Progress value={Math.round((detail.data_confidence ?? 0) * 100)} className="h-1.5" />
