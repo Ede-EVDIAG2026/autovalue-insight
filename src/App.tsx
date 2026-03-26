@@ -74,6 +74,7 @@ const App = () => (
               <Route path="/portal" element={<ProtectedRoute><PortalPage /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/ev-database" element={<EVDatabasePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
