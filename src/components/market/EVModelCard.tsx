@@ -41,6 +41,8 @@ export default function EVModelCard({
   make, model, variant, battery_kwh, range_km_wltp,
   fast_charge_kw, cell_chemistry, data_confidence, model_type, onClick,
 }: EVModelCardProps) {
+  const { lang } = useLanguage();
+  const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
   const confPct = Math.round((data_confidence ?? 0) * 100);
   const chemClass = chemistryStyle[cell_chemistry?.toUpperCase()] || 'bg-muted text-muted-foreground';
 
