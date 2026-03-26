@@ -173,7 +173,7 @@ export default function EVDatabasePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground">{l('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? '…' : `${models.length} ${l('subtitle_models')}`} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
+            {loading ? '…' : `${filtered.length} ${l('subtitle_models')}`} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
           </p>
         </div>
 
