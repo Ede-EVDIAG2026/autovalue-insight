@@ -21,6 +21,7 @@ interface EVModel {
   fast_charge_kw: number;
   cell_chemistry: string;
   data_confidence: number;
+  model_type?: string;
 }
 
 interface EVModelDetail {
@@ -45,7 +46,11 @@ interface Filters {
   minBattery: number;
   minRange: number;
   search: string;
+  model_type: string;
 }
+
+const modelTypes = ['BEV', 'PHEV', 'HEV', 'MHEV'] as const;
+const modelTypeIcons: Record<string, string> = { BEV: '⚡', PHEV: '🔌', HEV: '♻️', MHEV: '〰️' };
 
 const regions = ['EU', 'CN', 'US'];
 const batteryOptions = [0, 40, 60, 80];
@@ -67,7 +72,7 @@ const severityColor: Record<string, string> = {
 export default function EVDatabasePage() {
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '' });
+  const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '', model_type: '' });
   const [selectedModel, setSelectedModel] = useState<{ make: string; model: string } | null>(null);
   const [detail, setDetail] = useState<EVModelDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -96,6 +101,7 @@ export default function EVDatabasePage() {
       if (filters.make && m.make !== filters.make) return false;
       if (filters.minBattery && m.battery_kwh < filters.minBattery) return false;
       if (filters.minRange && m.range_km_wltp < filters.minRange) return false;
+      if (filters.model_type && m.model_type !== filters.model_type) return false;
       if (filters.search) {
         const q = filters.search.toLowerCase();
         if (!`${m.make} ${m.model}`.toLowerCase().includes(q)) return false;
@@ -125,7 +131,7 @@ export default function EVDatabasePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground">⚡ EV Tudásbázis</h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? '…' : `${models.length} modell`} · EU/CN/US adatok
+            {loading ? '…' : `${models.length} modell`} · BEV + PHEV + HEV + MHEV · EU/CN/US adatok
           </p>
         </div>
 
@@ -179,6 +185,36 @@ export default function EVDatabasePage() {
                 </div>
               </div>
 
+              {/* Model type toggle */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Hajtás típus</label>
+                <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
+                  <button
+                    onClick={() => setFilters(f => ({ ...f, model_type: '' }))}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      !filters.model_type
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Összes
+                  </button>
+                  {modelTypes.map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setFilters(f => ({ ...f, model_type: t }))}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        filters.model_type === t
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {modelTypeIcons[t]} {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Min battery */}
               <div className="min-w-[110px]">
                 <label className="text-xs text-muted-foreground mb-1 block">Min akksi</label>
@@ -206,7 +242,7 @@ export default function EVDatabasePage() {
 
         {/* Results count */}
         <div className="text-sm text-muted-foreground mb-4">
-          {filtered.length} modell{filters.make || filters.search || filters.minBattery || filters.minRange ? ' (szűrt)' : ''}
+          {filtered.length} modell{filters.make || filters.search || filters.minBattery || filters.minRange || filters.model_type ? ' (szűrt)' : ''}
         </div>
 
         {/* Grid */}
