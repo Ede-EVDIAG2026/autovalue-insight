@@ -13,8 +13,16 @@ export interface EVModelCardProps {
   fast_charge_kw: number;
   cell_chemistry: string;
   data_confidence: number;
+  model_type?: string;
   onClick: () => void;
 }
+
+const modelTypeBadge: Record<string, string> = {
+  BEV: 'bg-blue-100 text-blue-800 border-blue-300',
+  PHEV: 'bg-green-100 text-green-800 border-green-300',
+  HEV: 'bg-orange-100 text-orange-800 border-orange-300',
+  MHEV: 'bg-muted text-muted-foreground border-border',
+};
 
 const chemistryStyle: Record<string, string> = {
   LFP: 'bg-green-100 text-green-800 border-green-300',
@@ -24,7 +32,7 @@ const chemistryStyle: Record<string, string> = {
 
 export default function EVModelCard({
   make, model, variant, battery_kwh, range_km_wltp,
-  fast_charge_kw, cell_chemistry, data_confidence, onClick,
+  fast_charge_kw, cell_chemistry, data_confidence, model_type, onClick,
 }: EVModelCardProps) {
   const confPct = Math.round((data_confidence ?? 0) * 100);
   const chemClass = chemistryStyle[cell_chemistry?.toUpperCase()] || 'bg-muted text-muted-foreground';
@@ -49,12 +57,19 @@ export default function EVModelCard({
           <span>⚡ {fast_charge_kw} kW DC</span>
         </div>
 
-        {/* Chemistry badge */}
-        {cell_chemistry && (
-          <Badge className={`text-[10px] border ${chemClass}`}>
-            {cell_chemistry}
-          </Badge>
-        )}
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1.5">
+          {model_type && (
+            <Badge className={`text-[10px] border ${modelTypeBadge[model_type] || 'bg-muted text-muted-foreground border-border'}`}>
+              {model_type}
+            </Badge>
+          )}
+          {cell_chemistry && (
+            <Badge className={`text-[10px] border ${chemClass}`}>
+              {cell_chemistry}
+            </Badge>
+          )}
+        </div>
 
         {/* Confidence bar */}
         <div className="space-y-1">
