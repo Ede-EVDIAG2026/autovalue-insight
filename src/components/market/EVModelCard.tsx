@@ -132,6 +132,15 @@ export default function EVModelCard(props: EVModelCardProps) {
   const badge = badgeStyles[type] || badgeStyles.MHEV;
   const stats = statsForType(type, props);
 
+  const makeSlug = make.toLowerCase().replace(/\s+/g, '-');
+  const modelSlug = model.toLowerCase()
+    .replace('ioniq 5', 'ioniq-5')
+    .replace('ioniq 6', 'ioniq-6')
+    .replace('e-tron', 'e-tron')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+  const imageUrl = `https://cdn.imagin.studio/getimage?customer=img&make=${makeSlug}&modelFamily=${modelSlug}&zoomType=fullscreen&paintId=color-white`;
+
   return (
     <div
       className={`overflow-hidden rounded-lg cursor-pointer transition-shadow hover:shadow-md ${
@@ -142,9 +151,17 @@ export default function EVModelCard(props: EVModelCardProps) {
     >
       {/* Hero area */}
       <div
-        className="relative flex items-center justify-center"
+        className="relative overflow-hidden"
         style={{ height: 130, background: heroGradients[type] || heroGradients.MHEV }}
       >
+        <img
+          src={imageUrl}
+          alt={`${make} ${model}`}
+          loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+
         {/* Compare checkbox */}
         {onCompareToggle && (
           <label
@@ -163,14 +180,11 @@ export default function EVModelCard(props: EVModelCardProps) {
 
         {/* Badge */}
         <span
-          className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+          className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full z-[2]"
           style={{ backgroundColor: badge.bg, color: badge.text }}
         >
           {type}
         </span>
-
-        {/* Silhouette */}
-        <CarSilhouette type={type} />
       </div>
 
       {/* Body */}
