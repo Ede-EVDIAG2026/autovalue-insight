@@ -109,8 +109,8 @@ const severityColor: Record<string, string> = {
 };
 
 export default function EVDatabasePage() {
-  const { language } = useLanguage();
-  const l = (key: string) => tx[key]?.[language] ?? tx[key]?.HU ?? key;
+  const { lang } = useLanguage();
+  const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
 
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
