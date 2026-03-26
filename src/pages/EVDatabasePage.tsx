@@ -124,6 +124,38 @@ export default function EVDatabasePage() {
   const [selectedModel, setSelectedModel] = useState<{ make: string; model: string } | null>(null);
   const [detail, setDetail] = useState<EVModelDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [compareList, setCompareList] = useState<string[]>([]);
+  const [compareDetails, setCompareDetails] = useState<Record<string, EVModelDetail>>({});
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+
+  const MAX_COMPARE = 3;
+
+  const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
+
+  const toggleCompare = useCallback((m: EVModel) => {
+    const key = compareKey(m);
+    setCompareList(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : prev.length < MAX_COMPARE ? [...prev, key] : prev
+    );
+  }, []);
+
+  const openCompare = useCallback(async () => {
+    setCompareOpen(true);
+    setCompareLoading(true);
+    const details: Record<string, EVModelDetail> = {};
+    await Promise.all(
+      compareList.map(async key => {
+        const [make, model] = key.split('::');
+        try {
+          const r = await fetch(`https://api.evdiag.hu/api/v1/ev-kb/model/${encodeURIComponent(make)}/${encodeURIComponent(model)}`);
+          if (r.ok) details[key] = await r.json();
+        } catch {}
+      })
+    );
+    setCompareDetails(details);
+    setCompareLoading(false);
+  }, [compareList]);
 
   // Fetch models on region change
   useEffect(() => {
