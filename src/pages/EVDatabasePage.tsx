@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import AppHeader from '@/components/AppHeader';
 import EVModelCard from '@/components/market/EVModelCard';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, X } from 'lucide-react';
+import { Search, X, GitCompareArrows } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
 
@@ -49,6 +49,12 @@ const tx: Record<string, Record<Lang, string>> = {
   data_quality: { HU: 'Adatminőség', EN: 'Data quality', DE: 'Datenqualität' },
   warranty_format: { HU: 'év', EN: 'yr', DE: 'J.' },
   details: { HU: 'Részletek', EN: 'Details', DE: 'Details' },
+  compare: { HU: 'Összehasonlítás', EN: 'Compare', DE: 'Vergleichen' },
+  compare_models: { HU: 'Modellek összehasonlítása', EN: 'Compare models', DE: 'Modelle vergleichen' },
+  compare_select: { HU: 'Válassz 2-3 modellt', EN: 'Select 2-3 models', DE: 'Wähle 2-3 Modelle' },
+  compare_selected: { HU: 'kiválasztva', EN: 'selected', DE: 'ausgewählt' },
+  compare_clear: { HU: 'Törlés', EN: 'Clear', DE: 'Löschen' },
+  compare_no_data: { HU: 'n/a', EN: 'n/a', DE: 'n/v' },
 };
 
 interface EVModel {
@@ -118,6 +124,38 @@ export default function EVDatabasePage() {
   const [selectedModel, setSelectedModel] = useState<{ make: string; model: string } | null>(null);
   const [detail, setDetail] = useState<EVModelDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [compareList, setCompareList] = useState<string[]>([]);
+  const [compareDetails, setCompareDetails] = useState<Record<string, EVModelDetail>>({});
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+
+  const MAX_COMPARE = 3;
+
+  const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
+
+  const toggleCompare = useCallback((m: EVModel) => {
+    const key = compareKey(m);
+    setCompareList(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : prev.length < MAX_COMPARE ? [...prev, key] : prev
+    );
+  }, []);
+
+  const openCompare = useCallback(async () => {
+    setCompareOpen(true);
+    setCompareLoading(true);
+    const details: Record<string, EVModelDetail> = {};
+    await Promise.all(
+      compareList.map(async key => {
+        const [make, model] = key.split('::');
+        try {
+          const r = await fetch(`https://api.evdiag.hu/api/v1/ev-kb/model/${encodeURIComponent(make)}/${encodeURIComponent(model)}`);
+          if (r.ok) details[key] = await r.json();
+        } catch {}
+      })
+    );
+    setCompareDetails(details);
+    setCompareLoading(false);
+  }, [compareList]);
 
   // Fetch models on region change
   useEffect(() => {
@@ -312,6 +350,9 @@ export default function EVDatabasePage() {
                 key={`${m.make}-${m.model}-${m.variant}-${i}`}
                 {...m}
                 onClick={() => setSelectedModel({ make: m.make, model: m.model })}
+                isCompareSelected={compareList.includes(compareKey(m))}
+                onCompareToggle={() => toggleCompare(m)}
+                compareDisabled={compareList.length >= MAX_COMPARE}
               />
             ))}
           </div>
@@ -413,6 +454,140 @@ export default function EVDatabasePage() {
                 </div>
                 <Progress value={Math.round((detail.data_confidence ?? 0) * 100)} className="h-1.5" />
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating compare bar */}
+      {compareList.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-7xl">
+            <div className="flex items-center gap-3">
+              <GitCompareArrows className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {compareList.length} {l('compare_selected')}
+              </span>
+              <div className="flex gap-1.5">
+                {compareList.map(key => {
+                  const [make, model] = key.split('::');
+                  return (
+                    <Badge key={key} variant="secondary" className="text-xs gap-1">
+                      {make} {model}
+                      <button
+                        onClick={() => setCompareList(prev => prev.filter(k => k !== key))}
+                        className="ml-0.5 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setCompareList([])}>
+                {l('compare_clear')}
+              </Button>
+              <Button size="sm" disabled={compareList.length < 2} onClick={openCompare}>
+                <GitCompareArrows className="h-4 w-4 mr-1.5" />
+                {l('compare')} ({compareList.length})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compare modal */}
+      <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <GitCompareArrows className="h-5 w-5" />
+              {l('compare_models')}
+            </DialogTitle>
+          </DialogHeader>
+
+          {compareLoading ? (
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-muted-foreground font-medium min-w-[140px]" />
+                    {compareList.map(key => {
+                      const [make, model] = key.split('::');
+                      return (
+                        <th key={key} className="text-left py-2 px-3 font-display font-bold text-foreground min-w-[160px]">
+                          {make} {model}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ['spec_battery', 'battery_kwh', ' kWh'],
+                    ['spec_wltp', 'range_km_wltp', ' km'],
+                    ['spec_real_range', 'real_range_80pct_km', ' km'],
+                    ['spec_warranty', 'warranty_battery_years', ` ${l('warranty_format')}`],
+                    ['spec_connector', 'connector_type', ''],
+                    ['spec_ota', 'ota_updates', ''],
+                    ['spec_adas', 'adas_level', ''],
+                    ['degradation', 'degradation_risk', ''],
+                  ] as [string, string, string][]).map(([labelKey, field, suffix]) => (
+                    <tr key={field} className="border-b border-border/50">
+                      <td className="py-2 px-3 text-muted-foreground">{l(labelKey)}</td>
+                      {compareList.map(key => {
+                        const d = compareDetails[key];
+                        const val = d?.[field];
+                        return (
+                          <td key={key} className="py-2 px-3 font-medium text-foreground">
+                            {val != null ? `${val}${suffix}` : l('compare_no_data')}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                  {/* Rental battery row */}
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3 text-muted-foreground">🔋 Rental</td>
+                    {compareList.map(key => {
+                      const d = compareDetails[key];
+                      return (
+                        <td key={key} className="py-2 px-3">
+                          {d?.rental_battery ? (
+                            <Badge variant="destructive" className="text-xs">⚠</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">–</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {/* Confidence row */}
+                  <tr>
+                    <td className="py-2 px-3 text-muted-foreground">{l('data_quality')}</td>
+                    {compareList.map(key => {
+                      const d = compareDetails[key];
+                      const pct = Math.round((d?.data_confidence ?? 0) * 100);
+                      return (
+                        <td key={key} className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            <Progress value={pct} className="h-1.5 flex-1" />
+                            <span className="text-xs font-semibold text-muted-foreground">{pct}%</span>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </DialogContent>

@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
@@ -22,6 +23,9 @@ export interface EVModelCardProps {
   data_confidence: number;
   model_type?: string;
   onClick: () => void;
+  isCompareSelected?: boolean;
+  onCompareToggle?: () => void;
+  compareDisabled?: boolean;
 }
 
 const modelTypeBadge: Record<string, string> = {
@@ -40,6 +44,7 @@ const chemistryStyle: Record<string, string> = {
 export default function EVModelCard({
   make, model, variant, battery_kwh, range_km_wltp,
   fast_charge_kw, cell_chemistry, data_confidence, model_type, onClick,
+  isCompareSelected, onCompareToggle, compareDisabled,
 }: EVModelCardProps) {
   const { lang } = useLanguage();
   const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
@@ -47,15 +52,32 @@ export default function EVModelCard({
   const chemClass = chemistryStyle[cell_chemistry?.toUpperCase()] || 'bg-muted text-muted-foreground';
 
   return (
-    <Card className="border border-border bg-card hover:shadow-md transition-shadow cursor-pointer group" onClick={onClick}>
+    <Card
+      className={`border bg-card hover:shadow-md transition-shadow cursor-pointer group ${
+        isCompareSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+      }`}
+      onClick={onClick}
+    >
       <CardContent className="pt-5 pb-4 space-y-3">
-        {/* Header */}
-        <div>
-          <h3 className="font-display font-bold text-foreground text-base leading-tight">
-            {make} {model}
-          </h3>
-          {variant && (
-            <p className="text-xs text-muted-foreground mt-0.5">{variant}</p>
+        {/* Header with compare checkbox */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-display font-bold text-foreground text-base leading-tight">
+              {make} {model}
+            </h3>
+            {variant && (
+              <p className="text-xs text-muted-foreground mt-0.5">{variant}</p>
+            )}
+          </div>
+          {onCompareToggle && (
+            <div onClick={e => e.stopPropagation()} className="flex-shrink-0 pt-0.5">
+              <Checkbox
+                checked={isCompareSelected}
+                onCheckedChange={() => onCompareToggle()}
+                disabled={compareDisabled && !isCompareSelected}
+                className="h-4 w-4"
+              />
+            </div>
           )}
         </div>
 
