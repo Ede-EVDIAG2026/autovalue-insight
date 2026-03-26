@@ -483,6 +483,10 @@ export default function VinResultModal({ data, onClose, onApply }: VinResultModa
               </div>
             </Section>
           )}
+          {/* ═══ EV Tudásbázis ═══ */}
+          {make && model && year && (
+            <EVKBPanel make={make} model={model} year={Number(year)} />
+          )}
         </div>
 
         {/* Footer */}
