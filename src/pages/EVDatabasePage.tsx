@@ -350,6 +350,9 @@ export default function EVDatabasePage() {
                 key={`${m.make}-${m.model}-${m.variant}-${i}`}
                 {...m}
                 onClick={() => setSelectedModel({ make: m.make, model: m.model })}
+                isCompareSelected={compareList.includes(compareKey(m))}
+                onCompareToggle={() => toggleCompare(m)}
+                compareDisabled={compareList.length >= MAX_COMPARE}
               />
             ))}
           </div>
