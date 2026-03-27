@@ -186,7 +186,7 @@ export default function EVModelCard(props: EVModelCardProps) {
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-1.5">
           {stats.map((s, i) => (
-            <div key={i} className="bg-secondary/40 rounded-md py-1.5 px-1 text-center">
+            <div key={i} className="bg-muted/50 rounded-md py-1.5 px-1 text-center">
               <div className="text-[13px] font-medium text-foreground leading-tight">{s.val}</div>
               <div className="text-[10px] text-muted-foreground">{s.lbl}</div>
             </div>
