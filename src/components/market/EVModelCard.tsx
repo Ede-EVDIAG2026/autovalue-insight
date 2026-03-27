@@ -25,10 +25,10 @@ export interface EVModelCardProps {
 }
 
 const heroGradients: Record<string, string> = {
-  BEV: 'linear-gradient(135deg, #1a2a4a 0%, #0f3460 100%)',
-  PHEV: 'linear-gradient(135deg, #1a2d0e 0%, #2d5c10 100%)',
-  HEV: 'linear-gradient(135deg, #2d1a0e 0%, #5c3a0a 100%)',
-  MHEV: 'linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 100%)',
+  BEV: 'linear-gradient(135deg, hsl(224 71% 30%), hsl(224 71% 40%))',
+  PHEV: 'linear-gradient(135deg, hsl(160 84% 18%), hsl(160 84% 28%))',
+  HEV: 'linear-gradient(135deg, hsl(30 60% 25%), hsl(30 60% 35%))',
+  MHEV: 'linear-gradient(135deg, hsl(220 10% 20%), hsl(220 10% 30%))',
 };
 
 const badgeStyles: Record<string, { bg: string; text: string }> = {
