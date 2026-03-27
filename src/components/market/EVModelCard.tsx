@@ -18,7 +18,6 @@ export interface EVModelCardProps {
   cell_chemistry: string | null;
   model_type?: string;
   data_confidence: number | null;
-  image_url?: string | null;
   onClick: () => void;
   isCompareSelected?: boolean;
   onCompareToggle?: () => void;
@@ -122,7 +121,7 @@ function statsForType(type: string, props: EVModelCardProps): { val: string; lbl
 
 export default function EVModelCard(props: EVModelCardProps) {
   const {
-    make, model, variant, model_type, data_confidence, image_url, onClick,
+    make, model, variant, model_type, data_confidence, onClick,
     isCompareSelected, onCompareToggle, compareDisabled,
   } = props;
   const { lang } = useLanguage();
@@ -148,24 +147,12 @@ export default function EVModelCard(props: EVModelCardProps) {
         className="relative overflow-hidden flex flex-col items-center justify-center"
         style={{ height: 130, background: heroGradients[type] || heroGradients.MHEV }}
       >
-        {image_url ? (
-          <img
-            src={image_url}
-            alt={`${make} ${model}`}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ objectPosition: 'center 60%' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-        ) : (
-          <>
-            <span style={{ fontSize: 48, fontWeight: 500, color: 'rgba(255,255,255,0.15)', letterSpacing: -2, lineHeight: 1 }}>
-              {initials}
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-              {model}
-            </span>
-          </>
-        )}
+        <span style={{ fontSize: 48, fontWeight: 500, color: 'rgba(255,255,255,0.15)', letterSpacing: -2, lineHeight: 1 }}>
+          {initials}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+          {model}
+        </span>
 
         {/* Compare checkbox */}
         {onCompareToggle && (
