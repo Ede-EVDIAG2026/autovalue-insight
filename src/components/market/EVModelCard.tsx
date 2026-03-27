@@ -132,14 +132,7 @@ export default function EVModelCard(props: EVModelCardProps) {
   const badge = badgeStyles[type] || badgeStyles.MHEV;
   const stats = statsForType(type, props);
 
-  const makeSlug = make.toLowerCase().replace(/\s+/g, '-');
-  const modelSlug = model.toLowerCase()
-    .replace('ioniq 5', 'ioniq-5')
-    .replace('ioniq 6', 'ioniq-6')
-    .replace('e-tron', 'e-tron')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '');
-  const imageUrl = `https://cdn.imagin.studio/getimage?customer=img&make=${makeSlug}&modelFamily=${modelSlug}&zoomType=fullscreen&paintId=color-white`;
+  const initials = make.length >= 2 ? make.slice(0, 2).toUpperCase() : make.toUpperCase();
 
   return (
     <div
@@ -151,16 +144,16 @@ export default function EVModelCard(props: EVModelCardProps) {
     >
       {/* Hero area */}
       <div
-        className="relative overflow-hidden"
+        className="relative overflow-hidden flex flex-col items-center justify-center"
         style={{ height: 130, background: heroGradients[type] || heroGradients.MHEV }}
       >
-        <img
-          src={imageUrl}
-          alt={`${make} ${model}`}
-          loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-        />
+        {/* Initials */}
+        <span style={{ fontSize: 48, fontWeight: 500, color: 'rgba(255,255,255,0.15)', letterSpacing: -2, lineHeight: 1 }}>
+          {initials}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+          {model}
+        </span>
 
         {/* Compare checkbox */}
         {onCompareToggle && (
