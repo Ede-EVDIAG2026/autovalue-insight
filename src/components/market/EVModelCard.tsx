@@ -178,15 +178,10 @@ export default function EVModelCard(props: EVModelCardProps) {
 
       {/* Body */}
       <div className="bg-card p-3 space-y-2.5">
-        {/* Title */}
-        <div>
-          <div className="text-sm font-medium text-foreground leading-tight">
-            {make} {model}
-          </div>
-          {variant && (
-            <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{variant}</div>
-          )}
-        </div>
+        {/* Variant */}
+        {variant && (
+          <div className="text-[11px] text-muted-foreground truncate">{variant}</div>
+        )}
 
         {/* Stats grid */}
         <div className="grid grid-cols-3 gap-1.5">
