@@ -142,37 +142,34 @@ export default function EVModelCard(props: EVModelCardProps) {
       style={{ border: '0.5px solid hsl(var(--border))' }}
       onClick={onClick}
     >
-      {/* Hero area */}
+      {/* Compact colored header */}
       <div
-        className="relative overflow-hidden flex flex-col items-center justify-center"
-        style={{ height: 130, background: heroGradients[type] || heroGradients.MHEV }}
+        className="relative flex items-center justify-between px-3"
+        style={{ height: 36, background: heroGradients[type] || heroGradients.MHEV }}
       >
-        <span style={{ fontSize: 48, fontWeight: 500, color: 'rgba(255,255,255,0.15)', letterSpacing: -2, lineHeight: 1 }}>
-          {initials}
-        </span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-          {model}
-        </span>
-
-        {/* Compare checkbox */}
-        {onCompareToggle && (
-          <label
-            className="absolute top-2 left-2 flex items-center gap-1 cursor-pointer z-10"
-            onClick={e => e.stopPropagation()}
-          >
-            <input
-              type="checkbox"
-              checked={!!isCompareSelected}
-              onChange={() => onCompareToggle()}
-              disabled={compareDisabled && !isCompareSelected}
-              className="w-3.5 h-3.5 rounded accent-white"
-            />
-          </label>
-        )}
-
+        <div className="flex items-center gap-2">
+          {/* Compare checkbox */}
+          {onCompareToggle && (
+            <label
+              className="flex items-center cursor-pointer"
+              onClick={e => e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                checked={!!isCompareSelected}
+                onChange={() => onCompareToggle()}
+                disabled={compareDisabled && !isCompareSelected}
+                className="w-3.5 h-3.5 rounded accent-white"
+              />
+            </label>
+          )}
+          <span className="text-[13px] font-semibold text-white/90 truncate">
+            {make} {model}
+          </span>
+        </div>
         {/* Badge */}
         <span
-          className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full z-[2]"
+          className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: badge.bg, color: badge.text }}
         >
           {type}
