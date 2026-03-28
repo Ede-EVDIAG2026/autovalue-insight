@@ -1,6 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { InspectionResult } from '@/components/battery/BatteryInspectionResults';
+import { liberationSansRegular } from '@/components/battery/fonts/liberationSansRegular';
+import { liberationSansBold } from '@/components/battery/fonts/liberationSansBold';
+import { logoBase64 } from '@/components/battery/fonts/logoBase64';
 
 interface PdfParams {
   result: InspectionResult;
@@ -9,6 +12,14 @@ interface PdfParams {
 
 export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  // Register Liberation Sans font for Hungarian character support
+  doc.addFileToVFS('LiberationSans-Regular.ttf', liberationSansRegular);
+  doc.addFont('LiberationSans-Regular.ttf', 'LiberationSans', 'normal');
+  doc.addFileToVFS('LiberationSans-Bold.ttf', liberationSansBold);
+  doc.addFont('LiberationSans-Bold.ttf', 'LiberationSans', 'bold');
+  doc.setFont('LiberationSans', 'normal');
+
   const W = doc.internal.pageSize.getWidth();
   const M = 15; // margin
   const CW = W - 2 * M; // content width
