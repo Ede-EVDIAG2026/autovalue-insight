@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import AppHeader from '@/components/AppHeader';
+import BatteryInspectionWizard from '@/components/battery/BatteryInspectionWizard';
 import EVModelCard from '@/components/market/EVModelCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, X, GitCompareArrows } from 'lucide-react';
+import { Search, X, GitCompareArrows, Microscope } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
 
@@ -128,7 +129,8 @@ export default function EVDatabasePage() {
   const [compareDetails, setCompareDetails] = useState<Record<string, EVModelDetail>>({});
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareLoading, setCompareLoading] = useState(false);
-
+  const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [inspectionModel, setInspectionModel] = useState<any>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
@@ -454,6 +456,29 @@ export default function EVDatabasePage() {
                 </div>
                 <Progress value={Math.round((detail.data_confidence ?? 0) * 100)} className="h-1.5" />
               </div>
+
+              {/* Battery inspection button */}
+              <Button
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => {
+                  const modelType = models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV';
+                  setInspectionModel({
+                    make: selectedModel!.make,
+                    model: selectedModel!.model,
+                    variant: '',
+                    battery_kwh: detail.battery_kwh,
+                    model_type: modelType,
+                    range_km_wltp: detail.range_km_wltp,
+                    cell_chemistry: null,
+                    ...detail,
+                  });
+                  setInspectionOpen(true);
+                }}
+              >
+                <Microscope className="h-4 w-4 mr-2" />
+                🔬 Akkumulátor / Hajtáslánc előellenőrzés
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -592,6 +617,15 @@ export default function EVDatabasePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Battery Inspection Wizard */}
+      {inspectionModel && (
+        <BatteryInspectionWizard
+          open={inspectionOpen}
+          onOpenChange={setInspectionOpen}
+          modelData={inspectionModel}
+        />
+      )}
     </div>
   );
 }
