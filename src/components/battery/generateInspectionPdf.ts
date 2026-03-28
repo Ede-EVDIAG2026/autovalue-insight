@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { InspectionResult } from '@/components/battery/BatteryInspectionResults';
-import { liberationSansRegular } from '@/components/battery/fonts/liberationSansRegular';
-import { liberationSansBold } from '@/components/battery/fonts/liberationSansBold';
+import { montserratRegular } from '@/components/battery/fonts/montserratRegular';
+import { montserratBold } from '@/components/battery/fonts/montserratBold';
 import { logoBase64 } from '@/components/battery/fonts/logoBase64';
 
 interface PdfParams {
