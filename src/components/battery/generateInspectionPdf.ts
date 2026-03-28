@@ -14,11 +14,11 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   // Register Liberation Sans font for Hungarian character support
-  doc.addFileToVFS('LiberationSans-Regular.ttf', liberationSansRegular);
-  doc.addFont('LiberationSans-Regular.ttf', 'LiberationSans', 'normal');
-  doc.addFileToVFS('LiberationSans-Bold.ttf', liberationSansBold);
-  doc.addFont('LiberationSans-Bold.ttf', 'LiberationSans', 'bold');
-  doc.setFont('LiberationSans', 'normal');
+  doc.addFileToVFS('Montserrat-Regular.ttf', montserratRegular);
+  doc.addFont('Montserrat-Regular.ttf', 'Montserrat', 'normal');
+  doc.addFileToVFS('Montserrat-Bold.ttf', montserratBold);
+  doc.addFont('Montserrat-Bold.ttf', 'Montserrat', 'bold');
+  doc.setFont('Montserrat', 'normal');
 
   const W = doc.internal.pageSize.getWidth();
   const M = 15; // margin
