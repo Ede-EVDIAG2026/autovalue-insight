@@ -220,7 +220,7 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('battery-inspection', {
-        body: { wizardData: buildWizardData(), modelData },
+        body: { wizardData: buildWizardData(), modelData, lang },
       });
 
       if (fnError) throw fnError;
