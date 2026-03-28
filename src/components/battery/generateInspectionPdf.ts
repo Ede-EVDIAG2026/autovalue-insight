@@ -113,9 +113,9 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   doc.text('EV DIAG', textStartX, 13);
   doc.setFontSize(9);
   doc.setFont('LiberationSans', 'normal');
-  doc.text('Bayesian Core v2 — Akkumulátor / Hajtáslánc Előellenőrzési Riport', M, 20);
+  doc.text('Bayesian Core v2 — Akkumulátor / Hajtáslánc Előellenőrzési Riport', textStartX, 20);
   doc.setFontSize(8);
-  doc.text(`${modelInfo.make} ${modelInfo.model}${modelInfo.variant ? ' ' + modelInfo.variant : ''} (${modelInfo.model_type})`, M, 27);
+  doc.text(`${modelInfo.make} ${modelInfo.model}${modelInfo.variant ? ' ' + modelInfo.variant : ''} (${modelInfo.model_type})`, textStartX, 27);
   doc.text(new Date().toLocaleDateString('hu-HU'), W - M, 27, { align: 'right' });
 
   y = 40;
