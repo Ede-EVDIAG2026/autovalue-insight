@@ -232,8 +232,8 @@ export default function BatteryInspectionResults({ result, showIce, modelInfo }:
       </Card>
 
       {/* PDF button */}
-      <Button variant="outline" className="w-full" onClick={() => {
-        const { generateInspectionPdf } = require('./generateInspectionPdf');
+      <Button variant="outline" className="w-full" onClick={async () => {
+        const { generateInspectionPdf } = await import('./generateInspectionPdf');
         generateInspectionPdf({
           result,
           modelInfo: modelInfo || { make: 'N/A', model: 'N/A', model_type: 'BEV' },
