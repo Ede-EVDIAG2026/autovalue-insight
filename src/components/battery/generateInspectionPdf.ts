@@ -98,10 +98,19 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   // Header bar
   doc.setFillColor(...brand.primary);
   doc.rect(0, 0, W, 32, 'F');
+
+  // Brand logo in header (left side)
+  try {
+    doc.addImage(logoBase64, 'PNG', M, 3, 26, 26);
+  } catch (e) {
+    // fallback: no logo
+  }
+
+  const textStartX = M + 30;
   doc.setFontSize(16);
   doc.setFont('LiberationSans', 'bold');
   doc.setTextColor(255, 255, 255);
-  doc.text('EV DIAG', M, 13);
+  doc.text('EV DIAG', textStartX, 13);
   doc.setFontSize(9);
   doc.setFont('LiberationSans', 'normal');
   doc.text('Bayesian Core v2 — Akkumulátor / Hajtáslánc Előellenőrzési Riport', M, 20);
