@@ -129,7 +129,8 @@ export default function EVDatabasePage() {
   const [compareDetails, setCompareDetails] = useState<Record<string, EVModelDetail>>({});
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareLoading, setCompareLoading] = useState(false);
-
+  const [inspectionOpen, setInspectionOpen] = useState(false);
+  const [inspectionModel, setInspectionModel] = useState<any>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
