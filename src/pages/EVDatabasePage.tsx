@@ -456,6 +456,29 @@ export default function EVDatabasePage() {
                 </div>
                 <Progress value={Math.round((detail.data_confidence ?? 0) * 100)} className="h-1.5" />
               </div>
+
+              {/* Battery inspection button */}
+              <Button
+                variant="outline"
+                className="w-full mt-2"
+                onClick={() => {
+                  const modelType = models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV';
+                  setInspectionModel({
+                    make: selectedModel!.make,
+                    model: selectedModel!.model,
+                    variant: '',
+                    battery_kwh: detail.battery_kwh,
+                    model_type: modelType,
+                    range_km_wltp: detail.range_km_wltp,
+                    cell_chemistry: null,
+                    ...detail,
+                  });
+                  setInspectionOpen(true);
+                }}
+              >
+                <Microscope className="h-4 w-4 mr-2" />
+                🔬 Akkumulátor / Hajtáslánc előellenőrzés
+              </Button>
             </div>
           )}
         </DialogContent>
