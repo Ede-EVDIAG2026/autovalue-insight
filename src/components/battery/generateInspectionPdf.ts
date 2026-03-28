@@ -62,13 +62,13 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
 
     // Score text
     doc.setFontSize(18);
-    doc.setFont('LiberationSans', 'bold');
+    doc.setFont('Montserrat', 'bold');
     setColor(brand.dark);
     doc.text(`${score}`, cx, cy + 1, { align: 'center' });
     
     // Label
     doc.setFontSize(7);
-    doc.setFont('LiberationSans', 'normal');
+    doc.setFont('Montserrat', 'normal');
     setColor(brand.gray);
     doc.text(label, cx, cy + r + 6, { align: 'center' });
   };
@@ -76,7 +76,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   const drawSectionTitle = (title: string, icon?: string) => {
     checkPage(12);
     doc.setFontSize(11);
-    doc.setFont('LiberationSans', 'bold');
+    doc.setFont('Montserrat', 'bold');
     setColor(brand.primary);
     doc.text(`${icon ? icon + ' ' : ''}${title}`, M, y);
     y += 2;
@@ -108,11 +108,11 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
 
   const textStartX = M + 30;
   doc.setFontSize(16);
-  doc.setFont('LiberationSans', 'bold');
+  doc.setFont('Montserrat', 'bold');
   doc.setTextColor(255, 255, 255);
   doc.text('EV DIAG', textStartX, 13);
   doc.setFontSize(9);
-  doc.setFont('LiberationSans', 'normal');
+  doc.setFont('Montserrat', 'normal');
   doc.text('Bayesian Core v2 — Akkumulátor / Hajtáslánc Előellenőrzési Riport', textStartX, 20);
   doc.setFontSize(8);
   doc.text(`${modelInfo.make} ${modelInfo.model}${modelInfo.variant ? ' ' + modelInfo.variant : ''} (${modelInfo.model_type})`, textStartX, 27);
@@ -130,7 +130,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   // Recommendation badge
   const recX = result.ice_health_score != null ? M + 105 : M + 70;
   doc.setFontSize(8);
-  doc.setFont('LiberationSans', 'bold');
+  doc.setFont('Montserrat', 'bold');
   setColor(brand.gray);
   doc.text('Vásárlási ajánlás:', recX, gaugeY - 10);
   
@@ -139,7 +139,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   const recW = doc.getTextWidth(result.buy_recommendation) + 8;
   doc.roundedRect(recX, gaugeY - 7, recW, 7, 1.5, 1.5, 'F');
   doc.setFontSize(8);
-  doc.setFont('LiberationSans', 'bold');
+  doc.setFont('Montserrat', 'bold');
   doc.setTextColor(255, 255, 255);
   doc.text(result.buy_recommendation, recX + 4, gaugeY - 2);
 
@@ -149,7 +149,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   doc.text(`Állapot: ${result.battery_health_label}`, recX, gaugeY + 6);
   setColor(brand.gray);
   doc.setFontSize(8);
-  doc.setFont('LiberationSans', 'normal');
+  doc.setFont('Montserrat', 'normal');
   doc.text(`Bayes konfidencia: ${Math.round(result.bayesian_confidence * 100)}%`, recX, gaugeY + 12);
 
   y = gaugeY + 24;
@@ -161,8 +161,8 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
     startY: y,
     margin: { left: M, right: M },
     theme: 'grid',
-    headStyles: { fillColor: brand.primary, fontSize: 8, font: 'LiberationSans', fontStyle: 'bold' },
-    bodyStyles: { fontSize: 8, font: 'LiberationSans', textColor: brand.dark },
+    headStyles: { fillColor: brand.primary, fontSize: 8, font: 'Montserrat', fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, font: 'Montserrat', textColor: brand.dark },
     alternateRowStyles: { fillColor: brand.lightGray },
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 65 }, 1: { cellWidth: 55 } },
     head: [['Mutató', 'Érték']],
@@ -187,8 +187,8 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
       startY: y,
       margin: { left: M, right: M },
       theme: 'grid',
-      headStyles: { fillColor: brand.red, fontSize: 8, font: 'LiberationSans', fontStyle: 'bold', textColor: [255, 255, 255] },
-      bodyStyles: { fontSize: 7.5, font: 'LiberationSans', textColor: brand.dark },
+      headStyles: { fillColor: brand.red, fontSize: 8, font: 'Montserrat', fontStyle: 'bold', textColor: [255, 255, 255] },
+      bodyStyles: { fontSize: 7.5, font: 'Montserrat', textColor: brand.dark },
       columnStyles: { 0: { cellWidth: 35, fontStyle: 'bold' }, 1: { cellWidth: 20 }, 2: { cellWidth: 'auto' } },
       head: [['Tényező', 'Súlyosság', 'Leírás']],
       body: result.risk_factors.map(rf => [rf.factor, severityLabel(rf.severity), rf.description]),
@@ -206,8 +206,8 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
       startY: y,
       margin: { left: M, right: M },
       theme: 'grid',
-      headStyles: { fillColor: brand.green, fontSize: 8, font: 'LiberationSans', fontStyle: 'bold', textColor: [255, 255, 255] },
-      bodyStyles: { fontSize: 7.5, font: 'LiberationSans', textColor: brand.dark },
+      headStyles: { fillColor: brand.green, fontSize: 8, font: 'Montserrat', fontStyle: 'bold', textColor: [255, 255, 255] },
+      bodyStyles: { fontSize: 7.5, font: 'Montserrat', textColor: brand.dark },
       columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
       head: [['Tényező', 'Leírás']],
       body: result.positive_factors.map(pf => [pf.factor, pf.description]),
@@ -228,8 +228,8 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
       startY: y,
       margin: { left: M, right: M },
       theme: 'grid',
-      headStyles: { fillColor: brand.primary, fontSize: 8, font: 'LiberationSans', fontStyle: 'bold', textColor: [255, 255, 255] },
-      bodyStyles: { fontSize: 7.5, font: 'LiberationSans', textColor: brand.dark },
+      headStyles: { fillColor: brand.primary, fontSize: 8, font: 'Montserrat', fontStyle: 'bold', textColor: [255, 255, 255] },
+      bodyStyles: { fontSize: 7.5, font: 'Montserrat', textColor: brand.dark },
       columnStyles: { 0: { cellWidth: 22, fontStyle: 'bold' }, 1: { cellWidth: 50 } },
       head: [['Prioritás', 'Ellenőrzési pont', 'Indoklás']],
       body: sorted.map(ci => [ci.priority, ci.item, ci.reason]),
@@ -250,7 +250,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   checkPage(30);
   drawSectionTitle('AI Összefoglaló');
   doc.setFontSize(9);
-  doc.setFont('LiberationSans', 'normal');
+  doc.setFont('Montserrat', 'normal');
   setColor(brand.dark);
   const summaryLines = doc.splitTextToSize(result.summary_hu, CW);
   doc.text(summaryLines, M, y);
@@ -259,7 +259,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   // Buy recommendation reasoning
   checkPage(20);
   doc.setFontSize(8);
-  doc.setFont('LiberationSans', 'italic');
+  doc.setFont('Montserrat', 'italic');
   setColor(brand.gray);
   const reasonLines = doc.splitTextToSize(`Indoklás: ${result.buy_recommendation_reasoning}`, CW);
   doc.text(reasonLines, M, y);
