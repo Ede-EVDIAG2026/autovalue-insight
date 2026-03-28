@@ -617,6 +617,15 @@ export default function EVDatabasePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Battery Inspection Wizard */}
+      {inspectionModel && (
+        <BatteryInspectionWizard
+          open={inspectionOpen}
+          onOpenChange={setInspectionOpen}
+          modelData={inspectionModel}
+        />
+      )}
     </div>
   );
 }
