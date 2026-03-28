@@ -107,7 +107,7 @@ const priorityBadge: Record<string, string> = {
   'OPCIONÁLIS': 'bg-muted text-muted-foreground',
 };
 
-export default function BatteryInspectionResults({ result, showIce }: { result: InspectionResult; showIce: boolean }) {
+export default function BatteryInspectionResults({ result, showIce, modelInfo }: { result: InspectionResult; showIce: boolean; modelInfo?: { make: string; model: string; variant?: string; model_type: string } }) {
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
@@ -232,7 +232,13 @@ export default function BatteryInspectionResults({ result, showIce }: { result: 
       </Card>
 
       {/* PDF button */}
-      <Button variant="outline" className="w-full" onClick={() => window.print()}>
+      <Button variant="outline" className="w-full" onClick={() => {
+        const { generateInspectionPdf } = require('./generateInspectionPdf');
+        generateInspectionPdf({
+          result,
+          modelInfo: modelInfo || { make: 'N/A', model: 'N/A', model_type: 'BEV' },
+        });
+      }}>
         <Download className="h-4 w-4 mr-2" />
         {l('pdf_export')}
       </Button>
