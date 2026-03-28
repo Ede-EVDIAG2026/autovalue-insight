@@ -259,7 +259,7 @@ export function generateInspectionPdf({ result, modelInfo }: PdfParams) {
   // Buy recommendation reasoning
   checkPage(20);
   doc.setFontSize(8);
-  doc.setFont('Montserrat', 'italic');
+  doc.setFont('Montserrat', 'normal');
   setColor(brand.gray);
   const reasonLines = doc.splitTextToSize(`Indoklás: ${result.buy_recommendation_reasoning}`, CW);
   doc.text(reasonLines, M, y);
