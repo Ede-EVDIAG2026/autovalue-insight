@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import AppHeader from '@/components/AppHeader';
+import BatteryInspectionWizard from '@/components/battery/BatteryInspectionWizard';
 import EVModelCard from '@/components/market/EVModelCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, X, GitCompareArrows } from 'lucide-react';
+import { Search, X, GitCompareArrows, Microscope } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
 
