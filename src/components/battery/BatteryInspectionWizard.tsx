@@ -284,7 +284,7 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
           {loading ? (
             <LoadingAnimation phase={loadingPhase} messages={loadingMessages} />
           ) : step === resultStep && result ? (
-            <BatteryInspectionResults result={result} showIce={hasICE} />
+            <BatteryInspectionResults result={result} showIce={hasICE} modelInfo={{ make: modelData.make, model: modelData.model, variant: modelData.variant, model_type: pt }} />
           ) : (
             <>
               {error && (
