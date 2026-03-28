@@ -237,6 +237,7 @@ export default function BatteryInspectionResults({ result, showIce, modelInfo }:
         generateInspectionPdf({
           result,
           modelInfo: modelInfo || { make: 'N/A', model: 'N/A', model_type: 'BEV' },
+          lang,
         });
       }}>
         <Download className="h-4 w-4 mr-2" />
