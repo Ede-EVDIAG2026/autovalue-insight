@@ -404,7 +404,11 @@ function LoadingAnimation({ phase, messages }: { phase: number; messages: string
 
   return (
     <div className="flex flex-col items-center justify-center py-16 space-y-6">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="relative flex items-center justify-center">
+        <div className="absolute h-16 w-16 rounded-full bg-primary/20 animate-ping" />
+        <div className="absolute h-14 w-14 rounded-full bg-primary/10 animate-pulse" />
+        <Loader2 className="relative h-12 w-12 animate-spin text-primary" />
+      </div>
       <div className="text-center space-y-3 w-64">
         <p
           className={`text-sm font-semibold text-foreground transition-all duration-250 ${
