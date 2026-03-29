@@ -177,6 +177,34 @@ export default function EVDatabasePage() {
     return () => { cancelled = true; };
   }, [filters.region]);
 
+  // Auto-open from query params
+  useEffect(() => {
+    if (autoOpenHandled.current || loading || models.length === 0) return;
+    const qMake = searchParams.get('make');
+    const qModel = searchParams.get('model');
+    const autoopen = searchParams.get('autoopen');
+    if (autoopen === 'true' && qMake && qModel) {
+      autoOpenHandled.current = true;
+      // Set filters to match
+      setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
+      // Find matching model
+      const match = models.find(m =>
+        m.make.toLowerCase() === qMake.toLowerCase() &&
+        m.model.toLowerCase() === qModel.toLowerCase()
+      );
+      if (match) {
+        setSelectedModel({ make: match.make, model: match.model });
+        // Smooth scroll after a tick
+        setTimeout(() => {
+          autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+      // Clean up URL
+      searchParams.delete('autoopen');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [loading, models, searchParams, setSearchParams]);
+
   // Unique makes
   const makes = useMemo(() => {
     const set = new Set(models.map(m => m.make));
