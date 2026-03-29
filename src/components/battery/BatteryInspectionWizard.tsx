@@ -110,6 +110,8 @@ const tx: Record<string, Record<Lang, string>> = {
   mostly_ev: { HU: 'Főleg EV', EN: 'Mostly EV', DE: 'Überwiegend EV' },
   mostly_ice: { HU: 'Főleg benzin', EN: 'Mostly petrol', DE: 'Überwiegend Benzin' },
   mhev_note: { HU: 'Enyhe hibrid — az elektromos komponens korlátozott, az értékelés főként az ICE állapotára fókuszál', EN: 'Mild hybrid — limited electric component, evaluation focuses mainly on ICE condition', DE: 'Mild-Hybrid — eingeschränkte E-Komponente, Bewertung fokussiert auf Verbrennungsmotor' },
+  loading_kb: { HU: 'Gyári adatbázis lekérése...', EN: 'Fetching factory database...', DE: 'Werksdatenbank abrufen...' },
+  loading_market: { HU: 'Piaci kontextus betöltése...', EN: 'Loading market context...', DE: 'Marktkontext laden...' },
   loading_init: { HU: 'Bayes v2 modell inicializálás...', EN: 'Initializing Bayes v2 model...', DE: 'Bayes v2 Modell initialisieren...' },
   loading_degradation: { HU: 'Degradáció becslés...', EN: 'Estimating degradation...', DE: 'Degradation schätzen...' },
   loading_risk: { HU: 'Kockázati faktorok számítása...', EN: 'Calculating risk factors...', DE: 'Risikofaktoren berechnen...' },
@@ -214,27 +216,28 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
 
     const API_BASE = import.meta.env.VITE_API_BASE ?? "http://46.224.176.213:8890";
 
-    // Fetch KB data and market data in parallel before loading animation
+    // Phase 0: KB fetch
     let kbData: Record<string, any> = {};
     let marketData: Record<string, any> = {};
 
     try {
-      const [kbRes, marketRes] = await Promise.all([
-        fetch(
-          `${API_BASE}/api/v1/ev-kb/model/${encodeURIComponent(modelData.make)}/${encodeURIComponent(modelData.model)}?year=${year ?? modelData.year_from ?? 2022}`
-        ).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(
-          `${API_BASE}/autovalue/results?make=${encodeURIComponent(modelData.make)}&model=${encodeURIComponent(modelData.model)}&year=${year ?? 2022}`
-        ).then(r => r.ok ? r.json() : null).catch(() => null),
-      ]);
+      const kbRes = await fetch(
+        `${API_BASE}/api/v1/ev-kb/model/${encodeURIComponent(modelData.make)}/${encodeURIComponent(modelData.model)}?year=${year ?? modelData.year_from ?? 2022}`
+      ).then(r => r.ok ? r.json() : null).catch(() => null);
       kbData = kbRes ?? {};
-      marketData = marketRes ?? {};
-    } catch {
-      // Continue without KB/market data
-    }
+    } catch { /* continue */ }
 
-    const phases = [0, 1, 2, 3];
-    for (const p of phases) {
+    // Phase 1: Market fetch
+    setLoadingPhase(1);
+    try {
+      const marketRes = await fetch(
+        `${API_BASE}/autovalue/results?make=${encodeURIComponent(modelData.make)}&model=${encodeURIComponent(modelData.model)}&year=${year ?? 2022}`
+      ).then(r => r.ok ? r.json() : null).catch(() => null);
+      marketData = marketRes ?? {};
+    } catch { /* continue */ }
+
+    // Phases 2-5: AI analysis animation
+    for (const p of [2, 3, 4, 5]) {
       setLoadingPhase(p);
       await new Promise(r => setTimeout(r, 1200));
     }
@@ -289,7 +292,7 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
     }
   };
 
-  const loadingMessages = [l('loading_init'), l('loading_degradation'), l('loading_risk'), l('loading_results')];
+  const loadingMessages = [l('loading_kb'), l('loading_market'), l('loading_init'), l('loading_degradation'), l('loading_risk'), l('loading_results')];
 
   const stepTitles: Record<number, string> = {
     1: l('step1_title'),
