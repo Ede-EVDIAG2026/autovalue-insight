@@ -274,6 +274,38 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
         </div>
 
         <div className="p-6 md:p-8 space-y-8 bg-background">
+          {/* Section 0 — Input Data */}
+          <FadeInSection>
+            <Card className="border-border bg-card">
+              <CardContent className="pt-6">
+                <h3 className="text-base font-display font-bold text-foreground mb-4 flex items-center gap-2">
+                  📊 {l('inputDataTitle')}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <ParamBox label={l('inputMake')} value={data.make && data.model ? `${data.make} ${data.model}` : '—'} />
+                  <ParamBox label={l('inputPowertrain')} value={data.model_type || '—'} />
+                  <ParamBox label={l('inputBatteryNominal')} value={data.battery_kwh ? `${data.battery_kwh} kWh` : '—'} />
+                  <ParamBox label={l('inputWltp')} value={data.range_km_wltp ? `${data.range_km_wltp} km` : '—'} />
+                  <ParamBox label={l('inputRealRange')} value={data.real_range_80pct_km ? `${data.real_range_80pct_km} km` : '—'} />
+                  <ParamBox label={l('inputChemistry')} value={chem || '—'} tooltip={chemKey ? l(chemKey) : undefined} />
+                  <ParamBox label={l('inputDegradationRisk')} value={data.degradation_risk || '—'} />
+                  <ParamBox label={l('inputWarranty')} value={data.warranty_battery_years ? `${data.warranty_battery_years} ${lang === 'EN' ? 'yr' : lang === 'DE' ? 'J.' : 'év'}${data.warranty_battery_km ? ` / ${(data.warranty_battery_km / 1000).toFixed(0)}k km` : ''}` : '—'} />
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">{l('inputKbConfidence')}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${data.data_confidence ?? 0}%` }} />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{data.data_confidence != null ? `${data.data_confidence}%` : '—'}</span>
+                    </div>
+                  </div>
+                  <ParamBox label={l('inputMedianPrice')} value={data.median_price_eur != null ? `€${data.median_price_eur.toLocaleString()}` : '—'} />
+                  <ParamBox label={l('inputDataPoints')} value={data.data_points != null ? `${data.data_points} db` : '—'} />
+                </div>
+              </CardContent>
+            </Card>
+          </FadeInSection>
+
           {/* Section 1 — Bayesian Params */}
           <FadeInSection>
             <Card className="border-border bg-card">
