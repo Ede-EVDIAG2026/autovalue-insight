@@ -51,6 +51,18 @@ const tx: Record<string, Record<Lang, string>> = {
   lfp_desc: { HU: 'Lítium-vasfoszfát — alacsony degradáció, hosszú élettartam', EN: 'Lithium iron phosphate — low degradation, long lifespan', DE: 'Lithium-Eisenphosphat — niedrige Degradation, lange Lebensdauer' },
   nmc_desc: { HU: 'Nikkel-mangán-kobalt — közepes degradáció, magas energiasűrűség', EN: 'Nickel-manganese-cobalt — moderate degradation, high energy density', DE: 'Nickel-Mangan-Kobalt — moderate Degradation, hohe Energiedichte' },
   nca_desc: { HU: 'Nikkel-kobalt-alumínium — magasabb degradáció kockázat', EN: 'Nickel-cobalt-aluminium — higher degradation risk', DE: 'Nickel-Kobalt-Aluminium — höheres Degradationsrisiko' },
+  inputDataTitle: { HU: 'Számítás bemeneti adatai', EN: 'Calculation Input Data', DE: 'Berechnungs-Eingabedaten' },
+  inputMake: { HU: 'Gyártó / Modell', EN: 'Make / Model', DE: 'Hersteller / Modell' },
+  inputPowertrain: { HU: 'Hajtáslánc típus', EN: 'Powertrain Type', DE: 'Antriebsart' },
+  inputBatteryNominal: { HU: 'Akkumulátor (névleges)', EN: 'Battery (nominal)', DE: 'Batterie (nominell)' },
+  inputWltp: { HU: 'WLTP hatótáv', EN: 'WLTP Range', DE: 'WLTP-Reichweite' },
+  inputRealRange: { HU: 'Reális hatótáv (80%)', EN: 'Real Range (80%)', DE: 'Reale Reichweite (80%)' },
+  inputChemistry: { HU: 'Cellakémia', EN: 'Cell Chemistry', DE: 'Zellchemie' },
+  inputDegradationRisk: { HU: 'Gyári degradációs kockázat', EN: 'Factory Degradation Risk', DE: 'Werksseitiges Degradationsrisiko' },
+  inputWarranty: { HU: 'Garancia', EN: 'Warranty', DE: 'Garantie' },
+  inputKbConfidence: { HU: 'KB megbízhatóság', EN: 'KB Confidence', DE: 'KB-Zuverlässigkeit' },
+  inputMedianPrice: { HU: 'Piaci medián ár', EN: 'Market Median Price', DE: 'Markt-Medianpreis' },
+  inputDataPoints: { HU: 'Piaci adatpontok', EN: 'Market Data Points', DE: 'Marktdatenpunkte' },
 };
 
 interface DegradationDetailModalProps {
@@ -67,9 +79,14 @@ interface DegradationDetailModalProps {
     rental_battery?: boolean;
     known_issues?: string[];
     warranty_battery_years?: number;
+    warranty_battery_km?: number;
     model_type?: string;
     make?: string;
     model?: string;
+    real_range_80pct_km?: number;
+    data_confidence?: number;
+    median_price_eur?: number;
+    data_points?: number;
   };
   onOpenWizard?: () => void;
 }
