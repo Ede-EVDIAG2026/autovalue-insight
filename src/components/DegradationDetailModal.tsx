@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -217,11 +217,22 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
     return 10;
   })();
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 border-0">
+  if (!open) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-300"
+        onClick={() => onOpenChange(false)}
+      />
+      {/* Modal content */}
+      <div
+        className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="hero-gradient text-primary-foreground p-6 md:p-8 rounded-t-lg">
+        <div className="hero-gradient text-primary-foreground p-6 md:p-8 rounded-t-2xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <Battery className="h-8 w-8" />
@@ -424,7 +435,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border bg-card p-4 md:p-6 rounded-b-lg flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="border-t border-border bg-card p-4 md:p-6 rounded-b-2xl flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-muted-foreground text-center md:text-left">
             {l('footer')} · {new Date().toLocaleDateString(lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-US' : 'hu-HU')}
           </p>
@@ -434,8 +445,9 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>,
+    document.body
   );
 }
 

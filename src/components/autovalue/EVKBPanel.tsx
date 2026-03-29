@@ -112,7 +112,10 @@ export function EVKBPanel({ make, model, year }: EVKBPanelProps) {
         <CardContent className="pt-4 pb-4 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
+            <Badge
+              className="bg-primary/10 text-primary border-primary/20 text-xs font-bold cursor-pointer hover:bg-primary/20 transition-colors"
+              onClick={() => navigate(`/ev-database?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&autoopen=true`)}
+            >
               ⚡ EV Tudásbázis
             </Badge>
             <span className={`text-xs font-semibold ${confColor}`}>
@@ -168,15 +171,6 @@ export function EVKBPanel({ make, model, year }: EVKBPanelProps) {
             </div>
           )}
 
-          {/* EV Database link button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-primary hover:text-primary/80 text-xs font-semibold mt-1"
-            onClick={() => navigate(`/ev-database?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&autoopen=true`)}
-          >
-            {l('ev_kb_btn')}
-          </Button>
         </CardContent>
       </Card>
 
