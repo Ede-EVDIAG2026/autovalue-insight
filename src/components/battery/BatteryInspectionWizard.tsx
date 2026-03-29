@@ -384,12 +384,15 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
 
 // Loading animation component
 function LoadingAnimation({ phase, messages }: { phase: number; messages: string[] }) {
+  const total = messages.length;
+  const percent = Math.round(((phase + 1) / total) * 100);
   return (
     <div className="flex flex-col items-center justify-center py-16 space-y-6">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3 w-64">
         <p className="text-sm font-semibold text-foreground">{messages[phase] || messages[0]}</p>
-        <Progress value={((phase + 1) / messages.length) * 100} className="h-1.5 w-48 mx-auto" />
+        <Progress value={percent} className="h-2" />
+        <p className="text-xs text-muted-foreground">{phase + 1} / {total}</p>
       </div>
     </div>
   );
