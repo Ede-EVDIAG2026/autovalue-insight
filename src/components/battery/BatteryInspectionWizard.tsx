@@ -212,6 +212,27 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
     setError('');
     setLoadingPhase(0);
 
+    const API_BASE = import.meta.env.VITE_API_BASE ?? "http://46.224.176.213:8890";
+
+    // Fetch KB data and market data in parallel before loading animation
+    let kbData: Record<string, any> = {};
+    let marketData: Record<string, any> = {};
+
+    try {
+      const [kbRes, marketRes] = await Promise.all([
+        fetch(
+          `${API_BASE}/api/v1/ev-kb/model/${encodeURIComponent(modelData.make)}/${encodeURIComponent(modelData.model)}?year=${year ?? modelData.year_from ?? 2022}`
+        ).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(
+          `${API_BASE}/autovalue/results?make=${encodeURIComponent(modelData.make)}&model=${encodeURIComponent(modelData.model)}&year=${year ?? 2022}`
+        ).then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
+      kbData = kbRes ?? {};
+      marketData = marketRes ?? {};
+    } catch {
+      // Continue without KB/market data
+    }
+
     const phases = [0, 1, 2, 3];
     for (const p of phases) {
       setLoadingPhase(p);
@@ -219,8 +240,40 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
     }
 
     try {
+      const wizardPayload = buildWizardData();
+
       const { data, error: fnError } = await supabase.functions.invoke('battery-inspection', {
-        body: { wizardData: buildWizardData(), modelData, lang },
+        body: {
+          wizardData: wizardPayload,
+          modelData: {
+            make: modelData.make,
+            model: modelData.model,
+            powertrain_type: modelData.model_type,
+            battery_kwh: modelData.battery_kwh,
+            wltp_range_km: modelData.range_km_wltp,
+          },
+          kbData: {
+            cell_chemistry: kbData.cell_chemistry ?? null,
+            degradation_risk: kbData.degradation_risk ?? "MEDIUM",
+            known_issues: kbData.fault_codes?.slice(0, 5) ?? [],
+            bms_vendor: kbData.specs?.bms_vendor?.value ?? null,
+            thermal_management: kbData.specs?.thermal_management?.value ?? null,
+            warranty_battery_years: kbData.warranty_battery_years ?? null,
+            warranty_battery_km: kbData.warranty_battery_km ?? null,
+            rental_battery: kbData.rental_battery ?? false,
+            real_range_80pct_km: kbData.real_range_80pct_km ?? null,
+            connector_type: kbData.connector_type ?? "CCS2",
+            data_confidence: kbData.data_confidence ?? null,
+          },
+          marketData: {
+            median_price_eur: marketData.p50_eur ?? marketData.median_price_eur ?? null,
+            p25_eur: marketData.p25_eur ?? null,
+            p75_eur: marketData.p75_eur ?? null,
+            avg_mileage_km: marketData.avg_mileage_km ?? null,
+            data_points: marketData.data_points ?? null,
+          },
+          lang,
+        },
       });
 
       if (fnError) throw fnError;
