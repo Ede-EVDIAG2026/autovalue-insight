@@ -177,44 +177,112 @@ export default function EVDatabasePage() {
     return () => { cancelled = true; };
   }, [filters.region]);
 
-  // Auto-open from query params — search across ALL regions
+  // Auto-open from query params — search across ALL regions (no region filter)
   useEffect(() => {
-    if (autoOpenHandled.current || loading) return;
+    if (autoOpenHandled.current) return;
     const qMake = searchParams.get('make');
     const qModel = searchParams.get('model');
     const autoopen = searchParams.get('autoopen');
     if (autoopen !== 'true' || !qMake || !qModel) return;
 
-    // Try to find match in current models
-    const match = models.find(m =>
-      m.make.toLowerCase() === qMake.toLowerCase() &&
-      m.model.toLowerCase() === qModel.toLowerCase()
-    );
+    const MAKE_ALIASES: Record<string, string[]> = {
+      tesla: ['tesla', 'Tesla', 'TESLA'],
+      volkswagen: ['volkswagen', 'vw', 'VW', 'Volkswagen'],
+      bmw: ['bmw', 'BMW', 'Bmw'],
+      mercedes: ['mercedes', 'Mercedes', 'mercedes-benz', 'Mercedes-Benz'],
+      hyundai: ['hyundai', 'Hyundai', 'HYUNDAI'],
+      kia: ['kia', 'Kia', 'KIA'],
+      byd: ['byd', 'BYD', 'Byd'],
+      volvo: ['volvo', 'Volvo', 'VOLVO'],
+      polestar: ['polestar', 'Polestar'],
+      renault: ['renault', 'Renault'],
+      peugeot: ['peugeot', 'Peugeot'],
+      audi: ['audi', 'Audi', 'AUDI'],
+      ford: ['ford', 'Ford'],
+      honda: ['honda', 'Honda'],
+      toyota: ['toyota', 'Toyota'],
+      mg: ['mg', 'MG', 'saic-mg'],
+      nio: ['nio', 'NIO'],
+      xpeng: ['xpeng', 'XPENG'],
+    };
 
-    if (match) {
+    const normalizeMake = (input: string): string => {
+      const low = input.toLowerCase();
+      for (const [, aliases] of Object.entries(MAKE_ALIASES)) {
+        if (aliases.some(a => a.toLowerCase() === low)) return aliases[0];
+      }
+      return low;
+    };
+
+    const normalizedQMake = normalizeMake(qMake);
+    const qModelLow = qModel.toLowerCase();
+
+    // Fetch all regions in parallel and find the model
+    const fetchAllRegions = async () => {
+      const allModels: EVModel[] = [];
+      const results = await Promise.all(
+        regions.map(r =>
+          fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${r}&limit=200`)
+            .then(res => res.ok ? res.json() : [])
+            .then(d => ({ region: r, models: Array.isArray(d) ? d : d.models || [] }))
+            .catch(() => ({ region: r, models: [] as EVModel[] }))
+        )
+      );
+
+      let foundRegion = '';
+      let foundModel: EVModel | null = null;
+
+      for (const { region, models: regionModels } of results) {
+        allModels.push(...regionModels);
+        if (!foundModel) {
+          // Exact match first
+          const exact = regionModels.find((m: EVModel) =>
+            normalizeMake(m.make) === normalizedQMake &&
+            m.model.toLowerCase() === qModelLow
+          );
+          if (exact) { foundModel = exact; foundRegion = region; }
+        }
+      }
+
+      // Partial match fallback
+      if (!foundModel) {
+        for (const { region, models: regionModels } of results) {
+          const partial = regionModels.find((m: EVModel) =>
+            normalizeMake(m.make) === normalizedQMake &&
+            m.model.toLowerCase().includes(qModelLow)
+          );
+          if (partial) { foundModel = partial; foundRegion = region; break; }
+        }
+      }
+
+      // Loose make match fallback
+      if (!foundModel) {
+        for (const { region, models: regionModels } of results) {
+          const loose = regionModels.find((m: EVModel) =>
+            m.make.toLowerCase().includes(normalizedQMake)
+          );
+          if (loose) { foundModel = loose; foundRegion = region; break; }
+        }
+      }
+
       autoOpenHandled.current = true;
-      setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
-      setSelectedModel({ make: match.make, model: match.model });
-      setTimeout(() => {
-        autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
+
+      if (foundModel && foundRegion) {
+        setFilters(f => ({ ...f, region: foundRegion, search: `${foundModel!.make} ${foundModel!.model}`, make: '' }));
+        setSelectedModel({ make: foundModel.make, model: foundModel.model });
+        setTimeout(() => {
+          autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+      } else {
+        setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
+      }
+
       searchParams.delete('autoopen');
       setSearchParams(searchParams, { replace: true });
-    } else if (models.length > 0) {
-      // Model not found in current region — try other regions
-      const otherRegions = regions.filter(r => r !== filters.region);
-      if (otherRegions.length > 0) {
-        const tryRegion = otherRegions[0];
-        setFilters(f => ({ ...f, region: tryRegion }));
-      } else {
-        // Exhausted all regions
-        autoOpenHandled.current = true;
-        setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
-        searchParams.delete('autoopen');
-        setSearchParams(searchParams, { replace: true });
-      }
-    }
-  }, [loading, models, searchParams, setSearchParams, filters.region]);
+    };
+
+    fetchAllRegions();
+  }, [searchParams, setSearchParams]);
 
   // Unique makes
   const makes = useMemo(() => {

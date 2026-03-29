@@ -51,6 +51,18 @@ const tx: Record<string, Record<Lang, string>> = {
   lfp_desc: { HU: 'Lítium-vasfoszfát — alacsony degradáció, hosszú élettartam', EN: 'Lithium iron phosphate — low degradation, long lifespan', DE: 'Lithium-Eisenphosphat — niedrige Degradation, lange Lebensdauer' },
   nmc_desc: { HU: 'Nikkel-mangán-kobalt — közepes degradáció, magas energiasűrűség', EN: 'Nickel-manganese-cobalt — moderate degradation, high energy density', DE: 'Nickel-Mangan-Kobalt — moderate Degradation, hohe Energiedichte' },
   nca_desc: { HU: 'Nikkel-kobalt-alumínium — magasabb degradáció kockázat', EN: 'Nickel-cobalt-aluminium — higher degradation risk', DE: 'Nickel-Kobalt-Aluminium — höheres Degradationsrisiko' },
+  inputDataTitle: { HU: 'Számítás bemeneti adatai', EN: 'Calculation Input Data', DE: 'Berechnungs-Eingabedaten' },
+  inputMake: { HU: 'Gyártó / Modell', EN: 'Make / Model', DE: 'Hersteller / Modell' },
+  inputPowertrain: { HU: 'Hajtáslánc típus', EN: 'Powertrain Type', DE: 'Antriebsart' },
+  inputBatteryNominal: { HU: 'Akkumulátor (névleges)', EN: 'Battery (nominal)', DE: 'Batterie (nominell)' },
+  inputWltp: { HU: 'WLTP hatótáv', EN: 'WLTP Range', DE: 'WLTP-Reichweite' },
+  inputRealRange: { HU: 'Reális hatótáv (80%)', EN: 'Real Range (80%)', DE: 'Reale Reichweite (80%)' },
+  inputChemistry: { HU: 'Cellakémia', EN: 'Cell Chemistry', DE: 'Zellchemie' },
+  inputDegradationRisk: { HU: 'Gyári degradációs kockázat', EN: 'Factory Degradation Risk', DE: 'Werksseitiges Degradationsrisiko' },
+  inputWarranty: { HU: 'Garancia', EN: 'Warranty', DE: 'Garantie' },
+  inputKbConfidence: { HU: 'KB megbízhatóság', EN: 'KB Confidence', DE: 'KB-Zuverlässigkeit' },
+  inputMedianPrice: { HU: 'Piaci medián ár', EN: 'Market Median Price', DE: 'Markt-Medianpreis' },
+  inputDataPoints: { HU: 'Piaci adatpontok', EN: 'Market Data Points', DE: 'Marktdatenpunkte' },
 };
 
 interface DegradationDetailModalProps {
@@ -67,9 +79,14 @@ interface DegradationDetailModalProps {
     rental_battery?: boolean;
     known_issues?: string[];
     warranty_battery_years?: number;
+    warranty_battery_km?: number;
     model_type?: string;
     make?: string;
     model?: string;
+    real_range_80pct_km?: number;
+    data_confidence?: number;
+    median_price_eur?: number;
+    data_points?: number;
   };
   onOpenWizard?: () => void;
 }
@@ -220,15 +237,18 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-[9999] flex items-start justify-center"
+      style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+    >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-300"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-300"
         onClick={() => onOpenChange(false)}
       />
       {/* Modal content */}
       <div
-        className="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto mx-4 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
+        className="relative z-10 w-full max-w-5xl mx-4 my-8 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -254,6 +274,38 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
         </div>
 
         <div className="p-6 md:p-8 space-y-8 bg-background">
+          {/* Section 0 — Input Data */}
+          <FadeInSection>
+            <Card className="border-border bg-card">
+              <CardContent className="pt-6">
+                <h3 className="text-base font-display font-bold text-foreground mb-4 flex items-center gap-2">
+                  📊 {l('inputDataTitle')}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <ParamBox label={l('inputMake')} value={data.make && data.model ? `${data.make} ${data.model}` : '—'} />
+                  <ParamBox label={l('inputPowertrain')} value={data.model_type || '—'} />
+                  <ParamBox label={l('inputBatteryNominal')} value={data.battery_kwh ? `${data.battery_kwh} kWh` : '—'} />
+                  <ParamBox label={l('inputWltp')} value={data.range_km_wltp ? `${data.range_km_wltp} km` : '—'} />
+                  <ParamBox label={l('inputRealRange')} value={data.real_range_80pct_km ? `${data.real_range_80pct_km} km` : '—'} />
+                  <ParamBox label={l('inputChemistry')} value={chem || '—'} tooltip={chemKey ? l(chemKey) : undefined} />
+                  <ParamBox label={l('inputDegradationRisk')} value={data.degradation_risk || '—'} />
+                  <ParamBox label={l('inputWarranty')} value={data.warranty_battery_years ? `${data.warranty_battery_years} ${lang === 'EN' ? 'yr' : lang === 'DE' ? 'J.' : 'év'}${data.warranty_battery_km ? ` / ${(data.warranty_battery_km / 1000).toFixed(0)}k km` : ''}` : '—'} />
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">{l('inputKbConfidence')}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${data.data_confidence ?? 0}%` }} />
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{data.data_confidence != null ? `${data.data_confidence}%` : '—'}</span>
+                    </div>
+                  </div>
+                  <ParamBox label={l('inputMedianPrice')} value={data.median_price_eur != null ? `€${data.median_price_eur.toLocaleString()}` : '—'} />
+                  <ParamBox label={l('inputDataPoints')} value={data.data_points != null ? `${data.data_points} db` : '—'} />
+                </div>
+              </CardContent>
+            </Card>
+          </FadeInSection>
+
           {/* Section 1 — Bayesian Params */}
           <FadeInSection>
             <Card className="border-border bg-card">
