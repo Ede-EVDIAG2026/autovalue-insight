@@ -663,6 +663,42 @@ export default function EVDatabasePage() {
           modelData={inspectionModel}
         />
       )}
+
+      {/* Degradation Detail Modal */}
+      {detail && detail.degradation_risk && (
+        <DegradationDetailModal
+          open={degModalOpen}
+          onOpenChange={setDegModalOpen}
+          data={{
+            degradation_risk: detail.degradation_risk,
+            battery_kwh: detail.battery_kwh,
+            range_km_wltp: detail.range_km_wltp,
+            cell_chemistry: (detail as any).cell_chemistry,
+            fault_codes: detail.fault_codes,
+            rental_battery: detail.rental_battery,
+            known_issues: (detail as any).known_issues,
+            warranty_battery_years: detail.warranty_battery_years,
+            model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
+            make: selectedModel?.make,
+            model: selectedModel?.model,
+          }}
+          onOpenWizard={() => {
+            setDegModalOpen(false);
+            const modelType = models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV';
+            setInspectionModel({
+              make: selectedModel!.make,
+              model: selectedModel!.model,
+              variant: '',
+              battery_kwh: detail.battery_kwh,
+              model_type: modelType,
+              range_km_wltp: detail.range_km_wltp,
+              cell_chemistry: null,
+              ...detail,
+            });
+            setInspectionOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }
