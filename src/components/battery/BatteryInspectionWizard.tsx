@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -386,12 +386,34 @@ export default function BatteryInspectionWizard({ open, onOpenChange, modelData 
 function LoadingAnimation({ phase, messages }: { phase: number; messages: string[] }) {
   const total = messages.length;
   const percent = Math.round(((phase + 1) / total) * 100);
+  const [visible, setVisible] = useState(true);
+  const [displayPhase, setDisplayPhase] = useState(phase);
+  const prevPhase = useRef(phase);
+
+  useEffect(() => {
+    if (phase !== prevPhase.current) {
+      prevPhase.current = phase;
+      setVisible(false);
+      const t = setTimeout(() => {
+        setDisplayPhase(phase);
+        setVisible(true);
+      }, 250);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
   return (
     <div className="flex flex-col items-center justify-center py-16 space-y-6">
       <Loader2 className="h-12 w-12 animate-spin text-primary" />
       <div className="text-center space-y-3 w-64">
-        <p className="text-sm font-semibold text-foreground">{messages[phase] || messages[0]}</p>
-        <Progress value={percent} className="h-2" />
+        <p
+          className={`text-sm font-semibold text-foreground transition-all duration-250 ${
+            visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          }`}
+        >
+          {messages[displayPhase] || messages[0]}
+        </p>
+        <Progress value={percent} className="h-2 transition-all duration-500" />
         <p className="text-xs text-muted-foreground">{phase + 1} / {total}</p>
       </div>
     </div>
