@@ -432,11 +432,14 @@ export default function EVDatabasePage() {
                 <DetailRow label={l('spec_adas')} value={detail.adas_level} />
               </div>
 
-              {/* Degradation */}
+              {/* Degradation — clickable */}
               {detail.degradation_risk && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
-                  <Badge className={`text-xs border ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}>
+                  <Badge
+                    className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
+                    onClick={() => setDegModalOpen(true)}
+                  >
                     {detail.degradation_risk}
                   </Badge>
                 </div>
