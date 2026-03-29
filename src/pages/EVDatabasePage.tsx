@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import BatteryInspectionWizard from '@/components/battery/BatteryInspectionWizard';
 import EVModelCard from '@/components/market/EVModelCard';
+import DegradationDetailModal from '@/components/DegradationDetailModal';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -118,6 +120,7 @@ const severityColor: Record<string, string> = {
 export default function EVDatabasePage() {
   const { lang } = useLanguage();
   const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +134,9 @@ export default function EVDatabasePage() {
   const [compareLoading, setCompareLoading] = useState(false);
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [inspectionModel, setInspectionModel] = useState<any>(null);
+  const [degModalOpen, setDegModalOpen] = useState(false);
+  const autoOpenHandled = useRef(false);
+  const autoOpenCardRef = useRef<HTMLDivElement>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
