@@ -177,33 +177,44 @@ export default function EVDatabasePage() {
     return () => { cancelled = true; };
   }, [filters.region]);
 
-  // Auto-open from query params
+  // Auto-open from query params — search across ALL regions
   useEffect(() => {
-    if (autoOpenHandled.current || loading || models.length === 0) return;
+    if (autoOpenHandled.current || loading) return;
     const qMake = searchParams.get('make');
     const qModel = searchParams.get('model');
     const autoopen = searchParams.get('autoopen');
-    if (autoopen === 'true' && qMake && qModel) {
+    if (autoopen !== 'true' || !qMake || !qModel) return;
+
+    // Try to find match in current models
+    const match = models.find(m =>
+      m.make.toLowerCase() === qMake.toLowerCase() &&
+      m.model.toLowerCase() === qModel.toLowerCase()
+    );
+
+    if (match) {
       autoOpenHandled.current = true;
-      // Set filters to match
       setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
-      // Find matching model
-      const match = models.find(m =>
-        m.make.toLowerCase() === qMake.toLowerCase() &&
-        m.model.toLowerCase() === qModel.toLowerCase()
-      );
-      if (match) {
-        setSelectedModel({ make: match.make, model: match.model });
-        // Smooth scroll after a tick
-        setTimeout(() => {
-          autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 300);
-      }
-      // Clean up URL
+      setSelectedModel({ make: match.make, model: match.model });
+      setTimeout(() => {
+        autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
       searchParams.delete('autoopen');
       setSearchParams(searchParams, { replace: true });
+    } else if (models.length > 0) {
+      // Model not found in current region — try other regions
+      const otherRegions = regions.filter(r => r !== filters.region);
+      if (otherRegions.length > 0) {
+        const tryRegion = otherRegions[0];
+        setFilters(f => ({ ...f, region: tryRegion }));
+      } else {
+        // Exhausted all regions
+        autoOpenHandled.current = true;
+        setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
+        searchParams.delete('autoopen');
+        setSearchParams(searchParams, { replace: true });
+      }
     }
-  }, [loading, models, searchParams, setSearchParams]);
+  }, [loading, models, searchParams, setSearchParams, filters.region]);
 
   // Unique makes
   const makes = useMemo(() => {
