@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppHeader from '@/components/AppHeader';
 import BatteryInspectionWizard from '@/components/battery/BatteryInspectionWizard';
 import EVModelCard from '@/components/market/EVModelCard';
+import DegradationDetailModal from '@/components/DegradationDetailModal';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -118,6 +120,7 @@ const severityColor: Record<string, string> = {
 export default function EVDatabasePage() {
   const { lang } = useLanguage();
   const l = (key: string) => tx[key]?.[lang] ?? tx[key]?.HU ?? key;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +134,9 @@ export default function EVDatabasePage() {
   const [compareLoading, setCompareLoading] = useState(false);
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [inspectionModel, setInspectionModel] = useState<any>(null);
+  const [degModalOpen, setDegModalOpen] = useState(false);
+  const autoOpenHandled = useRef(false);
+  const autoOpenCardRef = useRef<HTMLDivElement>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
@@ -170,6 +176,34 @@ export default function EVDatabasePage() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [filters.region]);
+
+  // Auto-open from query params
+  useEffect(() => {
+    if (autoOpenHandled.current || loading || models.length === 0) return;
+    const qMake = searchParams.get('make');
+    const qModel = searchParams.get('model');
+    const autoopen = searchParams.get('autoopen');
+    if (autoopen === 'true' && qMake && qModel) {
+      autoOpenHandled.current = true;
+      // Set filters to match
+      setFilters(f => ({ ...f, search: `${qMake} ${qModel}`, make: '' }));
+      // Find matching model
+      const match = models.find(m =>
+        m.make.toLowerCase() === qMake.toLowerCase() &&
+        m.model.toLowerCase() === qModel.toLowerCase()
+      );
+      if (match) {
+        setSelectedModel({ make: match.make, model: match.model });
+        // Smooth scroll after a tick
+        setTimeout(() => {
+          autoOpenCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+      // Clean up URL
+      searchParams.delete('autoopen');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [loading, models, searchParams, setSearchParams]);
 
   // Unique makes
   const makes = useMemo(() => {
@@ -398,11 +432,14 @@ export default function EVDatabasePage() {
                 <DetailRow label={l('spec_adas')} value={detail.adas_level} />
               </div>
 
-              {/* Degradation */}
+              {/* Degradation — clickable */}
               {detail.degradation_risk && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
-                  <Badge className={`text-xs border ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}>
+                  <Badge
+                    className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
+                    onClick={() => setDegModalOpen(true)}
+                  >
                     {detail.degradation_risk}
                   </Badge>
                 </div>
@@ -624,6 +661,42 @@ export default function EVDatabasePage() {
           open={inspectionOpen}
           onOpenChange={setInspectionOpen}
           modelData={inspectionModel}
+        />
+      )}
+
+      {/* Degradation Detail Modal */}
+      {detail && detail.degradation_risk && (
+        <DegradationDetailModal
+          open={degModalOpen}
+          onOpenChange={setDegModalOpen}
+          data={{
+            degradation_risk: detail.degradation_risk,
+            battery_kwh: detail.battery_kwh,
+            range_km_wltp: detail.range_km_wltp,
+            cell_chemistry: (detail as any).cell_chemistry,
+            fault_codes: detail.fault_codes,
+            rental_battery: detail.rental_battery,
+            known_issues: (detail as any).known_issues,
+            warranty_battery_years: detail.warranty_battery_years,
+            model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
+            make: selectedModel?.make,
+            model: selectedModel?.model,
+          }}
+          onOpenWizard={() => {
+            setDegModalOpen(false);
+            const modelType = models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV';
+            setInspectionModel({
+              make: selectedModel!.make,
+              model: selectedModel!.model,
+              variant: '',
+              battery_kwh: detail.battery_kwh,
+              model_type: modelType,
+              range_km_wltp: detail.range_km_wltp,
+              cell_chemistry: null,
+              ...detail,
+            });
+            setInspectionOpen(true);
+          }}
         />
       )}
     </div>
