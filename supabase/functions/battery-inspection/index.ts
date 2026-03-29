@@ -34,7 +34,9 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   "bayesian_confidence": number (0-1)
 }
 
-Legyél precíz, konzervatív becslésekkel dolgozz. A powertrain_type alapján differenciálj: BEV-nél csak az akkumulátor számít, PHEV/HEV/MHEV esetén mindkét hajtáslánc elemzendő. Adj konkrét, actionable tanácsokat. MINDEN szöveges mező MAGYARUL legyen. CSAK a JSON objektumot add vissza, semmi mást.`,
+Legyél precíz, konzervatív becslésekkel dolgozz. A powertrain_type alapján differenciálj: BEV-nél csak az akkumulátor számít, PHEV/HEV/MHEV esetén mindkét hajtáslánc elemzendő. Adj konkrét, actionable tanácsokat. MINDEN szöveges mező MAGYARUL legyen. CSAK a JSON objektumot add vissza, semmi mást.
+
+FONTOS: Használd a KB (Knowledge Base) adatokat a cellakémia, degradációs kockázat, ismert hibák, garancia és termikus kezelés figyelembevételéhez. Használd a piaci kontextust az árbecsléshez és értékeléshez.`,
 
   EN: `You are the EV DIAG Bayesian Core v2 battery and powertrain pre-inspection system. Analyze the user-provided data and return a structured JSON response with the following fields:
 
@@ -64,7 +66,9 @@ Legyél precíz, konzervatív becslésekkel dolgozz. A powertrain_type alapján 
   "bayesian_confidence": number (0-1)
 }
 
-Be precise, work with conservative estimates. Differentiate by powertrain_type: for BEV only battery matters, for PHEV/HEV/MHEV both powertrains must be analyzed. Give concrete, actionable advice. ALL text fields MUST be in ENGLISH. Return ONLY the JSON object, nothing else.`,
+Be precise, work with conservative estimates. Differentiate by powertrain_type: for BEV only battery matters, for PHEV/HEV/MHEV both powertrains must be analyzed. Give concrete, actionable advice. ALL text fields MUST be in ENGLISH. Return ONLY the JSON object, nothing else.
+
+IMPORTANT: Use the KB (Knowledge Base) data for cell chemistry, degradation risk, known issues, warranty and thermal management considerations. Use the market context for price estimation and valuation.`,
 
   DE: `Du bist das EV DIAG Bayesian Core v2 Batterie- und Antriebsstrang-Vorabprüfungssystem. Analysiere die vom Benutzer bereitgestellten Daten und gib eine strukturierte JSON-Antwort mit folgenden Feldern zurück:
 
@@ -94,43 +98,67 @@ Be precise, work with conservative estimates. Differentiate by powertrain_type: 
   "bayesian_confidence": number (0-1)
 }
 
-Sei präzise, arbeite mit konservativen Schätzungen. Differenziere nach powertrain_type: Bei BEV zählt nur die Batterie, bei PHEV/HEV/MHEV müssen beide Antriebsstränge analysiert werden. Gib konkrete, umsetzbare Ratschläge. ALLE Textfelder MÜSSEN auf DEUTSCH sein. Gib NUR das JSON-Objekt zurück, nichts anderes.`,
-};
+Sei präzise, arbeite mit konservativen Schätzungen. Differenziere nach powertrain_type: Bei BEV zählt nur die Batterie, bei PHEV/HEV/MHEV müssen beide Antriebsstränge analysiert werden. Gib konkrete, umsetzbare Ratschläge. ALLE Textfelder MÜSSEN auf DEUTSCH sein. Gib NUR das JSON-Objekt zurück, nichts anderes.
 
-const USER_PROMPTS: Record<string, (modelJson: string, wizardJson: string) => string> = {
-  HU: (m, w) => `Jármű modell adatai (KB-ból):\n${m}\n\nFelhasználó által megadott wizard adatok:\n${w}\n\nKérlek elemezd az akkumulátor és hajtáslánc állapotát a fenti adatok alapján.`,
-  EN: (m, w) => `Vehicle model data (from KB):\n${m}\n\nUser-provided wizard data:\n${w}\n\nPlease analyze the battery and powertrain condition based on the above data.`,
-  DE: (m, w) => `Fahrzeugmodelldaten (aus KB):\n${m}\n\nVom Benutzer eingegebene Wizard-Daten:\n${w}\n\nBitte analysieren Sie den Batterie- und Antriebszustand anhand der obigen Daten.`,
+WICHTIG: Verwende die KB-Daten (Knowledge Base) für Zellchemie, Degradationsrisiko, bekannte Probleme, Garantie und Thermomanagement. Verwende den Marktkontext für Preisschätzung und Bewertung.`,
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { wizardData, modelData, lang = "HU" } = await req.json();
+    const body = await req.json();
+    const { wizardData, modelData, kbData, marketData, lang = "HU" } = body;
     const safeLang = (["HU", "EN", "DE"].includes(lang) ? lang : "HU") as string;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
     const systemPrompt = SYSTEM_PROMPTS[safeLang];
-    const userPrompt = USER_PROMPTS[safeLang](
-      JSON.stringify(modelData, null, 2),
-      JSON.stringify(wizardData, null, 2)
-    );
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const kb = kbData ?? {};
+    const market = marketData ?? {};
+
+    const userPrompt = `Jármű: ${modelData?.make ?? "N/A"} ${modelData?.model ?? "N/A"}
+Hajtáslánc: ${modelData?.powertrain_type ?? "N/A"}
+Akkumulátor (névleges): ${modelData?.battery_kwh ?? "N/A"} kWh
+WLTP hatótáv: ${modelData?.wltp_range_km ?? "N/A"} km
+
+KB ADATOK (gyári műszaki adatbázis):
+- Cellakémia: ${kb.cell_chemistry ?? "N/A"}
+- Degradációs kockázat (gyári): ${kb.degradation_risk ?? "MEDIUM"}
+- BMS gyártó: ${kb.bms_vendor ?? "N/A"}
+- Termikus kezelés: ${kb.thermal_management ?? "N/A"}
+- Garancia: ${kb.warranty_battery_years ?? "N/A"} év / ${kb.warranty_battery_km ?? "N/A"} km
+- Bérelt akksi figyelmeztetés: ${kb.rental_battery ? "IGEN — ELLENŐRIZD!" : "nem"}
+- Ismert hibák: ${JSON.stringify(kb.known_issues ?? [])}
+- Adatbiztonság: ${kb.data_confidence ?? "N/A"}
+- Csatlakozó típus: ${kb.connector_type ?? "CCS2"}
+- Valós hatótáv 80%-on: ${kb.real_range_80pct_km ?? "N/A"} km
+
+PIACI KONTEXTUS:
+- Medián piaci ár: ${market.median_price_eur ?? "N/A"} EUR
+- P25 ár: ${market.p25_eur ?? "N/A"} EUR
+- P75 ár: ${market.p75_eur ?? "N/A"} EUR
+- Átlag futásteljesítmény (piac): ${market.avg_mileage_km ?? "N/A"} km
+- Adatpontok száma: ${market.data_points ?? "N/A"}
+
+FELHASZNÁLÓ ÁLTAL MEGADOTT ADATOK:
+${JSON.stringify(wizardData, null, 2)}
+`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
       }),
     });
 
@@ -146,15 +174,15 @@ serve(async (req) => {
         });
       }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      console.error("Anthropic API error:", response.status, t);
+      return new Response(JSON.stringify({ error: "AI API error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-    
+    const content = data.content?.[0]?.text ?? "";
+
     let parsed;
     try {
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
