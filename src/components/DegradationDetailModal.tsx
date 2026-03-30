@@ -198,6 +198,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
   const bt = (k: string) => batteryWizardTx[k]?.[lang] ?? batteryWizardTx[k]?.HU ?? k;
+  const modalContentRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const handleDownloadPdf = useCallback(async () => {
