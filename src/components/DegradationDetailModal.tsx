@@ -238,7 +238,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-start justify-center"
+      className="fixed inset-0 z-[10001] flex items-start justify-center"
       style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
     >
       {/* Backdrop */}
