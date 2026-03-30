@@ -1,0 +1,27 @@
+import type { Lang } from './translations';
+
+export const batteryWizardTx: Record<string, Record<Lang, string>> = {
+  soh_label: { HU: 'Becsült SOH (Akksi állapot)', EN: 'Estimated SOH (Battery Health)', DE: 'Geschätzter SOH (Akkuzustand)' },
+  confidence_label: { HU: 'Bayesian konfidencia', EN: 'Bayesian Confidence', DE: 'Bayesianisches Konfidenz' },
+  uncertainty_label: { HU: 'Becslési bizonytalanság', EN: 'Estimation Uncertainty', DE: 'Schätzunsicherheit' },
+  data_source_label: { HU: 'Adatforrás típusa', EN: 'Data Source Type', DE: 'Datenquellentyp' },
+  data_completeness_label: { HU: 'Adatteljességi szint', EN: 'Data Completeness', DE: 'Datenvollständigkeit' },
+  bayesian_drivers_title: { HU: 'Bayesian súlyozási tényezők', EN: 'Bayesian Weighting Factors', DE: 'Bayesianische Gewichtungsfaktoren' },
+  bayesian_drivers_total: { HU: 'Összes azonosított degradációs hatás', EN: 'Total identified degradation impact', DE: 'Gesamter identifizierter Degradationseffekt' },
+  risk_class_title: { HU: 'Battery Risk osztálybesorolás', EN: 'Battery Risk Classification', DE: 'Batterie-Risikoklassifizierung' },
+  price_impact_pessimistic: { HU: 'Pesszimista', EN: 'Conservative', DE: 'Konservativ' },
+  price_impact_expected: { HU: 'Várható', EN: 'Expected', DE: 'Erwartet' },
+  price_impact_optimistic: { HU: 'Optimista', EN: 'Optimistic', DE: 'Optimistisch' },
+  liquidity_impact: { HU: 'Értékesítési idő várható változása', EN: 'Expected change in time-to-sell', DE: 'Erwartete Änderung der Verkaufszeit' },
+  dtc_contribution_title: { HU: 'DTC kódok degradációs hozzájárulása', EN: 'DTC Code Degradation Contributions', DE: 'DTC-Beiträge zur Degradation' },
+  dtc_col_code: { HU: 'DTC kód', EN: 'DTC Code', DE: 'DTC-Code' },
+  dtc_col_degradation: { HU: 'Degradációs hatás', EN: 'Degradation Impact', DE: 'Degradationsbeitrag' },
+  dtc_col_confidence: { HU: 'Confidence csökkentés', EN: 'Confidence Impact', DE: 'Konfidenzminderung' },
+  dealer_rec_title: { HU: 'Dealer döntéstámogatás', EN: 'Dealer Decision Support', DE: 'Händler-Entscheidungsunterstützung' },
+  dealer_discount_label: { HU: 'Javasolt tárgyalási engedmény', EN: 'Suggested Negotiation Discount', DE: 'Empfohlener Verhandlungsrabatt' },
+  dealer_buffer_label: { HU: 'Kockázati tartalék', EN: 'Risk Buffer', DE: 'Risikopuffer' },
+  model_based_label: { HU: 'Modell alapú becslés', EN: 'Model-based estimate', DE: 'Modellbasierte Schätzung' },
+  bms_read_label: { HU: 'BMS közvetlen leolvasás', EN: 'BMS direct readout', DE: 'BMS-Direktauslesung' },
+  obd_validated_label: { HU: 'OBD validált', EN: 'OBD validated', DE: 'OBD-validiert' },
+  no_bms_notice: { HU: 'Ez a rendszer modell alapú becslést alkalmaz — közvetlen BMS leolvasás nem történt.', EN: 'This system uses model-based estimation — no direct BMS readout was performed.', DE: 'Dieses System verwendet modellbasierte Schätzungen — keine direkte BMS-Auslesung wurde durchgeführt.' },
+};

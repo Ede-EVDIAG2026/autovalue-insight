@@ -5,6 +5,70 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const EXTENDED_SCHEMA_INSTRUCTIONS = `
+Az SOH becslést a következő Bayesian faktorok súlyozásával számold:
+- Életkor (regisztrációtól eltelt évek): max 15% hatás
+- Futásteljesítmény az átlaghoz képest: max 12% hatás
+- DC töltési frekvencia és teljesítmény: max 10% hatás
+- Hőstressz (éghajlat + tárolás): max 8% hatás
+- DTC anomáliák: kódonként max 5-8% hatás
+- Szervizhistória: max 5% hatás
+
+Az uncertainty a rendelkezésre álló adatok teljességétől függ (data_completeness_pct).
+A battery_risk_class: A1=kiváló/biztos, A2=jó, B1=közepes/alacsony kockázat, B2=közepes/mérsékelt bizonytalanság, C1=magas kockázat, C2=kritikus.
+`;
+
+const NEW_FIELDS_SCHEMA = `
+  "soh_estimated_pct": number (State of Health %, e.g. 82),
+  "soh_confidence": number (0-1, e.g. 0.64),
+  "soh_uncertainty_pct": number (± value, e.g. 7),
+  "data_source_type": "Model-based" | "BMS-read" | "OBD-validated",
+  "data_completeness_pct": number (0-100, e.g. 58),
+  "bayesian_drivers": [
+    { "factor": string, "contribution_pct": number }
+  ],
+  "battery_risk_class": string (A1/A2/B1/B2/C1/C2 scale),
+  "risk_class_description": string,
+  "cycle_proxy": {
+    "estimated_cycles": number | null,
+    "ac_dc_ratio_pct": number | null,
+    "fast_charge_stress": "LOW" | "MEDIUM" | "HIGH"
+  },
+  "thermal_exposure": {
+    "heat_stress_index": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+    "degradation_accelerator": number
+  },
+  "cell_imbalance_risk": "LOW" | "MEDIUM" | "HIGH",
+  "usage_profile": {
+    "pattern": "Urban-heavy" | "Mixed" | "Highway-heavy",
+    "daily_km_estimated": number | null,
+    "low_dc_usage": boolean
+  },
+  "price_impact_detailed": {
+    "conservative_pct": number,
+    "expected_pct": number,
+    "optimistic_pct": number,
+    "liquidity_time_to_sell_impact_pct": number
+  },
+  "dtc_risk_contributions": [
+    {
+      "dtc_code": string,
+      "degradation_risk_contribution_pct": number,
+      "confidence_impact": number
+    }
+  ],
+  "dealer_recommendation": {
+    "label": "STRONG BUY" | "BUY" | "CONDITIONAL BUY" | "AVOID" | "REJECT",
+    "target_discount_pct_min": number,
+    "target_discount_pct_max": number,
+    "risk_buffer_eur_min": number,
+    "risk_buffer_eur_max": number
+  },
+  "soc_context": {
+    "measurement_context": string | null,
+    "cell_imbalance_validated": boolean
+  }`;
+
 const SYSTEM_PROMPTS: Record<string, string> = {
   HU: `Te az EV DIAG Bayesian Core v2 akkumulátor és hajtáslánc előellenőrzési rendszere vagy. Elemezd a felhasználó által megadott adatokat és adj strukturált JSON választ a következő mezőkkel:
 
@@ -31,8 +95,11 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   "estimated_replacement_cost_eur": { "min": number, "max": number },
   "price_impact_pct": number (negatív = értékcsökkentő, pozitív = értéknövelő),
   "summary_hu": string (2-3 mondatos magyar összefoglalás),
-  "bayesian_confidence": number (0-1)
+  "bayesian_confidence": number (0-1),
+${NEW_FIELDS_SCHEMA}
 }
+
+${EXTENDED_SCHEMA_INSTRUCTIONS}
 
 Legyél precíz, konzervatív becslésekkel dolgozz. A powertrain_type alapján differenciálj: BEV-nél csak az akkumulátor számít, PHEV/HEV/MHEV esetén mindkét hajtáslánc elemzendő. Adj konkrét, actionable tanácsokat. MINDEN szöveges mező MAGYARUL legyen. CSAK a JSON objektumot add vissza, semmi mást.
 
@@ -63,8 +130,11 @@ FONTOS: Használd a KB (Knowledge Base) adatokat a cellakémia, degradációs ko
   "estimated_replacement_cost_eur": { "min": number, "max": number },
   "price_impact_pct": number (negative = value-decreasing, positive = value-increasing),
   "summary_hu": string (2-3 sentence English summary),
-  "bayesian_confidence": number (0-1)
+  "bayesian_confidence": number (0-1),
+${NEW_FIELDS_SCHEMA}
 }
+
+${EXTENDED_SCHEMA_INSTRUCTIONS}
 
 Be precise, work with conservative estimates. Differentiate by powertrain_type: for BEV only battery matters, for PHEV/HEV/MHEV both powertrains must be analyzed. Give concrete, actionable advice. ALL text fields MUST be in ENGLISH. Return ONLY the JSON object, nothing else.
 
@@ -95,8 +165,11 @@ IMPORTANT: Use the KB (Knowledge Base) data for cell chemistry, degradation risk
   "estimated_replacement_cost_eur": { "min": number, "max": number },
   "price_impact_pct": number (negativ = wertmindernd, positiv = wertsteigernd),
   "summary_hu": string (2-3 Sätze deutsche Zusammenfassung),
-  "bayesian_confidence": number (0-1)
+  "bayesian_confidence": number (0-1),
+${NEW_FIELDS_SCHEMA}
 }
+
+${EXTENDED_SCHEMA_INSTRUCTIONS}
 
 Sei präzise, arbeite mit konservativen Schätzungen. Differenziere nach powertrain_type: Bei BEV zählt nur die Batterie, bei PHEV/HEV/MHEV müssen beide Antriebsstränge analysiert werden. Gib konkrete, umsetzbare Ratschläge. ALLE Textfelder MÜSSEN auf DEUTSCH sein. Gib NUR das JSON-Objekt zurück, nichts anderes.
 
