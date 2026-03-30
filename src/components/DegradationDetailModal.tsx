@@ -197,7 +197,7 @@ function FadeInSection({ children, className = '' }: { children: React.ReactNode
 export default function DegradationDetailModal({ open, onOpenChange, data, onOpenWizard }: DegradationDetailModalProps) {
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
-  const modalContentRef = useRef<HTMLDivElement>(null);
+  const bt = (k: string) => batteryWizardTx[k]?.[lang] ?? batteryWizardTx[k]?.HU ?? k;
   const [downloading, setDownloading] = useState(false);
 
   const handleDownloadPdf = useCallback(async () => {
