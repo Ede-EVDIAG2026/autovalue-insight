@@ -89,6 +89,18 @@ interface DegradationDetailModalProps {
     data_confidence?: number;
     median_price_eur?: number;
     data_points?: number;
+    // New extended fields
+    soh_estimated_pct?: number;
+    soh_confidence?: number;
+    soh_uncertainty_pct?: number;
+    data_source_type?: string;
+    data_completeness_pct?: number;
+    bayesian_drivers?: { factor: string; contribution_pct: number }[];
+    battery_risk_class?: string;
+    risk_class_description?: string;
+    price_impact_detailed?: { conservative_pct: number; expected_pct: number; optimistic_pct: number; liquidity_time_to_sell_impact_pct: number };
+    dtc_risk_contributions?: { dtc_code: string; degradation_risk_contribution_pct: number; confidence_impact: number }[];
+    dealer_recommendation?: { label: string; target_discount_pct_min: number; target_discount_pct_max: number; risk_buffer_eur_min: number; risk_buffer_eur_max: number };
   };
   onOpenWizard?: () => void;
 }
