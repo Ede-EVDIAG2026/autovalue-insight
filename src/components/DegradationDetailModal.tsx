@@ -184,6 +184,52 @@ function FadeInSection({ children, className = '' }: { children: React.ReactNode
 export default function DegradationDetailModal({ open, onOpenChange, data, onOpenWizard }: DegradationDetailModalProps) {
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    const el = modalContentRef.current;
+    if (!el) return;
+    setDownloading(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = 210; // A4 mm
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const doc = new jsPDF({ orientation: pdfHeight > 297 ? 'portrait' : 'portrait', unit: 'mm', format: 'a4' });
+
+      let remainingHeight = pdfHeight;
+      let position = 0;
+      const pageHeight = 297;
+
+      // First page
+      doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+      remainingHeight -= pageHeight;
+
+      // Additional pages if needed
+      while (remainingHeight > 0) {
+        position -= pageHeight;
+        doc.addPage();
+        doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+        remainingHeight -= pageHeight;
+      }
+
+      const makePart = data.make || 'EV';
+      const modelPart = data.model || 'DIAG';
+      const datePart = new Date().toISOString().slice(0, 10);
+      doc.save(`EV_DIAG_Degradation_${makePart}_${modelPart}_${datePart}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  }, [data.make, data.model]);
 
   const level = data.degradation_risk?.toUpperCase() || 'MEDIUM';
   const colors = levelColors[level] || levelColors.MEDIUM;
