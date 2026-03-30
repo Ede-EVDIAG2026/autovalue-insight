@@ -540,6 +540,10 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
             {l('footer')} · {new Date().toLocaleDateString(lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-US' : 'hu-HU')}
           </p>
           <div className="flex gap-2">
+            <Button variant="default" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
+              <Download className="h-4 w-4 mr-1" />
+              {downloading ? '...' : l('download_pdf')}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               {l('close')}
             </Button>
