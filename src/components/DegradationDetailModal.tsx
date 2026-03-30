@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Battery, X, Download, Microscope, AlertTriangle, ShieldCheck, TrendingDown, TrendingUp, Info } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Legend } from 'recharts';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
