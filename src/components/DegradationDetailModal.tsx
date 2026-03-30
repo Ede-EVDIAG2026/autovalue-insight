@@ -170,6 +170,26 @@ function AnimatedCircularGauge({ value, color, size = 160 }: { value: number; co
   );
 }
 
+function SemiGauge({ value, color, size = 100 }: { value: number; color: string; size?: number }) {
+  const [animVal, setAnimVal] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimVal(value), 200);
+    return () => clearTimeout(t);
+  }, [value]);
+  const r = (size - 12) / 2;
+  const c = Math.PI * r;
+  const progress = (animVal / 100) * c;
+  return (
+    <svg width={size} height={size / 2 + 12} className="mx-auto">
+      <path d={`M 6,${size / 2} A ${r},${r} 0 0,1 ${size - 6},${size / 2}`} fill="none" stroke="hsl(var(--muted))" strokeWidth={8} opacity={0.3} />
+      <path d={`M 6,${size / 2} A ${r},${r} 0 0,1 ${size - 6},${size / 2}`} fill="none" stroke={color} strokeWidth={8}
+        strokeDasharray={c} strokeDashoffset={c - progress} strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
+      <text x={size / 2} y={size / 2 - 4} textAnchor="middle" className="fill-foreground text-lg font-bold">{animVal}%</text>
+    </svg>
+  );
+}
+
 function FadeInSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
