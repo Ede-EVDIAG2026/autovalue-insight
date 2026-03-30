@@ -3,11 +3,12 @@ import { createPortal } from 'react-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Battery, X, Download, Microscope, AlertTriangle, ShieldCheck, TrendingDown, TrendingUp, Info } from 'lucide-react';
+import { Battery, X, Download, Microscope, AlertTriangle, ShieldCheck, TrendingDown, TrendingUp, Info, Check, Minus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Legend } from 'recharts';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
+import { batteryWizardTx } from '@/i18n/batteryWizard.i18n';
 
 const tx: Record<string, Record<Lang, string>> = {
   title: { HU: 'Akkumulátor Degradációs Analízis', EN: 'Battery Degradation Analysis', DE: 'Batterie-Degradationsanalyse' },
@@ -88,6 +89,18 @@ interface DegradationDetailModalProps {
     data_confidence?: number;
     median_price_eur?: number;
     data_points?: number;
+    // New extended fields
+    soh_estimated_pct?: number;
+    soh_confidence?: number;
+    soh_uncertainty_pct?: number;
+    data_source_type?: string;
+    data_completeness_pct?: number;
+    bayesian_drivers?: { factor: string; contribution_pct: number }[];
+    battery_risk_class?: string;
+    risk_class_description?: string;
+    price_impact_detailed?: { conservative_pct: number; expected_pct: number; optimistic_pct: number; liquidity_time_to_sell_impact_pct: number };
+    dtc_risk_contributions?: { dtc_code: string; degradation_risk_contribution_pct: number; confidence_impact: number }[];
+    dealer_recommendation?: { label: string; target_discount_pct_min: number; target_discount_pct_max: number; risk_buffer_eur_min: number; risk_buffer_eur_max: number };
   };
   onOpenWizard?: () => void;
 }
@@ -157,6 +170,26 @@ function AnimatedCircularGauge({ value, color, size = 160 }: { value: number; co
   );
 }
 
+function SemiGauge({ value, color, size = 100 }: { value: number; color: string; size?: number }) {
+  const [animVal, setAnimVal] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimVal(value), 200);
+    return () => clearTimeout(t);
+  }, [value]);
+  const r = (size - 12) / 2;
+  const c = Math.PI * r;
+  const progress = (animVal / 100) * c;
+  return (
+    <svg width={size} height={size / 2 + 12} className="mx-auto">
+      <path d={`M 6,${size / 2} A ${r},${r} 0 0,1 ${size - 6},${size / 2}`} fill="none" stroke="hsl(var(--muted))" strokeWidth={8} opacity={0.3} />
+      <path d={`M 6,${size / 2} A ${r},${r} 0 0,1 ${size - 6},${size / 2}`} fill="none" stroke={color} strokeWidth={8}
+        strokeDasharray={c} strokeDashoffset={c - progress} strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
+      <text x={size / 2} y={size / 2 - 4} textAnchor="middle" className="fill-foreground text-lg font-bold">{animVal}%</text>
+    </svg>
+  );
+}
+
 function FadeInSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -184,6 +217,7 @@ function FadeInSection({ children, className = '' }: { children: React.ReactNode
 export default function DegradationDetailModal({ open, onOpenChange, data, onOpenWizard }: DegradationDetailModalProps) {
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
+  const bt = (k: string) => batteryWizardTx[k]?.[lang] ?? batteryWizardTx[k]?.HU ?? k;
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -532,9 +566,208 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
               );
             })()}
           </FadeInSection>
-        </div>
+          {/* Section A — SOH + Confidence */}
+          {data.soh_estimated_pct != null && (
+            <FadeInSection>
+              <Card className="border-border bg-card">
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center space-y-1">
+                      <p className="text-3xl font-bold text-foreground">{data.soh_estimated_pct}%</p>
+                      <p className="text-xs text-muted-foreground">{bt('soh_label')}</p>
+                      <Badge variant="outline" className="text-[10px]">{data.data_source_type ?? 'Model-based'}</Badge>
+                    </div>
+                    <div className="text-center space-y-1">
+                      <SemiGauge value={Math.round((data.soh_confidence ?? 0) * 100)} color={data.soh_confidence != null && data.soh_confidence >= 0.8 ? 'hsl(142 76% 36%)' : data.soh_confidence != null && data.soh_confidence >= 0.6 ? 'hsl(48 96% 53%)' : 'hsl(25 95% 53%)'} />
+                      <p className="text-xs text-muted-foreground">{bt('confidence_label')}</p>
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-3xl font-bold text-foreground">±{data.soh_uncertainty_pct ?? 0}%</p>
+                      <p className="text-xs text-muted-foreground">{bt('uncertainty_label')}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium">{bt('data_source_label')}</p>
+                      {(['Model-based', 'BMS-read', 'OBD-validated'] as const).map(src => (
+                        <div key={src} className="flex items-center gap-2 text-xs">
+                          {data.data_source_type === src ? <Check className="h-3 w-3 text-green-600" /> : <Minus className="h-3 w-3 text-muted-foreground" />}
+                          <span className={data.data_source_type === src ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                            {src === 'Model-based' ? bt('model_based_label') : src === 'BMS-read' ? bt('bms_read_label') : bt('obd_validated_label')}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                          <span>{bt('data_completeness_label')}</span>
+                          <span>{data.data_completeness_pct ?? 0}%</span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${data.data_completeness_pct ?? 0}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {data.data_source_type === 'Model-based' && (
+                    <p className="text-[10px] text-muted-foreground mt-3 italic">{bt('no_bms_notice')}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
 
-        {/* Footer */}
+          {/* Section B — Bayesian Drivers */}
+          {data.bayesian_drivers && data.bayesian_drivers.length > 0 && (
+            <FadeInSection>
+              <Card className="border-border bg-card">
+                <CardContent className="pt-6">
+                  <h3 className="text-base font-display font-bold text-foreground mb-4">{bt('bayesian_drivers_title')}</h3>
+                  <div className="space-y-3">
+                    {data.bayesian_drivers.map((d, i) => {
+                      const barColor = d.contribution_pct > 6 ? 'bg-red-500' : d.contribution_pct >= 3 ? 'bg-orange-500' : 'bg-yellow-500';
+                      return (
+                        <div key={i} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-36 truncate">{d.factor}</span>
+                          <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-1000 ${barColor}`} style={{ width: `${Math.min(d.contribution_pct * 5, 100)}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold text-foreground w-10 text-right">+{d.contribution_pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 font-medium">
+                    {bt('bayesian_drivers_total')}: +{data.bayesian_drivers.reduce((s, d) => s + d.contribution_pct, 0).toFixed(1)}%
+                  </p>
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
+
+          {/* Section C — Battery Risk Class */}
+          {data.battery_risk_class && (
+            <FadeInSection>
+              <Card className="border-border bg-card">
+                <CardContent className="pt-6">
+                  <h3 className="text-base font-display font-bold text-foreground mb-4">{bt('risk_class_title')}</h3>
+                  <div className="flex items-center justify-center gap-1 mb-3">
+                    {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(cls => {
+                      const clsColor = cls.startsWith('A') ? 'bg-green-500' : cls.startsWith('B') ? 'bg-yellow-500' : 'bg-red-500';
+                      return (
+                        <div key={cls} className={`px-3 py-2 rounded-lg text-xs font-bold text-white transition-all ${clsColor} ${cls === data.battery_risk_class ? 'ring-2 ring-foreground scale-110 animate-pulse' : 'opacity-40'}`}>
+                          {cls}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground">{data.risk_class_description}</p>
+                  <p className="text-center text-xs text-muted-foreground mt-1">Battery Risk Class: {data.battery_risk_class}</p>
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
+
+          {/* Section D — Detailed Price Impact */}
+          {data.price_impact_detailed && (
+            <FadeInSection>
+              <Card className="border-border bg-card">
+                <CardContent className="pt-6">
+                  <h3 className="text-base font-display font-bold text-foreground mb-4">{l('sec_market')}</h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: bt('price_impact_pessimistic'), pct: data.price_impact_detailed.conservative_pct, color: 'bg-red-500' },
+                      { label: bt('price_impact_expected'), pct: data.price_impact_detailed.expected_pct, color: 'bg-primary' },
+                      { label: bt('price_impact_optimistic'), pct: data.price_impact_detailed.optimistic_pct, color: 'bg-green-500' },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground w-24">{item.label}</span>
+                        <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-1000 ${item.color}`} style={{ width: `${Math.min(Math.abs(item.pct) * 3, 100)}%` }} />
+                        </div>
+                        <span className={`text-xs font-semibold w-12 text-right ${item.pct < 0 ? 'text-destructive' : 'text-green-600'}`}>{item.pct > 0 ? '+' : ''}{item.pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {bt('liquidity_impact')}: +{data.price_impact_detailed.liquidity_time_to_sell_impact_pct}%
+                  </p>
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
+
+          {/* Section E — DTC contributions */}
+          {data.dtc_risk_contributions && data.dtc_risk_contributions.length > 0 && (
+            <FadeInSection>
+              <Card className="border-border bg-card">
+                <CardContent className="pt-6">
+                  <h3 className="text-base font-display font-bold text-foreground mb-3">{bt('dtc_contribution_title')}</h3>
+                  <div className="overflow-x-auto border border-border rounded-lg">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{bt('dtc_col_code')}</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{bt('dtc_col_degradation')}</th>
+                          <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{bt('dtc_col_confidence')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.dtc_risk_contributions.map((dtc, i) => (
+                          <tr key={i} className={`border-t border-border ${dtc.degradation_risk_contribution_pct > 5 ? 'bg-red-50' : 'bg-orange-50'}`}>
+                            <td className="px-3 py-2 font-mono font-medium">{dtc.dtc_code}</td>
+                            <td className="px-3 py-2 font-semibold text-destructive">+{dtc.degradation_risk_contribution_pct}%</td>
+                            <td className="px-3 py-2 text-muted-foreground">{dtc.confidence_impact}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
+
+          {/* Section F — Dealer Recommendation */}
+          {data.dealer_recommendation && (
+            <FadeInSection>
+              <Card className="border-2 border-primary/20">
+                <CardContent className="pt-6">
+                  <h3 className="text-base font-display font-bold text-foreground mb-3">{bt('dealer_rec_title')}</h3>
+                  <div className="text-center mb-4">
+                    {(() => {
+                      const dlrColors: Record<string, string> = {
+                        'STRONG BUY': 'bg-green-600 text-white', 'BUY': 'bg-green-500 text-white',
+                        'CONDITIONAL BUY': 'bg-yellow-500 text-black', 'AVOID': 'bg-orange-600 text-white', 'REJECT': 'bg-red-600 text-white',
+                      };
+                      return (
+                        <span className={`inline-block px-5 py-2 rounded-lg text-base font-bold ${dlrColors[data.dealer_recommendation!.label] || 'bg-muted text-foreground'}`}>
+                          {data.dealer_recommendation!.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">{bt('dealer_discount_label')}</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {data.dealer_recommendation.target_discount_pct_min}% – {data.dealer_recommendation.target_discount_pct_max}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-1">{bt('dealer_buffer_label')}</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        €{data.dealer_recommendation.risk_buffer_eur_min.toLocaleString()} – €{data.dealer_recommendation.risk_buffer_eur_max.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {data.battery_risk_class && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      Battery Risk Class: {data.battery_risk_class} · {data.risk_class_description}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </FadeInSection>
+          )}
+        </div>
         <div className="border-t border-border bg-card p-4 md:p-6 rounded-b-2xl flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-muted-foreground text-center md:text-left">
             {l('footer')} · {new Date().toLocaleDateString(lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-US' : 'hu-HU')}
