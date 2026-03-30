@@ -295,6 +295,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
       />
       {/* Modal content */}
       <div
+        ref={modalContentRef}
         className="relative z-10 w-full max-w-5xl mx-4 my-8 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
         onClick={e => e.stopPropagation()}
       >
