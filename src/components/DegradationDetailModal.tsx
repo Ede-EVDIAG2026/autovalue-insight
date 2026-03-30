@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Battery, X, Download, Microscope, AlertTriangle, ShieldCheck, TrendingDown, TrendingUp, Info } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Legend } from 'recharts';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Lang } from '@/i18n/translations';
@@ -183,6 +184,52 @@ function FadeInSection({ children, className = '' }: { children: React.ReactNode
 export default function DegradationDetailModal({ open, onOpenChange, data, onOpenWizard }: DegradationDetailModalProps) {
   const { lang } = useLanguage();
   const l = (k: string) => tx[k]?.[lang] ?? tx[k]?.HU ?? k;
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    const el = modalContentRef.current;
+    if (!el) return;
+    setDownloading(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdfWidth = 210; // A4 mm
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const doc = new jsPDF({ orientation: pdfHeight > 297 ? 'portrait' : 'portrait', unit: 'mm', format: 'a4' });
+
+      let remainingHeight = pdfHeight;
+      let position = 0;
+      const pageHeight = 297;
+
+      // First page
+      doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+      remainingHeight -= pageHeight;
+
+      // Additional pages if needed
+      while (remainingHeight > 0) {
+        position -= pageHeight;
+        doc.addPage();
+        doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+        remainingHeight -= pageHeight;
+      }
+
+      const makePart = data.make || 'EV';
+      const modelPart = data.model || 'DIAG';
+      const datePart = new Date().toISOString().slice(0, 10);
+      doc.save(`EV_DIAG_Degradation_${makePart}_${modelPart}_${datePart}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  }, [data.make, data.model]);
 
   const level = data.degradation_risk?.toUpperCase() || 'MEDIUM';
   const colors = levelColors[level] || levelColors.MEDIUM;
@@ -248,6 +295,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
       />
       {/* Modal content */}
       <div
+        ref={modalContentRef}
         className="relative z-10 w-full max-w-5xl mx-4 my-8 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
         onClick={e => e.stopPropagation()}
       >
@@ -492,6 +540,10 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
             {l('footer')} · {new Date().toLocaleDateString(lang === 'DE' ? 'de-DE' : lang === 'EN' ? 'en-US' : 'hu-HU')}
           </p>
           <div className="flex gap-2">
+            <Button variant="default" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
+              <Download className="h-4 w-4 mr-1" />
+              {downloading ? '...' : l('download_pdf')}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               {l('close')}
             </Button>
