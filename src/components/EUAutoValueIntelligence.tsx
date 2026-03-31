@@ -338,8 +338,19 @@ export interface VehicleEvaluation {
   country: string;
 }
 
+export interface VinIdentifiedResult {
+  vin: string;
+  make: string;
+  model: string;
+  year: number;
+  powertrain_type: string;
+  body_type?: string;
+  trim?: string;
+}
+
 interface EUAutoValueIntelligenceProps {
   onVehicleEvaluated?: (vehicle: VehicleEvaluation) => void;
+  onVinIdentified?: (result: VinIdentifiedResult) => void;
 }
 
 export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoValueIntelligenceProps = {}) {
