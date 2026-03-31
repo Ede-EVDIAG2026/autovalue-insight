@@ -46,6 +46,57 @@ const BODY_TYPE_I18N_MAP: Record<string, BodyTypeKey> = {
   Pickup: 'bodyTypePickup',
 };
 
+const MAKES = [
+  "Alfa Romeo", "Audi", "BMW", "BYD", "Citroen", "Cupra", "Dacia",
+  "DS", "Fiat", "Ford", "Honda", "Hyundai", "Jaguar", "Jeep", "Kia",
+  "Land Rover", "Lexus", "Mazda", "Mercedes", "MG", "Mini", "Mitsubishi",
+  "NIO", "Nissan", "Opel", "Peugeot", "Polestar", "Porsche", "Renault",
+  "Seat", "Skoda", "Smart", "Subaru", "Tesla", "Toyota", "Volkswagen",
+  "Volvo", "XPENG", "Egyéb"
+];
+
+const MODELS_BY_MAKE: Record<string, string[]> = {
+  "Alfa Romeo": ["Tonale PHEV", "Stelvio", "Giulia", "MiTo", "Egyéb"],
+  "Audi": ["A3 TFSI e", "A4", "A6 TFSI e", "A7", "A8", "e-tron", "e-tron GT", "Q3 TFSI e", "Q4 e-tron", "Q5 TFSI e", "Q7 TFSI e", "Q8 e-tron", "Egyéb"],
+  "BMW": ["i3", "i4", "i5", "i7", "iX", "iX1", "iX2", "iX3", "225e", "230e", "330e", "530e", "550e", "740e", "750e", "X1 xDrive25e", "X2 xDrive25e", "X3 xDrive30e", "X5 xDrive45e", "X5 xDrive50e", "Egyéb"],
+  "BYD": ["Atto 3", "Han", "Seal", "Dolphin", "Tang", "Egyéb"],
+  "Citroen": ["e-C4", "e-Berlingo", "e-Dispatch", "C5 Aircross PHEV", "Egyéb"],
+  "Cupra": ["Born", "Formentor e-Hybrid", "Leon e-Hybrid", "Tavascan", "Egyéb"],
+  "Dacia": ["Spring", "Jogger Hybrid", "Egyéb"],
+  "DS": ["DS 3 E-Tense", "DS 4 E-Tense", "DS 7 E-Tense", "Egyéb"],
+  "Fiat": ["500e", "500 Hybrid", "Egyéb"],
+  "Ford": ["Mustang Mach-E", "Explorer EV", "Kuga PHEV", "Puma Hybrid", "Transit Custom PHEV", "Egyéb"],
+  "Honda": ["e", "HR-V e:HEV", "Jazz e:HEV", "CR-V e:PHEV", "Egyéb"],
+  "Hyundai": ["IONIQ 5", "IONIQ 5 N", "IONIQ 6", "Kona Electric", "Casper Electric", "Santa Fe PHEV", "Tucson PHEV", "i30 HEV", "Egyéb"],
+  "Jaguar": ["I-PACE", "F-PACE PHEV", "E-PACE PHEV", "Egyéb"],
+  "Jeep": ["Avenger", "Renegade 4xe", "Compass 4xe", "Wrangler 4xe", "Egyéb"],
+  "Kia": ["EV3", "EV6", "EV6 GT", "EV9", "Niro EV", "Niro PHEV", "Niro HEV", "Sportage PHEV", "Sorento PHEV", "Egyéb"],
+  "Land Rover": ["Range Rover PHEV", "Range Rover Sport PHEV", "Defender PHEV", "Discovery Sport PHEV", "Egyéb"],
+  "Lexus": ["UX 300e", "NX PHEV", "RX PHEV", "ES HEV", "IS HEV", "Egyéb"],
+  "Mazda": ["MX-30", "CX-60 PHEV", "CX-5 MHEV", "Egyéb"],
+  "Mercedes": ["EQA", "EQB", "EQC", "EQE", "EQE SUV", "EQS", "EQS SUV", "EQV", "A 250 e", "C 300 e", "E 300 e", "S 580 e", "GLA 250 e", "GLB 250 e", "GLC 300 e", "GLE 350 de", "Egyéb"],
+  "MG": ["MG4", "MG5", "ZS EV", "HS PHEV", "Egyéb"],
+  "Mini": ["Cooper SE", "Countryman PHEV", "Aceman E", "Egyéb"],
+  "Mitsubishi": ["Eclipse Cross PHEV", "Outlander PHEV", "Egyéb"],
+  "NIO": ["ET5", "ET7", "EL6", "ES8", "Egyéb"],
+  "Nissan": ["Leaf", "Ariya", "Qashqai MHEV", "Egyéb"],
+  "Opel": ["Corsa-e", "Mokka-e", "Astra-e", "Astra PHEV", "Grandland PHEV", "Vivaro-e", "Egyéb"],
+  "Peugeot": ["e-208", "e-2008", "e-308", "e-408", "e-Rifter", "3008 PHEV", "408 PHEV", "508 PHEV", "Egyéb"],
+  "Polestar": ["Polestar 2", "Polestar 3", "Polestar 4", "Egyéb"],
+  "Porsche": ["Taycan", "Taycan Cross Turismo", "Cayenne E-Hybrid", "Panamera E-Hybrid", "Egyéb"],
+  "Renault": ["Zoe", "Megane E-Tech", "Scenic E-Tech", "Kangoo E-Tech", "Austral E-Tech PHEV", "Clio E-Tech HEV", "Egyéb"],
+  "Seat": ["Leon e-Hybrid", "Tarraco e-Hybrid", "Egyéb"],
+  "Skoda": ["Enyaq iV", "Enyaq Coupe iV", "Elroq", "Octavia iV", "Superb iV", "Egyéb"],
+  "Smart": ["#1", "#3", "Egyéb"],
+  "Subaru": ["Solterra", "Egyéb"],
+  "Tesla": ["Model 3", "Model Y", "Model S", "Model X", "Cybertruck", "Egyéb"],
+  "Toyota": ["bZ4X", "Yaris HEV", "Corolla HEV", "C-HR HEV", "RAV4 HEV", "RAV4 PHEV", "Highlander HEV", "Prius HEV", "Prius PHEV", "Egyéb"],
+  "Volkswagen": ["ID.3", "ID.4", "ID.5", "ID.7", "ID. Buzz", "Golf GTE", "Passat GTE", "Tiguan eHybrid", "Egyéb"],
+  "Volvo": ["XC40 Recharge", "C40 Recharge", "EX30", "EX40", "EC40", "XC60 PHEV", "XC90 PHEV", "Egyéb"],
+  "XPENG": ["G6", "G9", "P7", "Egyéb"],
+  "Egyéb": ["Egyéb"]
+};
+
 export default function CommercialValuationWizard({ vinResult, onBack }: CommercialValuationWizardProps) {
   const { lang } = useLanguage();
   const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
@@ -53,9 +104,21 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
   const isManual = !!vinResult.isManual;
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  // Resolve initial make/model from VIN
+  const resolvedMake = vinResult.make
+    ? (MAKES.includes(vinResult.make) ? vinResult.make : 'Egyéb')
+    : '';
+  const resolvedModel = vinResult.model
+    ? (resolvedMake && resolvedMake !== 'Egyéb' && MODELS_BY_MAKE[resolvedMake]?.includes(vinResult.model)
+      ? vinResult.model
+      : 'Egyéb')
+    : '';
+
   const [formData, setFormData] = useState({
-    make: vinResult.make,
-    model: vinResult.model,
+    make: resolvedMake,
+    model: resolvedModel,
+    customMake: resolvedMake === 'Egyéb' && vinResult.make ? vinResult.make : '',
+    customModel: (resolvedModel === 'Egyéb' || resolvedMake === 'Egyéb') && vinResult.model ? vinResult.model : '',
     year: vinResult.year,
     powertrain: vinResult.powertrain_type,
     bodyType: vinResult.body_type || '',
@@ -77,6 +140,18 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
   const updateForm = (key: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
+
+  const handleMakeChange = (v: string) => {
+    setFormData(prev => ({ ...prev, make: v, model: '', customMake: '', customModel: '' }));
+  };
+
+  const handleModelChange = (v: string) => {
+    setFormData(prev => ({ ...prev, model: v, customModel: '' }));
+  };
+
+  // Effective make/model for API calls
+  const effectiveMake = formData.make === 'Egyéb' ? formData.customMake : formData.make;
+  const effectiveModel = formData.model === 'Egyéb' || formData.make === 'Egyéb' ? formData.customModel : formData.model;
 
   const setAgent = (id: number, status: AgentStatus) => {
     setAgents(prev => ({ ...prev, [id]: status }));
@@ -103,8 +178,8 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     setTimeout(() => setAgent(1, 'done'), 500);
     setAgent(2, 'running');
     const params: Record<string, string> = {
-      make: formData.make,
-      model: formData.model,
+      make: effectiveMake,
+      model: effectiveModel,
     };
     if (formData.year) params.year = String(formData.year);
     if (formData.powertrain) params.powertrain = formData.powertrain;
@@ -112,14 +187,14 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     const result = await fetchValuation(params);
     if (result) setAnalysisResult(result);
     setAgent(2, 'done');
-  }, [formData, fetchValuation]);
+  }, [formData, effectiveMake, effectiveModel, fetchValuation]);
 
   const handleStep2Next = useCallback(async () => {
     setCurrentStep(3);
     setAgent(3, 'running');
     const params: Record<string, string> = {
-      make: formData.make,
-      model: formData.model,
+      make: effectiveMake,
+      model: effectiveModel,
     };
     if (formData.year) params.year = String(formData.year);
     if (formData.powertrain) params.powertrain = formData.powertrain;
@@ -128,7 +203,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     const result = await fetchValuation(params);
     if (result) setAnalysisResult(result);
     setAgent(3, 'done');
-  }, [formData, fetchValuation]);
+  }, [formData, effectiveMake, effectiveModel, fetchValuation]);
 
   const handleStep3Start = useCallback(async () => {
     setCurrentStep(4);
@@ -229,26 +304,60 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm">{t.make}</Label>
+                <Label className="text-sm">{(t as any).makeLabel ?? t.make}</Label>
                 <div className="relative">
-                  <Input
-                    value={formData.make}
-                    onChange={e => updateForm('make', e.target.value)}
-                    className={isManual ? '' : 'pr-16'}
-                  />
-                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
+                  <Select value={formData.make} onValueChange={handleMakeChange}>
+                    <SelectTrigger className={!isManual && formData.make ? 'pr-16' : ''}>
+                      <SelectValue placeholder={t.selectPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAKES.map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!isManual && formData.make && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200 z-10">✓ VIN</Badge>}
                 </div>
+                {formData.make === 'Egyéb' && (
+                  <Input
+                    className="mt-2"
+                    placeholder={(t as any).otherModel ?? 'Gyártó megadása'}
+                    value={formData.customMake}
+                    onChange={e => updateForm('customMake', e.target.value)}
+                  />
+                )}
               </div>
               <div>
-                <Label className="text-sm">{t.model}</Label>
+                <Label className="text-sm">{(t as any).modelLabel ?? t.model}</Label>
                 <div className="relative">
-                  <Input
-                    value={formData.model}
-                    onChange={e => updateForm('model', e.target.value)}
-                    className={isManual ? '' : 'pr-16'}
-                  />
-                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
+                  {formData.make === 'Egyéb' ? (
+                    <Input
+                      value={formData.customModel}
+                      onChange={e => updateForm('customModel', e.target.value)}
+                      placeholder={(t as any).otherModel ?? 'Modell megadása'}
+                    />
+                  ) : (
+                    <Select value={formData.model} onValueChange={handleModelChange} disabled={!formData.make}>
+                      <SelectTrigger className={!isManual && formData.model ? 'pr-16' : ''}>
+                        <SelectValue placeholder={!formData.make ? (t as any).selectMakeFirst ?? 'Először válassz gyártót' : t.selectPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(MODELS_BY_MAKE[formData.make] || []).map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {!isManual && formData.model && formData.make !== 'Egyéb' && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200 z-10">✓ VIN</Badge>}
                 </div>
+                {formData.model === 'Egyéb' && formData.make !== 'Egyéb' && (
+                  <Input
+                    className="mt-2"
+                    placeholder={(t as any).otherModel ?? 'Modell megadása'}
+                    value={formData.customModel}
+                    onChange={e => updateForm('customModel', e.target.value)}
+                  />
+                )}
               </div>
               <div>
                 <Label className="text-sm">{t.year}</Label>
@@ -460,7 +569,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
               <CardContent className="pt-5 space-y-4">
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-bold text-foreground">
-                    {formData.make} {formData.model} ({formData.year})
+                    {effectiveMake} {effectiveModel} ({formData.year})
                   </h3>
                   {analysisResult.p50_eur != null && (
                     <div className="text-3xl font-bold text-primary">
