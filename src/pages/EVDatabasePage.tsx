@@ -124,6 +124,15 @@ export default function EVDatabasePage() {
 
   const [models, setModels] = useState<EVModel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kbStats, setKbStats] = useState<{ models: number; specs: number } | null>(null);
+
+  useEffect(() => {
+    const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
+    fetch(`${API_BASE}/api/v1/ev-kb/health`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setKbStats({ models: d.models, specs: d.specs }); })
+      .catch(() => null);
+  }, []);
   const [filters, setFilters] = useState<Filters>({ make: '', region: 'EU', minBattery: 0, minRange: 0, search: '', model_type: '' });
   const [selectedModel, setSelectedModel] = useState<{ make: string; model: string } | null>(null);
   const [detail, setDetail] = useState<EVModelDetail | null>(null);
@@ -326,7 +335,7 @@ export default function EVDatabasePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground">{l('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? '…' : `${filtered.length} ${l('subtitle_models')}`} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
+            {kbStats ? kbStats.models : (loading ? '…' : filtered.length)} {l('subtitle_models')} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
           </p>
         </div>
 
