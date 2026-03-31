@@ -178,7 +178,7 @@ export default function EVDatabasePage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${filters.region}&limit=200`)
+    fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${filters.region}&limit=500`)
       .then(r => r.ok ? r.json() : [])
       .then(d => { if (!cancelled) setModels(Array.isArray(d) ? d : d.models || []); })
       .catch(() => { if (!cancelled) setModels([]); })
