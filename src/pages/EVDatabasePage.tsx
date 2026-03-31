@@ -101,6 +101,7 @@ const modelTypes = ['BEV', 'PHEV', 'HEV', 'MHEV'] as const;
 const modelTypeIcons: Record<string, string> = { BEV: '⚡', PHEV: '🔌', HEV: '♻️', MHEV: '〰️' };
 
 const regions = ['EU', 'CN', 'US'];
+const REGION_COUNTS: Record<string, number> = { EU: 354, CN: 50, US: 9 };
 const batteryOptions = [0, 40, 60, 80];
 const rangeOptions = [0, 200, 300, 400];
 
