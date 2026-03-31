@@ -569,7 +569,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
               <CardContent className="pt-5 space-y-4">
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-bold text-foreground">
-                    {formData.make} {formData.model} ({formData.year})
+                    {effectiveMake} {effectiveModel} ({formData.year})
                   </h3>
                   {analysisResult.p50_eur != null && (
                     <div className="text-3xl font-bold text-primary">
