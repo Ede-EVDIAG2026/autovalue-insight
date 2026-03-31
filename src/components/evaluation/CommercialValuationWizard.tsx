@@ -104,9 +104,21 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
   const isManual = !!vinResult.isManual;
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  // Resolve initial make/model from VIN
+  const resolvedMake = vinResult.make
+    ? (MAKES.includes(vinResult.make) ? vinResult.make : 'Egyéb')
+    : '';
+  const resolvedModel = vinResult.model
+    ? (resolvedMake && resolvedMake !== 'Egyéb' && MODELS_BY_MAKE[resolvedMake]?.includes(vinResult.model)
+      ? vinResult.model
+      : 'Egyéb')
+    : '';
+
   const [formData, setFormData] = useState({
-    make: vinResult.make,
-    model: vinResult.model,
+    make: resolvedMake,
+    model: resolvedModel,
+    customMake: resolvedMake === 'Egyéb' && vinResult.make ? vinResult.make : '',
+    customModel: (resolvedModel === 'Egyéb' || resolvedMake === 'Egyéb') && vinResult.model ? vinResult.model : '',
     year: vinResult.year,
     powertrain: vinResult.powertrain_type,
     bodyType: vinResult.body_type || '',
