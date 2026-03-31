@@ -332,6 +332,29 @@ export default function EVDatabasePage() {
     return () => { cancelled = true; };
   }, [selectedModel]);
 
+  // Handle action param after detail loads
+  useEffect(() => {
+    if (!detail || !selectedModel || !pendingAction.current) return;
+    const action = pendingAction.current;
+    pendingAction.current = null;
+    const modelType = models.find(m => m.make === selectedModel.make && m.model === selectedModel.model)?.model_type || 'BEV';
+    if (action === 'degradation') {
+      setDegModalOpen(true);
+    } else if (action === 'inspection') {
+      setInspectionModel({
+        make: selectedModel.make,
+        model: selectedModel.model,
+        variant: '',
+        battery_kwh: detail.battery_kwh,
+        model_type: modelType,
+        range_km_wltp: detail.range_km_wltp,
+        cell_chemistry: null,
+        ...detail,
+      });
+      setInspectionOpen(true);
+    }
+  }, [detail, selectedModel, models]);
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
