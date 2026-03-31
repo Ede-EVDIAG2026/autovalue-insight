@@ -335,7 +335,13 @@ export default function EVDatabasePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground">{l('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            {kbStats ? kbStats.models : (loading ? '…' : filtered.length)} {l('subtitle_models')} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
+            {filters.region === 'EU'
+              ? `${REGION_COUNTS.EU} EU ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Europäische Daten' : lang === 'EN' ? 'European data' : 'Európai adatok'}`
+              : filters.region === 'CN'
+              ? `${REGION_COUNTS.CN} CN ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Chinesische Daten' : lang === 'EN' ? 'Chinese data' : 'Kínai adatok'}`
+              : filters.region === 'US'
+              ? `${REGION_COUNTS.US} US ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Amerikanische Daten' : lang === 'EN' ? 'American data' : 'Amerikai adatok'}`
+              : `${kbStats?.models ?? '…'} ${l('subtitle_models')} · EU: ${REGION_COUNTS.EU} · CN: ${REGION_COUNTS.CN} · US: ${REGION_COUNTS.US} · BEV + PHEV + HEV + MHEV`}
           </p>
         </div>
 
