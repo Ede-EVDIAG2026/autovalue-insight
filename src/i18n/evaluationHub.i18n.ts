@@ -53,6 +53,12 @@ export const evaluationHubI18n = {
     agent4: "Visszahívás ellenőrzés...",
     agent5: "Összesítés...",
     agentDone: "Kész ✓",
+    noVin: "Nincs VIN számod?",
+    manualStart: "Manuális értékelés indítása",
+    manualBadge: "VIN nélküli értékelés — adatok manuálisan megadva",
+    pdfBtn: "📄 PDF letöltése",
+    pdfLoading: "PDF generálás...",
+    pdfError: "Hiba — próbáld újra",
   },
   en: {
     hubTitle: "What would you like to evaluate?",
