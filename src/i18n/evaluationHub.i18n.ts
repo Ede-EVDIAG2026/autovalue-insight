@@ -114,6 +114,12 @@ export const evaluationHubI18n = {
     agent4: "Recall verification...",
     agent5: "Final summary...",
     agentDone: "Done ✓",
+    noVin: "No VIN number?",
+    manualStart: "Start manual evaluation",
+    manualBadge: "Manual evaluation — data entered manually",
+    pdfBtn: "📄 Download PDF",
+    pdfLoading: "Generating PDF...",
+    pdfError: "Error — try again",
   },
   de: {
     hubTitle: "Was möchten Sie bewerten?",
