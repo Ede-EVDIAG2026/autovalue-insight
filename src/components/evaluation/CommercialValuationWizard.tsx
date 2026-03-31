@@ -304,26 +304,60 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm">{t.make}</Label>
+                <Label className="text-sm">{(t as any).makeLabel ?? t.make}</Label>
                 <div className="relative">
-                  <Input
-                    value={formData.make}
-                    onChange={e => updateForm('make', e.target.value)}
-                    className={isManual ? '' : 'pr-16'}
-                  />
-                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
+                  <Select value={formData.make} onValueChange={handleMakeChange}>
+                    <SelectTrigger className={!isManual && formData.make ? 'pr-16' : ''}>
+                      <SelectValue placeholder={t.selectPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAKES.map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!isManual && formData.make && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200 z-10">✓ VIN</Badge>}
                 </div>
+                {formData.make === 'Egyéb' && (
+                  <Input
+                    className="mt-2"
+                    placeholder={(t as any).otherModel ?? 'Gyártó megadása'}
+                    value={formData.customMake}
+                    onChange={e => updateForm('customMake', e.target.value)}
+                  />
+                )}
               </div>
               <div>
-                <Label className="text-sm">{t.model}</Label>
+                <Label className="text-sm">{(t as any).modelLabel ?? t.model}</Label>
                 <div className="relative">
-                  <Input
-                    value={formData.model}
-                    onChange={e => updateForm('model', e.target.value)}
-                    className={isManual ? '' : 'pr-16'}
-                  />
-                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
+                  {formData.make === 'Egyéb' ? (
+                    <Input
+                      value={formData.customModel}
+                      onChange={e => updateForm('customModel', e.target.value)}
+                      placeholder={(t as any).otherModel ?? 'Modell megadása'}
+                    />
+                  ) : (
+                    <Select value={formData.model} onValueChange={handleModelChange} disabled={!formData.make}>
+                      <SelectTrigger className={!isManual && formData.model ? 'pr-16' : ''}>
+                        <SelectValue placeholder={!formData.make ? (t as any).selectMakeFirst ?? 'Először válassz gyártót' : t.selectPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(MODELS_BY_MAKE[formData.make] || []).map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {!isManual && formData.model && formData.make !== 'Egyéb' && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200 z-10">✓ VIN</Badge>}
                 </div>
+                {formData.model === 'Egyéb' && formData.make !== 'Egyéb' && (
+                  <Input
+                    className="mt-2"
+                    placeholder={(t as any).otherModel ?? 'Modell megadása'}
+                    value={formData.customModel}
+                    onChange={e => updateForm('customModel', e.target.value)}
+                  />
+                )}
               </div>
               <div>
                 <Label className="text-sm">{t.year}</Label>
