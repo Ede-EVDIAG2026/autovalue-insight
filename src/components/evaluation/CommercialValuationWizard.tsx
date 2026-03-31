@@ -444,9 +444,38 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                 </div>
 
                 <div className="flex gap-3">
-                  <Button className="flex-1" variant="outline">
-                    <FileText className="h-4 w-4 mr-2" />
-                    {t.downloadPdf}
+                  <Button
+                    className="flex-1"
+                    variant={pdfError ? 'destructive' : 'outline'}
+                    disabled={pdfLoading}
+                    onClick={async () => {
+                      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
+                      const pdfLang = (lang ?? 'hu').toLowerCase();
+                      setPdfError(false);
+                      setPdfLoading(true);
+                      try {
+                        const url = isManual || !vinResult.vin
+                          ? `${API_BASE}/autovalue/pdf/report?lang=${pdfLang}`
+                          : `${API_BASE}/vin/report/${vinResult.vin}?lang=${pdfLang}`;
+                        const resp = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { Accept: 'application/json' } });
+                        const data = await resp.json();
+                        if (data.download_url) {
+                          window.open(data.download_url, '_blank');
+                        }
+                      } catch {
+                        setPdfError(true);
+                      } finally {
+                        setPdfLoading(false);
+                      }
+                    }}
+                  >
+                    {pdfLoading ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.pdfLoading}</>
+                    ) : pdfError ? (
+                      <><span className="mr-2">⚠</span>{t.pdfError}</>
+                    ) : (
+                      <><FileText className="h-4 w-4 mr-2" />{t.pdfBtn}</>
+                    )}
                   </Button>
                   <Button
                     className="flex-1"
