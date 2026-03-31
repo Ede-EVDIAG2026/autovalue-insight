@@ -21,6 +21,7 @@ interface CommercialValuationWizardProps {
     powertrain_type: string;
     body_type?: string;
     trim?: string;
+    isManual?: boolean;
   };
   onBack: () => void;
 }
