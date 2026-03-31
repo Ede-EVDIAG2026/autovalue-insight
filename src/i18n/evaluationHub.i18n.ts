@@ -175,6 +175,12 @@ export const evaluationHubI18n = {
     agent4: "Rückrufprüfung...",
     agent5: "Zusammenfassung...",
     agentDone: "Fertig ✓",
+    noVin: "Keine Fahrgestellnummer?",
+    manualStart: "Manuelle Bewertung starten",
+    manualBadge: "Manuelle Bewertung — Daten manuell eingegeben",
+    pdfBtn: "📄 PDF herunterladen",
+    pdfLoading: "PDF wird erstellt...",
+    pdfError: "Fehler — erneut versuchen",
   },
 } as const;
 
