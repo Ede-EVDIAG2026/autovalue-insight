@@ -53,6 +53,12 @@ export const evaluationHubI18n = {
     agent4: "Visszahívás ellenőrzés...",
     agent5: "Összesítés...",
     agentDone: "Kész ✓",
+    noVin: "Nincs VIN számod?",
+    manualStart: "Manuális értékelés indítása",
+    manualBadge: "VIN nélküli értékelés — adatok manuálisan megadva",
+    pdfBtn: "📄 PDF letöltése",
+    pdfLoading: "PDF generálás...",
+    pdfError: "Hiba — próbáld újra",
   },
   en: {
     hubTitle: "What would you like to evaluate?",
@@ -108,6 +114,12 @@ export const evaluationHubI18n = {
     agent4: "Recall verification...",
     agent5: "Final summary...",
     agentDone: "Done ✓",
+    noVin: "No VIN number?",
+    manualStart: "Start manual evaluation",
+    manualBadge: "Manual evaluation — data entered manually",
+    pdfBtn: "📄 Download PDF",
+    pdfLoading: "Generating PDF...",
+    pdfError: "Error — try again",
   },
   de: {
     hubTitle: "Was möchten Sie bewerten?",
@@ -163,6 +175,12 @@ export const evaluationHubI18n = {
     agent4: "Rückrufprüfung...",
     agent5: "Zusammenfassung...",
     agentDone: "Fertig ✓",
+    noVin: "Keine Fahrgestellnummer?",
+    manualStart: "Manuelle Bewertung starten",
+    manualBadge: "Manuelle Bewertung — Daten manuell eingegeben",
+    pdfBtn: "📄 PDF herunterladen",
+    pdfLoading: "PDF wird erstellt...",
+    pdfError: "Fehler — erneut versuchen",
   },
 } as const;
 

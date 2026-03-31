@@ -21,6 +21,7 @@ interface CommercialValuationWizardProps {
     powertrain_type: string;
     body_type?: string;
     trim?: string;
+    isManual?: boolean;
   };
   onBack: () => void;
 }
@@ -34,6 +35,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
   const { lang } = useLanguage();
   const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
   const navigate = useNavigate();
+  const isManual = !!vinResult.isManual;
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [formData, setFormData] = useState({
@@ -54,6 +56,8 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     1: 'idle', 2: 'idle', 3: 'idle', 4: 'idle', 5: 'idle',
   });
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   const updateForm = (key: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -180,9 +184,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <Input
                     value={formData.make}
                     onChange={e => updateForm('make', e.target.value)}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
@@ -191,9 +195,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <Input
                     value={formData.model}
                     onChange={e => updateForm('model', e.target.value)}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
@@ -205,9 +209,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                     max={2026}
                     value={formData.year}
                     onChange={e => updateForm('year', Number(e.target.value))}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
@@ -440,9 +444,38 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                 </div>
 
                 <div className="flex gap-3">
-                  <Button className="flex-1" variant="outline">
-                    <FileText className="h-4 w-4 mr-2" />
-                    {t.downloadPdf}
+                  <Button
+                    className="flex-1"
+                    variant={pdfError ? 'destructive' : 'outline'}
+                    disabled={pdfLoading}
+                    onClick={async () => {
+                      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
+                      const pdfLang = (lang ?? 'hu').toLowerCase();
+                      setPdfError(false);
+                      setPdfLoading(true);
+                      try {
+                        const url = isManual || !vinResult.vin
+                          ? `${API_BASE}/autovalue/pdf/report?lang=${pdfLang}`
+                          : `${API_BASE}/vin/report/${vinResult.vin}?lang=${pdfLang}`;
+                        const resp = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { Accept: 'application/json' } });
+                        const data = await resp.json();
+                        if (data.download_url) {
+                          window.open(data.download_url, '_blank');
+                        }
+                      } catch {
+                        setPdfError(true);
+                      } finally {
+                        setPdfLoading(false);
+                      }
+                    }}
+                  >
+                    {pdfLoading ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.pdfLoading}</>
+                    ) : pdfError ? (
+                      <><span className="mr-2">⚠</span>{t.pdfError}</>
+                    ) : (
+                      <><FileText className="h-4 w-4 mr-2" />{t.pdfBtn}</>
+                    )}
                   </Button>
                   <Button
                     className="flex-1"

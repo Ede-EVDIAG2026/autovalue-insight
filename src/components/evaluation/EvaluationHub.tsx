@@ -17,6 +17,7 @@ interface EvaluationHubProps {
     powertrain_type: string;
     body_type?: string;
     trim?: string;
+    isManual?: boolean;
   };
 }
 
@@ -28,13 +29,15 @@ export default function EvaluationHub({ vinResult }: EvaluationHubProps) {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<EvalType>(null);
 
+  const isManual = !!vinResult.isManual;
+
   const handleSelect = (type: EvalType) => {
     if (type === 'degradation') {
-      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=true&action=degradation`);
+      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=${isManual ? 'false' : 'true'}&action=degradation`);
       return;
     }
     if (type === 'inspection') {
-      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=true&action=inspection`);
+      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=${isManual ? 'false' : 'true'}&action=inspection`);
       return;
     }
     setSelected(type);
@@ -98,6 +101,11 @@ export default function EvaluationHub({ vinResult }: EvaluationHubProps) {
 
   return (
     <div className="space-y-6">
+      {isManual && (
+        <div className="flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 text-sm text-blue-700 dark:text-blue-300">
+          <span>ℹ</span> {t.manualBadge}
+        </div>
+      )}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">{t.hubTitle}</h2>
         <p className="text-sm text-muted-foreground mt-1">{t.hubSubtitle}</p>
