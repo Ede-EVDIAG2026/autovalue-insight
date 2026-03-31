@@ -199,6 +199,15 @@ export const evaluationHubI18n = {
     pdfBtn: "📄 PDF herunterladen",
     pdfLoading: "PDF wird erstellt...",
     pdfError: "Fehler — erneut versuchen",
+    selectPlaceholder: "Auswählen...",
+    bodyTypeSUV: "SUV / Geländewagen",
+    bodyTypeSedan: "Limousine",
+    bodyTypeHatchback: "Schrägheck",
+    bodyTypeKombi: "Kombi / Touring",
+    bodyTypeCoupe: "Coupé",
+    bodyTypeCabrio: "Cabrio",
+    bodyTypeVan: "Van / MPV",
+    bodyTypePickup: "Pickup",
   },
 } as const;
 

@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { evaluationHubI18n, type HubLang } from '@/i18n/evaluationHub.i18n';
-import { MARKET_API } from '@/lib/marketApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Check, Loader2, Circle, ShoppingCart, CreditCard, ArrowRightLeft, Shield, FileText, Microscope } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Circle, FileText, Microscope } from 'lucide-react';
 
 interface CommercialValuationWizardProps {
   vinResult: {
@@ -30,6 +29,22 @@ type AgentStatus = 'idle' | 'running' | 'done' | 'error';
 
 const COUNTRIES = ["HU","DE","AT","CZ","PL","SK","RO","FR","IT","NL","BE","ES"];
 const FLAGS: Record<string, string> = { HU:'🇭🇺',DE:'🇩🇪',AT:'🇦🇹',FR:'🇫🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',CZ:'🇨🇿',SK:'🇸🇰',RO:'🇷🇴',NL:'🇳🇱',BE:'🇧🇪' };
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: currentYear - 2010 + 1 }, (_, i) => currentYear - i);
+
+const BODY_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Kombi', 'Coupe', 'Cabrio', 'Van', 'Pickup'] as const;
+type BodyTypeKey = 'bodyTypeSedan' | 'bodyTypeHatchback' | 'bodyTypeSUV' | 'bodyTypeKombi' | 'bodyTypeCoupe' | 'bodyTypeCabrio' | 'bodyTypeVan' | 'bodyTypePickup';
+const BODY_TYPE_I18N_MAP: Record<string, BodyTypeKey> = {
+  Sedan: 'bodyTypeSedan',
+  Hatchback: 'bodyTypeHatchback',
+  SUV: 'bodyTypeSUV',
+  Kombi: 'bodyTypeKombi',
+  Coupe: 'bodyTypeCoupe',
+  Cabrio: 'bodyTypeCabrio',
+  Van: 'bodyTypeVan',
+  Pickup: 'bodyTypePickup',
+};
 
 export default function CommercialValuationWizard({ vinResult, onBack }: CommercialValuationWizardProps) {
   const { lang } = useLanguage();
@@ -69,8 +84,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
 
   const fetchValuation = useCallback(async (params: Record<string, string>) => {
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
       const qs = new URLSearchParams(params);
-      const res = await fetch(`${MARKET_API}/api/v1/market/valuation?${qs}`, {
+      const res = await fetch(`${API_BASE}/market/valuation?${qs}`, {
         signal: AbortSignal.timeout(15000),
         headers: { Accept: 'application/json' },
       });
@@ -83,67 +99,101 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
 
   const handleStep1Next = useCallback(async () => {
     setCurrentStep(2);
-    // Agent 1: VIN already identified
     setAgent(1, 'running');
     setTimeout(() => setAgent(1, 'done'), 500);
-    // Agent 2: Market price lookup
     setAgent(2, 'running');
-    const result = await fetchValuation({
+    const params: Record<string, string> = {
       make: formData.make,
       model: formData.model,
-      year: String(formData.year),
-      powertrain: formData.powertrain,
-    });
+    };
+    if (formData.year) params.year = String(formData.year);
+    if (formData.powertrain) params.powertrain = formData.powertrain;
+    if (formData.country) params.country = formData.country;
+    const result = await fetchValuation(params);
     if (result) setAnalysisResult(result);
     setAgent(2, 'done');
   }, [formData, fetchValuation]);
 
   const handleStep2Next = useCallback(async () => {
     setCurrentStep(3);
-    // Agent 3: Mileage-based correction
     setAgent(3, 'running');
-    const result = await fetchValuation({
+    const params: Record<string, string> = {
       make: formData.make,
       model: formData.model,
-      year: String(formData.year),
-      powertrain: formData.powertrain,
-      mileage_km: formData.mileage,
-    });
+    };
+    if (formData.year) params.year = String(formData.year);
+    if (formData.powertrain) params.powertrain = formData.powertrain;
+    if (formData.mileage) params.mileage_km = formData.mileage;
+    if (formData.country) params.country = formData.country;
+    const result = await fetchValuation(params);
     if (result) setAnalysisResult(result);
     setAgent(3, 'done');
   }, [formData, fetchValuation]);
 
   const handleStep3Start = useCallback(async () => {
     setCurrentStep(4);
-    // Agent 4: Recall check
     setAgent(4, 'running');
     try {
-      const res = await fetch(`https://api.evdiag.hu/vin/report/${vinResult.vin}`, {
-        signal: AbortSignal.timeout(15000),
-        headers: { Accept: 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAnalysisResult((prev: any) => ({ ...prev, vinReport: data }));
+      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
+      if (vinResult.vin && vinResult.vin.length >= 11) {
+        const res = await fetch(`${API_BASE}/vin/report/${vinResult.vin}`, {
+          signal: AbortSignal.timeout(15000),
+          headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAnalysisResult((prev: any) => ({ ...prev, vinReport: data }));
+        }
       }
     } catch {}
     setAgent(4, 'done');
 
-    // Agent 5: Final summary
     setAgent(5, 'running');
     await new Promise(r => setTimeout(r, 1200));
     setAgent(5, 'done');
   }, [vinResult.vin]);
 
+  const handlePdfDownload = useCallback(async () => {
+    setPdfLoading(true);
+    setPdfError(false);
+    try {
+      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
+      const pdfLang = (lang ?? 'hu').toLowerCase();
+
+      if (vinResult.vin && vinResult.vin.length >= 11) {
+        const resp = await fetch(`${API_BASE}/vin/report/${vinResult.vin}?lang=${pdfLang}`, {
+          signal: AbortSignal.timeout(20000),
+          headers: { Accept: 'application/json' },
+        });
+        const data = await resp.json();
+        if (data.download_url) {
+          window.open(data.download_url, '_blank');
+        } else {
+          throw new Error('No download_url');
+        }
+      } else {
+        const resp = await fetch(`${API_BASE}/autovalue/pdf/report?lang=${pdfLang}`, {
+          signal: AbortSignal.timeout(20000),
+        });
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `evdiag_report_${pdfLang}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      setPdfError(true);
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [vinResult.vin, lang]);
+
   const agentsDone = Object.values(agents).filter(s => s === 'done').length;
   const allAgentsDone = agentsDone === 5;
-
-  const purposeCards = [
-    { value: 'sell', icon: <ShoppingCart className="h-5 w-5" />, label: t.purpose_sell },
-    { value: 'buy', icon: <CreditCard className="h-5 w-5" />, label: t.purpose_buy },
-    { value: 'trade', icon: <ArrowRightLeft className="h-5 w-5" />, label: t.purpose_trade },
-    { value: 'insurance', icon: <Shield className="h-5 w-5" />, label: t.purpose_insurance },
-  ];
 
   return (
     <div className="space-y-4">
@@ -203,22 +253,24 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
               <div>
                 <Label className="text-sm">{t.year}</Label>
                 <div className="relative">
-                  <Input
-                    type="number"
-                    min={2000}
-                    max={2026}
-                    value={formData.year}
-                    onChange={e => updateForm('year', Number(e.target.value))}
-                    className={isManual ? '' : 'pr-16'}
-                  />
-                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
+                  <Select value={String(formData.year)} onValueChange={v => updateForm('year', Number(v))}>
+                    <SelectTrigger className={isManual ? '' : 'pr-16'}>
+                      <SelectValue placeholder={t.selectPlaceholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {YEARS.map(y => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200 z-10">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
                 <Label className="text-sm">{t.powertrain}</Label>
                 <Select value={formData.powertrain} onValueChange={v => updateForm('powertrain', v)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder={t.selectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="BEV">BEV</SelectItem>
@@ -230,11 +282,18 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
               </div>
               <div className="md:col-span-2">
                 <Label className="text-sm">{t.bodyType}</Label>
-                <Input
-                  value={formData.bodyType}
-                  onChange={e => updateForm('bodyType', e.target.value)}
-                  placeholder="SUV, Sedan, Hatchback..."
-                />
+                <Select value={formData.bodyType} onValueChange={v => updateForm('bodyType', v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.selectPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BODY_TYPES.map(bt => (
+                      <SelectItem key={bt} value={bt}>
+                        {(t as any)[BODY_TYPE_I18N_MAP[bt]] ?? bt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <Button className="w-full" onClick={handleStep1Next}>
@@ -270,47 +329,29 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
             </div>
             <div>
               <Label className="text-sm">{t.owners}</Label>
-              <div className="flex gap-2 mt-1">
-                {[
-                  { value: '1', label: t.owners_1 },
-                  { value: '2', label: t.owners_2 },
-                  { value: '3+', label: t.owners_3plus },
-                ].map(o => (
-                  <button
-                    key={o.value}
-                    onClick={() => updateForm('owners', o.value)}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                      formData.owners === o.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-card text-foreground border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
+              <Select value={formData.owners} onValueChange={v => updateForm('owners', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.selectPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">{t.owners_1}</SelectItem>
+                  <SelectItem value="2">{t.owners_2}</SelectItem>
+                  <SelectItem value="3+">{t.owners_3plus}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-sm">{t.serviceHistory}</Label>
-              <div className="flex gap-2 mt-1">
-                {[
-                  { value: 'full', label: t.serviceHistory_full },
-                  { value: 'partial', label: t.serviceHistory_partial },
-                  { value: 'none', label: t.serviceHistory_none },
-                ].map(o => (
-                  <button
-                    key={o.value}
-                    onClick={() => updateForm('serviceHistory', o.value)}
-                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                      formData.serviceHistory === o.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-card text-foreground border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
+              <Select value={formData.serviceHistory} onValueChange={v => updateForm('serviceHistory', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.selectPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">{t.serviceHistory_full}</SelectItem>
+                  <SelectItem value="partial">{t.serviceHistory_partial}</SelectItem>
+                  <SelectItem value="none">{t.serviceHistory_none}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setCurrentStep(1)}>
@@ -333,28 +374,23 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
           <CardContent className="space-y-4">
             <div>
               <Label className="text-sm">{t.evaluationPurpose}</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
-                {purposeCards.map(p => (
-                  <button
-                    key={p.value}
-                    onClick={() => updateForm('purpose', p.value)}
-                    className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg border text-sm font-medium transition-colors ${
-                      formData.purpose === p.value
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-card text-foreground border-border hover:border-primary/50'
-                    }`}
-                  >
-                    {p.icon}
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+              <Select value={formData.purpose} onValueChange={v => updateForm('purpose', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.selectPlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sell">{t.purpose_sell}</SelectItem>
+                  <SelectItem value="buy">{t.purpose_buy}</SelectItem>
+                  <SelectItem value="trade">{t.purpose_trade}</SelectItem>
+                  <SelectItem value="insurance">{t.purpose_insurance}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-sm">{t.country}</Label>
               <Select value={formData.country} onValueChange={v => updateForm('country', v)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {COUNTRIES.map(c => (
@@ -387,7 +423,6 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
       {/* Step 4: Agent Progress & Results */}
       {currentStep === 4 && (
         <div className="space-y-4">
-          {/* Agent status panel */}
           <Card className="border border-border">
             <CardContent className="pt-5 space-y-3">
               {[
@@ -420,7 +455,6 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
             </CardContent>
           </Card>
 
-          {/* Results section */}
           {allAgentsDone && analysisResult && (
             <Card className="border border-border">
               <CardContent className="pt-5 space-y-4">
@@ -428,18 +462,23 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <h3 className="text-xl font-bold text-foreground">
                     {formData.make} {formData.model} ({formData.year})
                   </h3>
-                  {analysisResult.price_stats && (
+                  {analysisResult.p50_eur != null && (
                     <div className="text-3xl font-bold text-primary">
-                      €{(analysisResult.price_stats.median_eur ?? analysisResult.price_stats.median ?? 0).toLocaleString()}
+                      €{Number(analysisResult.p50_eur).toLocaleString()}
                     </div>
                   )}
-                  {analysisResult.price_stats && (
+                  {(analysisResult.p25_eur != null || analysisResult.p75_eur != null) && (
                     <p className="text-sm text-muted-foreground">
-                      P25: €{(analysisResult.price_stats.p25_eur ?? analysisResult.price_stats.p25 ?? 0).toLocaleString()} — P75: €{(analysisResult.price_stats.p75_eur ?? analysisResult.price_stats.p75 ?? 0).toLocaleString()}
+                      P25: €{Number(analysisResult.p25_eur ?? 0).toLocaleString()} — P75: €{Number(analysisResult.p75_eur ?? 0).toLocaleString()}
                     </p>
                   )}
-                  {analysisResult.data_points != null && (
-                    <Badge variant="secondary">{analysisResult.data_points} listings</Badge>
+                  {analysisResult.listing_count != null && (
+                    <Badge variant="secondary">{analysisResult.listing_count} listings</Badge>
+                  )}
+                  {analysisResult.avg_mileage_km != null && (
+                    <p className="text-xs text-muted-foreground">
+                      Ø {Number(analysisResult.avg_mileage_km).toLocaleString()} km
+                    </p>
                   )}
                 </div>
 
@@ -448,26 +487,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                     className="flex-1"
                     variant={pdfError ? 'destructive' : 'outline'}
                     disabled={pdfLoading}
-                    onClick={async () => {
-                      const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
-                      const pdfLang = (lang ?? 'hu').toLowerCase();
-                      setPdfError(false);
-                      setPdfLoading(true);
-                      try {
-                        const url = isManual || !vinResult.vin
-                          ? `${API_BASE}/autovalue/pdf/report?lang=${pdfLang}`
-                          : `${API_BASE}/vin/report/${vinResult.vin}?lang=${pdfLang}`;
-                        const resp = await fetch(url, { signal: AbortSignal.timeout(20000), headers: { Accept: 'application/json' } });
-                        const data = await resp.json();
-                        if (data.download_url) {
-                          window.open(data.download_url, '_blank');
-                        }
-                      } catch {
-                        setPdfError(true);
-                      } finally {
-                        setPdfLoading(false);
-                      }
-                    }}
+                    onClick={handlePdfDownload}
                   >
                     {pdfLoading ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t.pdfLoading}</>
