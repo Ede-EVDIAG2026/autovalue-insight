@@ -35,6 +35,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
   const { lang } = useLanguage();
   const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
   const navigate = useNavigate();
+  const isManual = !!vinResult.isManual;
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [formData, setFormData] = useState({
@@ -55,6 +56,8 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     1: 'idle', 2: 'idle', 3: 'idle', 4: 'idle', 5: 'idle',
   });
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   const updateForm = (key: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [key]: value }));
