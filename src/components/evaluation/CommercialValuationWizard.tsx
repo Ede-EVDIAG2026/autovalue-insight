@@ -141,6 +141,18 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleMakeChange = (v: string) => {
+    setFormData(prev => ({ ...prev, make: v, model: '', customMake: '', customModel: '' }));
+  };
+
+  const handleModelChange = (v: string) => {
+    setFormData(prev => ({ ...prev, model: v, customModel: '' }));
+  };
+
+  // Effective make/model for API calls
+  const effectiveMake = formData.make === 'Egyéb' ? formData.customMake : formData.make;
+  const effectiveModel = formData.model === 'Egyéb' || formData.make === 'Egyéb' ? formData.customModel : formData.model;
+
   const setAgent = (id: number, status: AgentStatus) => {
     setAgents(prev => ({ ...prev, [id]: status }));
   };
