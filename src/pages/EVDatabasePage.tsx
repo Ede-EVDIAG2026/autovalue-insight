@@ -101,6 +101,7 @@ const modelTypes = ['BEV', 'PHEV', 'HEV', 'MHEV'] as const;
 const modelTypeIcons: Record<string, string> = { BEV: '⚡', PHEV: '🔌', HEV: '♻️', MHEV: '〰️' };
 
 const regions = ['EU', 'CN', 'US'];
+const REGION_COUNTS: Record<string, number> = { EU: 354, CN: 50, US: 9 };
 const batteryOptions = [0, 40, 60, 80];
 const rangeOptions = [0, 200, 300, 400];
 
@@ -335,7 +336,13 @@ export default function EVDatabasePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground">{l('title')}</h1>
           <p className="text-muted-foreground mt-1">
-            {kbStats ? kbStats.models : (loading ? '…' : filtered.length)} {l('subtitle_models')} · BEV + PHEV + HEV + MHEV · {l('subtitle_data')}
+            {filters.region === 'EU'
+              ? `${REGION_COUNTS.EU} EU ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Europäische Daten' : lang === 'EN' ? 'European data' : 'Európai adatok'}`
+              : filters.region === 'CN'
+              ? `${REGION_COUNTS.CN} CN ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Chinesische Daten' : lang === 'EN' ? 'Chinese data' : 'Kínai adatok'}`
+              : filters.region === 'US'
+              ? `${REGION_COUNTS.US} US ${l('subtitle_models')} · BEV + PHEV + HEV + MHEV · ${lang === 'DE' ? 'Amerikanische Daten' : lang === 'EN' ? 'American data' : 'Amerikai adatok'}`
+              : `${kbStats?.models ?? '…'} ${l('subtitle_models')} · EU: ${REGION_COUNTS.EU} · CN: ${REGION_COUNTS.CN} · US: ${REGION_COUNTS.US} · BEV + PHEV + HEV + MHEV`}
           </p>
         </div>
 
@@ -382,8 +389,9 @@ export default function EVDatabasePage() {
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
+                      title={`${REGION_COUNTS[r]} ${l('subtitle_models')}`}
                     >
-                      {r}
+                      {r} <span className="opacity-70 ml-0.5 text-[10px]">{REGION_COUNTS[r]}</span>
                     </button>
                   ))}
                 </div>
