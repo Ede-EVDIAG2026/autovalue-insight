@@ -231,7 +231,7 @@ export default function EVDatabasePage() {
       const allModels: EVModel[] = [];
       const results = await Promise.all(
         regions.map(r =>
-          fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${r}&limit=200`)
+          fetch(`https://api.evdiag.hu/api/v1/ev-kb/models?region=${r}&limit=500`)
             .then(res => res.ok ? res.json() : [])
             .then(d => ({ region: r, models: Array.isArray(d) ? d : d.models || [] }))
             .catch(() => ({ region: r, models: [] as EVModel[] }))
