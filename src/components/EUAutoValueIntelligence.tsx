@@ -338,11 +338,22 @@ export interface VehicleEvaluation {
   country: string;
 }
 
-interface EUAutoValueIntelligenceProps {
-  onVehicleEvaluated?: (vehicle: VehicleEvaluation) => void;
+export interface VinIdentifiedResult {
+  vin: string;
+  make: string;
+  model: string;
+  year: number;
+  powertrain_type: string;
+  body_type?: string;
+  trim?: string;
 }
 
-export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoValueIntelligenceProps = {}) {
+interface EUAutoValueIntelligenceProps {
+  onVehicleEvaluated?: (vehicle: VehicleEvaluation) => void;
+  onVinIdentified?: (result: VinIdentifiedResult) => void;
+}
+
+export default function EUAutoValueIntelligence({ onVehicleEvaluated, onVinIdentified }: EUAutoValueIntelligenceProps = {}) {
   const { lang } = useLanguage();
   const [screen, setScreen] = useState<Screen>('input');
   const [form, setForm] = useState<FormState>({ brand: '', model: '', year: '', fuel: '', km: '', country: 'HU', body: '', trimLevel: '', enginePowerKw: '', engineDisplacement: '', driveType: '', transmission: '', doors: '', seats: '', batteryKwh: '', chargingPowerAc: '', color: '', equipmentNote: '', mfgYear: '', mfgMonth: '', regYear: '', regMonth: '', optionalPackages: '', standardEquipment: '', priorUsage: '', priorUsageConfidence: '' });
@@ -829,6 +840,19 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       setVinRawResult(rawResult);
       // Auto-fill immediately
       applyVinToForm(rawResult);
+      // Notify parent about VIN identification
+      const vi = rawResult.vehicle_identity;
+      if (vi?.make) {
+        onVinIdentified?.({
+          vin: rawResult.vin || vi.vin || '',
+          make: vi.make,
+          model: vi.model || model,
+          year: parseInt(vi.year || year) || 0,
+          powertrain_type: vi.electrification || powertrain || 'BEV',
+          body_type: vi.body_class,
+          trim: vi.trim,
+        });
+      }
     } else {
       // Fallback: basic fields only
       const normMake = canonicalizeMake(make);
@@ -840,8 +864,18 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated }: EUAutoVa
       if (powertrain) { updates.fuel = powertrain; count++; }
       setForm(prev => ({ ...prev, ...updates }));
       if (count > 0) toast.success(`✓ ${count} mező automatikusan kitöltve VIN alapján`);
+      // Notify parent with basic info
+      if (normMake && model) {
+        onVinIdentified?.({
+          vin: '',
+          make: normMake,
+          model,
+          year: parseInt(year) || 0,
+          powertrain_type: powertrain || 'BEV',
+        });
+      }
     }
-  }, [applyVinToForm]);
+  }, [applyVinToForm, onVinIdentified]);
 
   const handleModalApply = useCallback(() => {
     if (vinRawResult) applyVinToForm(vinRawResult);

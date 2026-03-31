@@ -147,6 +147,7 @@ export default function EVDatabasePage() {
   const [degModalOpen, setDegModalOpen] = useState(false);
   const autoOpenHandled = useRef(false);
   const autoOpenCardRef = useRef<HTMLDivElement>(null);
+  const pendingAction = useRef<string | null>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
@@ -193,6 +194,7 @@ export default function EVDatabasePage() {
     const qMake = searchParams.get('make');
     const qModel = searchParams.get('model');
     const autoopen = searchParams.get('autoopen');
+    const action = searchParams.get('action');
     if (autoopen !== 'true' || !qMake || !qModel) return;
 
     const MAKE_ALIASES: Record<string, string[]> = {
@@ -276,6 +278,7 @@ export default function EVDatabasePage() {
       }
 
       autoOpenHandled.current = true;
+      if (action) pendingAction.current = action;
 
       if (foundModel && foundRegion) {
         setFilters(f => ({ ...f, region: foundRegion, search: `${foundModel!.make} ${foundModel!.model}`, make: '' }));
@@ -288,6 +291,7 @@ export default function EVDatabasePage() {
       }
 
       searchParams.delete('autoopen');
+      searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     };
 
@@ -327,6 +331,29 @@ export default function EVDatabasePage() {
       .finally(() => { if (!cancelled) setDetailLoading(false); });
     return () => { cancelled = true; };
   }, [selectedModel]);
+
+  // Handle action param after detail loads
+  useEffect(() => {
+    if (!detail || !selectedModel || !pendingAction.current) return;
+    const action = pendingAction.current;
+    pendingAction.current = null;
+    const modelType = models.find(m => m.make === selectedModel.make && m.model === selectedModel.model)?.model_type || 'BEV';
+    if (action === 'degradation') {
+      setDegModalOpen(true);
+    } else if (action === 'inspection') {
+      setInspectionModel({
+        make: selectedModel.make,
+        model: selectedModel.model,
+        variant: '',
+        battery_kwh: detail.battery_kwh,
+        model_type: modelType,
+        range_km_wltp: detail.range_km_wltp,
+        cell_chemistry: null,
+        ...detail,
+      });
+      setInspectionOpen(true);
+    }
+  }, [detail, selectedModel, models]);
 
   return (
     <div className="min-h-screen bg-background">
