@@ -193,8 +193,8 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     setCurrentStep(3);
     setAgent(3, 'running');
     const params: Record<string, string> = {
-      make: formData.make,
-      model: formData.model,
+      make: effectiveMake,
+      model: effectiveModel,
     };
     if (formData.year) params.year = String(formData.year);
     if (formData.powertrain) params.powertrain = formData.powertrain;
@@ -203,7 +203,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     const result = await fetchValuation(params);
     if (result) setAnalysisResult(result);
     setAgent(3, 'done');
-  }, [formData, fetchValuation]);
+  }, [formData, effectiveMake, effectiveModel, fetchValuation]);
 
   const handleStep3Start = useCallback(async () => {
     setCurrentStep(4);
