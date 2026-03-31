@@ -29,13 +29,15 @@ export default function EvaluationHub({ vinResult }: EvaluationHubProps) {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<EvalType>(null);
 
+  const isManual = !!vinResult.isManual;
+
   const handleSelect = (type: EvalType) => {
     if (type === 'degradation') {
-      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=true&action=degradation`);
+      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=${isManual ? 'false' : 'true'}&action=degradation`);
       return;
     }
     if (type === 'inspection') {
-      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=true&action=inspection`);
+      navigate(`/ev-database?make=${encodeURIComponent(vinResult.make)}&model=${encodeURIComponent(vinResult.model)}&autoopen=${isManual ? 'false' : 'true'}&action=inspection`);
       return;
     }
     setSelected(type);
