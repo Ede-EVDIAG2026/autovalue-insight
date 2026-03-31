@@ -389,8 +389,9 @@ export default function EVDatabasePage() {
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
+                      title={`${REGION_COUNTS[r]} ${l('subtitle_models')}`}
                     >
-                      {r}
+                      {r} <span className="opacity-70 ml-0.5 text-[10px]">{REGION_COUNTS[r]}</span>
                     </button>
                   ))}
                 </div>
