@@ -184,9 +184,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <Input
                     value={formData.make}
                     onChange={e => updateForm('make', e.target.value)}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
@@ -195,9 +195,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <Input
                     value={formData.model}
                     onChange={e => updateForm('model', e.target.value)}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
@@ -209,9 +209,9 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                     max={2026}
                     value={formData.year}
                     onChange={e => updateForm('year', Number(e.target.value))}
-                    className="pr-16"
+                    className={isManual ? '' : 'pr-16'}
                   />
-                  <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>
+                  {!isManual && <Badge className="absolute right-2 top-2 text-[10px] bg-green-100 text-green-700 border-green-200">✓ VIN</Badge>}
                 </div>
               </div>
               <div>
