@@ -20,6 +20,7 @@ const DashboardPage = () => {
   }, []);
 
   const handleVinIdentified = useCallback((result: VinIdentifiedResult) => {
+    console.log('vinResult:', result);
     setVinResult(result);
   }, []);
 
