@@ -194,6 +194,7 @@ export default function EVDatabasePage() {
     const qMake = searchParams.get('make');
     const qModel = searchParams.get('model');
     const autoopen = searchParams.get('autoopen');
+    const action = searchParams.get('action');
     if (autoopen !== 'true' || !qMake || !qModel) return;
 
     const MAKE_ALIASES: Record<string, string[]> = {
