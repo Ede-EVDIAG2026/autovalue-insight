@@ -147,6 +147,7 @@ export default function EVDatabasePage() {
   const [degModalOpen, setDegModalOpen] = useState(false);
   const autoOpenHandled = useRef(false);
   const autoOpenCardRef = useRef<HTMLDivElement>(null);
+  const pendingAction = useRef<string | null>(null);
   const MAX_COMPARE = 3;
 
   const compareKey = (m: EVModel) => `${m.make}::${m.model}`;
