@@ -278,6 +278,7 @@ export default function EVDatabasePage() {
       }
 
       autoOpenHandled.current = true;
+      if (action) pendingAction.current = action;
 
       if (foundModel && foundRegion) {
         setFilters(f => ({ ...f, region: foundRegion, search: `${foundModel!.make} ${foundModel!.model}`, make: '' }));
@@ -290,6 +291,7 @@ export default function EVDatabasePage() {
       }
 
       searchParams.delete('autoopen');
+      searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     };
 
