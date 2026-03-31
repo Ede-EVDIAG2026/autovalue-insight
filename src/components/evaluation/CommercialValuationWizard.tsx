@@ -233,13 +233,11 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
     setPdfError(false);
     try {
       const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://46.224.176.213:8890';
-      const pdfLang = (lang ?? 'hu').toLowerCase();
+      const currentLanguage = (lang ?? 'hu').toLowerCase();
 
-      if (vinResult.vin && vinResult.vin.length >= 11) {
-        const resp = await fetch(`${API_BASE}/vin/report/${vinResult.vin}?lang=${pdfLang}`, {
-          signal: AbortSignal.timeout(20000),
-          headers: { Accept: 'application/json' },
-        });
+      if (vinResult.vin && vinResult.vin.length >= 11 && !vinResult.isManual) {
+        // VIN-alapú PDF — JSON válasz download_url-lel
+        const resp = await fetch(`${API_BASE}/vin/report/${vinResult.vin}?lang=${currentLanguage}`);
         const data = await resp.json();
         if (data.download_url) {
           window.open(data.download_url, '_blank');
@@ -247,25 +245,54 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
           throw new Error('No download_url');
         }
       } else {
-        const resp = await fetch(`${API_BASE}/autovalue/pdf/report?lang=${pdfLang}`, {
-          signal: AbortSignal.timeout(20000),
+        // VIN nélküli PDF — wizard adatokból generál, közvetlen binary stream
+        const resp = await fetch(`${API_BASE}/autovalue/pdf/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            make: formData.make,
+            model: formData.model,
+            year: formData.year,
+            powertrain: formData.powertrain,
+            body_type: formData.bodyType ?? '',
+            mileage_km: formData.mileage ?? 0,
+            country: formData.country ?? 'HU',
+            lang: currentLanguage,
+            market_data: {
+              p50_eur: analysisResult?.p50_eur ?? analysisResult?.median_price_eur ?? 0,
+              p25_eur: analysisResult?.p25_eur ?? 0,
+              p75_eur: analysisResult?.p75_eur ?? 0,
+              p10_eur: analysisResult?.p10_eur ?? 0,
+              p90_eur: analysisResult?.p90_eur ?? 0,
+              avg_price_eur: analysisResult?.avg_price_eur ?? 0,
+              min_price_eur: analysisResult?.min_price_eur ?? 0,
+              max_price_eur: analysisResult?.max_price_eur ?? 0,
+              listing_count: analysisResult?.listing_count ?? 0,
+              avg_mileage_km: analysisResult?.avg_mileage_km ?? 0,
+              comparable_listings: analysisResult?.comparable_listings ?? [],
+            }
+          })
         });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `evdiag_report_${pdfLang}.pdf`;
+        const safeMake = (formData.make ?? 'evdiag').replace(/\s+/g, '_');
+        const safeModel = (formData.model ?? 'report').replace(/\s+/g, '_');
+        a.download = `EV_DIAG_${safeMake}_${safeModel}_${currentLanguage}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
-    } catch {
+    } catch (e) {
+      console.error('PDF error:', e);
       setPdfError(true);
     } finally {
       setPdfLoading(false);
     }
-  }, [vinResult.vin, lang]);
+  }, [vinResult, lang, formData, analysisResult]);
 
   const agentsDone = Object.values(agents).filter(s => s === 'done').length;
   const allAgentsDone = agentsDone === 5;
