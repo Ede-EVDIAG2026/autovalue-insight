@@ -561,7 +561,7 @@ export default function EVDatabasePage() {
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
                   <Badge
                     className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
-                    onClick={() => setDegModalOpen(true)}
+                    onClick={() => { setDegModalOpen(true); setSelectedModel(null); }}
                   >
                     {detail.degradation_risk}
                   </Badge>
