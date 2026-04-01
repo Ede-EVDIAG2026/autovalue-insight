@@ -327,18 +327,14 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10001] overflow-y-auto"
+      className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-sm"
       style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      onClick={() => onOpenChange(false)}
     >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in-0 duration-300"
-        onClick={() => onOpenChange(false)}
-      />
       {/* Modal content */}
       <div
         ref={modalContentRef}
-        className="relative z-10 w-full max-w-5xl mx-auto my-8 mx-4 rounded-2xl shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
+        className="relative z-10 w-full max-w-5xl mx-auto my-8 px-4 rounded-2xl shadow-2xl bg-background border border-border"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
