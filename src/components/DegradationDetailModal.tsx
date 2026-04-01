@@ -841,7 +841,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
         </div>
         </div>
       </div>
-    </>,
+    </div>,
     document.body
   );
 }
