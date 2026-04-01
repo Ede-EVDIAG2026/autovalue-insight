@@ -562,7 +562,16 @@ export default function EVDatabasePage() {
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
                   <Badge
                     className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
-                    onClick={() => { setSavedDetail(detail); setDegModalOpen(true); setSelectedModel(null); }}
+                    onClick={() => {
+                      setSavedDetail({
+                        ...detail,
+                        _make: selectedModel?.make,
+                        _model: selectedModel?.model,
+                        _model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV',
+                      });
+                      setDegModalOpen(true);
+                      setSelectedModel(null);
+                    }}
                   >
                     {detail.degradation_risk}
                   </Badge>
@@ -802,9 +811,9 @@ export default function EVDatabasePage() {
             rental_battery: (savedDetail || detail).rental_battery,
             known_issues: ((savedDetail || detail) as any).known_issues,
             warranty_battery_years: (savedDetail || detail).warranty_battery_years,
-            model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
-            make: selectedModel?.make,
-            model: selectedModel?.model,
+            model_type: (savedDetail as any)?._model_type || models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
+            make: (savedDetail as any)?._make || selectedModel?.make,
+            model: (savedDetail as any)?._model || selectedModel?.model,
           }}
           onOpenWizard={() => {
             setDegModalOpen(false);
