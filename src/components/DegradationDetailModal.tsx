@@ -326,35 +326,55 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   if (!open) return null;
 
   return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 10001,
-        overflowY: 'scroll',
-        WebkitOverflowScrolling: 'touch',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-      }}
-      onClick={() => onOpenChange(false)}
-    >
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10001, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+
+      {/* Görgethető wrapper */}
       <div
-        ref={modalContentRef}
         style={{
-          position: 'relative',
-          zIndex: 10002,
-          width: '90%',
-          maxWidth: '960px',
-          margin: '32px auto',
-          paddingBottom: '48px',
-          borderRadius: '16px',
-          overflow: 'visible',
-          backgroundColor: 'white',
+          position: 'absolute',
+          inset: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
+        {/* Modal doboz */}
+        <div
+          ref={modalContentRef}
+          style={{
+            position: 'relative',
+            width: '90%',
+            maxWidth: '960px',
+            margin: '32px auto 80px auto',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            backgroundColor: 'hsl(var(--background))',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Bezáró gomb — sticky, mindig látható */}
+          <button
+            onClick={() => onOpenChange(false)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 10,
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ✕
+          </button>
         {/* Header */}
         <div className="hero-gradient text-primary-foreground p-6 md:p-8 rounded-t-2xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -803,6 +823,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
               {l('close')}
             </Button>
           </div>
+        </div>
         </div>
       </div>
     </div>,
