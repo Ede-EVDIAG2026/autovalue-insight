@@ -323,12 +323,37 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        overflowY: 'scroll',
+        overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
         backgroundColor: 'rgba(0,0,0,0.85)',
       }}
       onClick={() => onOpenChange(false)}
     >
+      {/* Fixed close button */}
+      <button
+        onClick={() => onOpenChange(false)}
+        style={{
+          position: 'fixed',
+          top: '16px',
+          right: '16px',
+          zIndex: 10000,
+          background: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          fontSize: '20px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          color: '#111',
+        }}
+        aria-label="Bezárás"
+      >
+        ✕
+      </button>
       {/* Modal content */}
       <div
         ref={modalContentRef}
