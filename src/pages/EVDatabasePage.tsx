@@ -562,7 +562,16 @@ export default function EVDatabasePage() {
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
                   <Badge
                     className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
-                    onClick={() => { setSavedDetail(detail); setDegModalOpen(true); setSelectedModel(null); }}
+                    onClick={() => {
+                      setSavedDetail({
+                        ...detail,
+                        _make: selectedModel?.make,
+                        _model: selectedModel?.model,
+                        _model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV',
+                      });
+                      setDegModalOpen(true);
+                      setSelectedModel(null);
+                    }}
                   >
                     {detail.degradation_risk}
                   </Badge>
