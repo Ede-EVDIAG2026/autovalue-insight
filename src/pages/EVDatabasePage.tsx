@@ -145,6 +145,7 @@ export default function EVDatabasePage() {
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [inspectionModel, setInspectionModel] = useState<any>(null);
   const [degModalOpen, setDegModalOpen] = useState(false);
+  const [savedDetail, setSavedDetail] = useState<any>(null);
   const autoOpenHandled = useRef(false);
   const autoOpenCardRef = useRef<HTMLDivElement>(null);
   const pendingAction = useRef<string | null>(null);
