@@ -318,6 +318,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   const onClose = () => onOpenChange(false);
 
   useEffect(() => {
+    if (!open) return;
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
@@ -326,7 +327,7 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
       document.body.style.position = '';
       document.body.style.width = '';
     };
-  }, []);
+  }, [open]);
 
   if (!open) return null;
 
