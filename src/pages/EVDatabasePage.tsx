@@ -811,9 +811,9 @@ export default function EVDatabasePage() {
             rental_battery: (savedDetail || detail).rental_battery,
             known_issues: ((savedDetail || detail) as any).known_issues,
             warranty_battery_years: (savedDetail || detail).warranty_battery_years,
-            model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
-            make: selectedModel?.make,
-            model: selectedModel?.model,
+            model_type: (savedDetail as any)?._model_type || models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
+            make: (savedDetail as any)?._make || selectedModel?.make,
+            model: (savedDetail as any)?._model || selectedModel?.model,
           }}
           onOpenWizard={() => {
             setDegModalOpen(false);
