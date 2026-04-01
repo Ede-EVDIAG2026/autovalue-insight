@@ -221,6 +221,14 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   const handleDownloadPdf = useCallback(async () => {
     const el = modalContentRef.current;
     if (!el) return;
