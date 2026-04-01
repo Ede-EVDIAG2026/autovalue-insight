@@ -327,15 +327,33 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10001] overflow-y-auto bg-black/80 backdrop-blur-sm"
-      style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 10001,
+        overflowY: 'scroll',
+        WebkitOverflowScrolling: 'touch',
+        backgroundColor: 'rgba(0,0,0,0.8)',
+      }}
       onClick={() => onOpenChange(false)}
     >
-      {/* Modal content */}
       <div
         ref={modalContentRef}
-        className="relative z-10 w-full max-w-5xl mx-auto my-8 px-4 rounded-2xl shadow-2xl bg-background border border-border"
-        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          zIndex: 10002,
+          width: '90%',
+          maxWidth: '960px',
+          margin: '32px auto',
+          paddingBottom: '48px',
+          borderRadius: '16px',
+          overflow: 'visible',
+          backgroundColor: 'white',
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="hero-gradient text-primary-foreground p-6 md:p-8 rounded-t-2xl">
