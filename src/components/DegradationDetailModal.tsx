@@ -326,30 +326,15 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   if (!open) return null;
 
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 10001, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
-
-      {/* Görgethető wrapper */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {/* Modal doboz */}
+    <div
+      className="fixed inset-0 z-[10001]"
+      style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', backgroundColor: 'rgba(0,0,0,0.8)' }}
+      onClick={() => onOpenChange(false)}
+    >
         <div
           ref={modalContentRef}
-          style={{
-            position: 'relative',
-            width: '90%',
-            maxWidth: '960px',
-            margin: '32px auto 80px auto',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            backgroundColor: 'hsl(var(--background))',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-          }}
+          className="relative z-10 w-full max-w-5xl rounded-2xl shadow-2xl bg-background border border-border"
+          style={{ margin: '32px auto', width: '90%' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Bezáró gomb — sticky, mindig látható */}
@@ -825,7 +810,6 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
           </div>
         </div>
         </div>
-      </div>
     </div>,
     document.body
   );
