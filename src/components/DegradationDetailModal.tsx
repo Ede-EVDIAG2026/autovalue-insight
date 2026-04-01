@@ -318,58 +318,71 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
   if (!open) return null;
 
   return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        backgroundColor: 'rgba(0,0,0,0.85)',
-      }}
-      onClick={() => onOpenChange(false)}
-    >
-      {/* Fixed close button */}
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={() => onOpenChange(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9998,
+          backgroundColor: 'rgba(0,0,0,0.75)',
+        }}
+      />
+
+      {/* Bezáró gomb — mindig látható */}
       <button
         onClick={() => onOpenChange(false)}
         style={{
           position: 'fixed',
-          top: '16px',
-          right: '16px',
-          zIndex: 10000,
+          top: '12px',
+          right: '12px',
+          zIndex: 10001,
           background: 'white',
           border: 'none',
           borderRadius: '50%',
           width: '40px',
           height: '40px',
-          fontSize: '20px',
+          fontSize: '18px',
           cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+          color: '#111',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          color: '#111',
+          lineHeight: 1,
         }}
         aria-label="Bezárás"
       >
         ✕
       </button>
-      {/* Modal content */}
+
+      {/* Görgethető tartalom wrapper */}
       <div
-        ref={modalContentRef}
         style={{
-          position: 'relative',
-          zIndex: 10,
-          width: '100%',
-          maxWidth: '900px',
-          margin: '32px auto',
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          overflowY: 'scroll',
+          paddingTop: '24px',
           paddingBottom: '48px',
-          borderRadius: '16px',
-          overflow: 'visible',
         }}
-        className="shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
-        onClick={e => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
+        {/* Modal doboz */}
+        <div
+          ref={modalContentRef}
+          style={{
+            position: 'relative',
+            margin: '0 auto',
+            width: '90%',
+            maxWidth: '960px',
+            borderRadius: '16px',
+            overflow: 'hidden',
+          }}
+          className="shadow-2xl bg-background border border-border animate-in zoom-in-95 fade-in-0 duration-300"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div className="hero-gradient text-primary-foreground p-6 md:p-8 rounded-t-2xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -819,8 +832,9 @@ export default function DegradationDetailModal({ open, onOpenChange, data, onOpe
             </Button>
           </div>
         </div>
+        </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 }
