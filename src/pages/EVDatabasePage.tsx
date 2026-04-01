@@ -145,6 +145,7 @@ export default function EVDatabasePage() {
   const [inspectionOpen, setInspectionOpen] = useState(false);
   const [inspectionModel, setInspectionModel] = useState<any>(null);
   const [degModalOpen, setDegModalOpen] = useState(false);
+  const [savedDetail, setSavedDetail] = useState<any>(null);
   const autoOpenHandled = useRef(false);
   const autoOpenCardRef = useRef<HTMLDivElement>(null);
   const pendingAction = useRef<string | null>(null);
@@ -561,7 +562,7 @@ export default function EVDatabasePage() {
                   <span className="text-sm text-muted-foreground">{l('degradation')}</span>
                   <Badge
                     className={`text-xs border cursor-pointer hover:opacity-80 transition-opacity ${degradationColor[detail.degradation_risk?.toUpperCase()] || 'bg-muted text-muted-foreground'}`}
-                    onClick={() => { setDegModalOpen(true); setSelectedModel(null); }}
+                    onClick={() => { setSavedDetail(detail); setDegModalOpen(true); setSelectedModel(null); }}
                   >
                     {detail.degradation_risk}
                   </Badge>
@@ -788,35 +789,36 @@ export default function EVDatabasePage() {
       )}
 
       {/* Degradation Detail Modal */}
-      {detail && detail.degradation_risk && (
+      {(savedDetail || detail) && (savedDetail || detail).degradation_risk && (
         <DegradationDetailModal
           open={degModalOpen}
-          onOpenChange={setDegModalOpen}
+          onOpenChange={(open) => { setDegModalOpen(open); if (!open) setSavedDetail(null); }}
           data={{
-            degradation_risk: detail.degradation_risk,
-            battery_kwh: detail.battery_kwh,
-            range_km_wltp: detail.range_km_wltp,
-            cell_chemistry: (detail as any).cell_chemistry,
-            fault_codes: detail.fault_codes,
-            rental_battery: detail.rental_battery,
-            known_issues: (detail as any).known_issues,
-            warranty_battery_years: detail.warranty_battery_years,
+            degradation_risk: (savedDetail || detail).degradation_risk,
+            battery_kwh: (savedDetail || detail).battery_kwh,
+            range_km_wltp: (savedDetail || detail).range_km_wltp,
+            cell_chemistry: ((savedDetail || detail) as any).cell_chemistry,
+            fault_codes: (savedDetail || detail).fault_codes,
+            rental_battery: (savedDetail || detail).rental_battery,
+            known_issues: ((savedDetail || detail) as any).known_issues,
+            warranty_battery_years: (savedDetail || detail).warranty_battery_years,
             model_type: models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type,
             make: selectedModel?.make,
             model: selectedModel?.model,
           }}
           onOpenWizard={() => {
             setDegModalOpen(false);
+            setSavedDetail(null);
             const modelType = models.find(m => m.make === selectedModel?.make && m.model === selectedModel?.model)?.model_type || 'BEV';
             setInspectionModel({
               make: selectedModel!.make,
               model: selectedModel!.model,
               variant: '',
-              battery_kwh: detail.battery_kwh,
+              battery_kwh: (savedDetail || detail).battery_kwh,
               model_type: modelType,
-              range_km_wltp: detail.range_km_wltp,
+              range_km_wltp: (savedDetail || detail).range_km_wltp,
               cell_chemistry: null,
-              ...detail,
+              ...(savedDetail || detail),
             });
             setInspectionOpen(true);
           }}
