@@ -9,8 +9,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
 const DashboardPage = () => {
-  const { lang, tr } = useLanguage();
-  const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
+  const { tr } = useLanguage();
   const [vehicle, setVehicle] = useState<VehicleParams | null>(null);
   const [vinResult, setVinResult] = useState<VinIdentifiedResult | null>(null);
   const [manualMode, setManualMode] = useState(false);
