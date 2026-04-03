@@ -422,7 +422,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <SelectTrigger>
                     <SelectValue placeholder={t.selectPlaceholder} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                     {BODY_TYPES.map(bt => (
                       <SelectItem key={bt} value={bt}>
                         {(t as any)[BODY_TYPE_I18N_MAP[bt]] ?? bt}
