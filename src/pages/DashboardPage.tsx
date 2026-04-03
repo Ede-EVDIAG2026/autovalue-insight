@@ -3,13 +3,20 @@ import EUAutoValueIntelligence, { type VehicleEvaluation, type VinIdentifiedResu
 import AppHeader from '@/components/AppHeader';
 import MarketIntelligenceSection from '@/components/market/MarketIntelligenceSection';
 import EvaluationHub from '@/components/evaluation/EvaluationHub';
+import DashboardHero from '@/components/dashboard/DashboardHero';
+import DashboardServiceCards from '@/components/dashboard/DashboardServiceCards';
+import DashboardFooter from '@/components/dashboard/DashboardFooter';
 import { useLanguage } from '@/i18n/LanguageContext';
-
+import { useNavigate } from 'react-router-dom';
 
 import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
+type DashboardTab = 'home' | 'valuation' | 'evdb';
+
 const DashboardPage = () => {
   const { tr } = useLanguage();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<DashboardTab>('home');
   const [vehicle, setVehicle] = useState<VehicleParams | null>(null);
   const [vinResult, setVinResult] = useState<VinIdentifiedResult | null>(null);
   const [manualMode, setManualMode] = useState(false);
@@ -41,32 +48,96 @@ const DashboardPage = () => {
       trim: '',
       isManual: true,
     } as any);
+    setActiveTab('valuation');
   };
+
+  const handleVinFlow = () => {
+    setActiveTab('valuation');
+  };
+
+  const handleCommercial = () => {
+    setActiveTab('valuation');
+  };
+
+  const handleDegradation = () => {
+    navigate('/ev-database?action=degradation');
+  };
+
+  const handleInspection = () => {
+    navigate('/ev-database?action=inspection');
+  };
+
+  const tabs: { key: DashboardTab; label: string }[] = [
+    { key: 'home', label: tr('tab_home') },
+    { key: 'valuation', label: tr('tab_valuation') },
+    { key: 'evdb', label: tr('tab_evdb') },
+  ];
 
   return (
     <div className="min-h-screen bg-muted/30">
       <AppHeader />
-      <div className="container mx-auto px-4 py-6 space-y-8">
-        {vinResult && (vinResult.make || manualMode) ? (
-          <EvaluationHub vinResult={vinResult as any} />
-        ) : (
-          <div>
-            <EUAutoValueIntelligence
-              onVehicleEvaluated={handleVehicleEvaluated}
-              onVinIdentified={handleVinIdentified}
-            />
-            <div className="max-w-[680px] mx-auto mt-4">
-              <button
-                onClick={handleManualStart}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-3 transition-colors"
-              >
-                {tr('vin_manualButton')}
-              </button>
-            </div>
-          </div>
-        )}
-        <MarketIntelligenceSection vehicle={vehicle} />
+
+      {/* Tab bar */}
+      <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-16 z-40">
+        <div className="container mx-auto px-4 flex gap-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                if (tab.key === 'evdb') {
+                  navigate('/ev-database');
+                } else {
+                  setActiveTab(tab.key);
+                }
+              }}
+              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Tab content */}
+      {activeTab === 'home' && (
+        <div>
+          <DashboardHero onVinFlow={handleVinFlow} onManualFlow={handleManualStart} />
+          <DashboardServiceCards
+            onCommercial={handleCommercial}
+            onDegradation={handleDegradation}
+            onInspection={handleInspection}
+          />
+          <DashboardFooter />
+        </div>
+      )}
+
+      {activeTab === 'valuation' && (
+        <div className="container mx-auto px-4 py-6 space-y-8">
+          {vinResult && (vinResult.make || manualMode) ? (
+            <EvaluationHub vinResult={vinResult as any} />
+          ) : (
+            <div>
+              <EUAutoValueIntelligence
+                onVehicleEvaluated={handleVehicleEvaluated}
+                onVinIdentified={handleVinIdentified}
+              />
+              <div className="max-w-[680px] mx-auto mt-4">
+                <button
+                  onClick={handleManualStart}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-3 transition-colors"
+                >
+                  {tr('vin_manualButton')}
+                </button>
+              </div>
+            </div>
+          )}
+          <MarketIntelligenceSection vehicle={vehicle} />
+        </div>
+      )}
     </div>
   );
 };
