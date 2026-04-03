@@ -4,12 +4,12 @@ import AppHeader from '@/components/AppHeader';
 import MarketIntelligenceSection from '@/components/market/MarketIntelligenceSection';
 import EvaluationHub from '@/components/evaluation/EvaluationHub';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { evaluationHubI18n, type HubLang } from '@/i18n/evaluationHub.i18n';
+
+
 import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
 const DashboardPage = () => {
-  const { lang } = useLanguage();
-  const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
+  const { tr } = useLanguage();
   const [vehicle, setVehicle] = useState<VehicleParams | null>(null);
   const [vinResult, setVinResult] = useState<VinIdentifiedResult | null>(null);
   const [manualMode, setManualMode] = useState(false);
@@ -60,7 +60,7 @@ const DashboardPage = () => {
                 onClick={handleManualStart}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-3 transition-colors"
               >
-                {t.noVin} {t.manualStart}
+                {tr('vin_manualButton')}
               </button>
             </div>
           </div>
