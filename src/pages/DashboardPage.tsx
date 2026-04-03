@@ -67,11 +67,6 @@ const DashboardPage = () => {
     navigate('/ev-database?action=inspection');
   };
 
-  const tabs: { key: DashboardTab; label: string }[] = [
-    { key: 'home', label: tr('tab_home') },
-    { key: 'valuation', label: tr('tab_valuation') },
-    { key: 'evdb', label: tr('tab_evdb') },
-  ];
 
   return (
     <div className="min-h-screen bg-muted/30">
