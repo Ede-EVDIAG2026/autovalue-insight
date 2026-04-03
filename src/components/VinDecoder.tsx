@@ -4,7 +4,7 @@ import { MARKET_API } from '@/lib/marketApi';
 // ── Types ──
 interface VinDecoderProps {
   onVehicleDecoded: (make: string, model: string, year: string, powertrain: string, rawResult?: any) => void;
-  styles: {
+  styles?: {
     card: React.CSSProperties;
     input: React.CSSProperties;
     btn: React.CSSProperties;
