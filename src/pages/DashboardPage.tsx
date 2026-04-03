@@ -61,7 +61,7 @@ const DashboardPage = () => {
                 onClick={handleManualStart}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-3 transition-colors"
               >
-                {t.noVin} {t.manualStart}
+                {tr('vin_manualButton')}
               </button>
             </div>
           </div>
