@@ -77,30 +77,6 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-muted/30">
       <AppHeader />
 
-      {/* Tab bar */}
-      <div className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-16 z-40">
-        <div className="container mx-auto px-4 flex gap-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                if (tab.key === 'evdb') {
-                  navigate('/ev-database');
-                } else {
-                  setActiveTab(tab.key);
-                }
-              }}
-              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Tab content */}
       {activeTab === 'home' && (
