@@ -9,7 +9,7 @@ import { evaluationHubI18n, type HubLang } from '@/i18n/evaluationHub.i18n';
 import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
 const DashboardPage = () => {
-  const { lang } = useLanguage();
+  const { lang, tr } = useLanguage();
   const t = evaluationHubI18n[(lang as HubLang) || 'hu'] || evaluationHubI18n.hu;
   const [vehicle, setVehicle] = useState<VehicleParams | null>(null);
   const [vinResult, setVinResult] = useState<VinIdentifiedResult | null>(null);
