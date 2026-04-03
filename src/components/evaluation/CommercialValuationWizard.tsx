@@ -337,7 +337,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                     <SelectTrigger className={!isManual && formData.make ? 'pr-16' : ''}>
                       <SelectValue placeholder={t.selectPlaceholder} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                       {MAKES.map(m => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
                       ))}
@@ -368,7 +368,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                       <SelectTrigger className={!isManual && formData.model ? 'pr-16' : ''}>
                         <SelectValue placeholder={!formData.make ? (t as any).selectMakeFirst ?? 'Először válassz gyártót' : t.selectPlaceholder} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                         {(MODELS_BY_MAKE[formData.make] || []).map(m => (
                           <SelectItem key={m} value={m}>{m}</SelectItem>
                         ))}
@@ -393,7 +393,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                     <SelectTrigger className={isManual ? '' : 'pr-16'}>
                       <SelectValue placeholder={t.selectPlaceholder} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                       {YEARS.map(y => (
                         <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                       ))}
@@ -408,7 +408,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <SelectTrigger>
                     <SelectValue placeholder={t.selectPlaceholder} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                     <SelectItem value="BEV">BEV</SelectItem>
                     <SelectItem value="PHEV">PHEV</SelectItem>
                     <SelectItem value="HEV">HEV</SelectItem>
@@ -422,7 +422,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                   <SelectTrigger>
                     <SelectValue placeholder={t.selectPlaceholder} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                     {BODY_TYPES.map(bt => (
                       <SelectItem key={bt} value={bt}>
                         {(t as any)[BODY_TYPE_I18N_MAP[bt]] ?? bt}
@@ -469,7 +469,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                 <SelectTrigger>
                   <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                   <SelectItem value="1">{t.owners_1}</SelectItem>
                   <SelectItem value="2">{t.owners_2}</SelectItem>
                   <SelectItem value="3+">{t.owners_3plus}</SelectItem>
@@ -482,7 +482,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                 <SelectTrigger>
                   <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                   <SelectItem value="full">{t.serviceHistory_full}</SelectItem>
                   <SelectItem value="partial">{t.serviceHistory_partial}</SelectItem>
                   <SelectItem value="none">{t.serviceHistory_none}</SelectItem>
