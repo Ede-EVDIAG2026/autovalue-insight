@@ -338,4 +338,15 @@ export const t: Record<string, TranslationValue> = {
   country_LT: { HU: "Litvánia", EN: "Lithuania", DE: "Litauen" },
   country_LV: { HU: "Lettország", EN: "Latvia", DE: "Lettland" },
   country_EE: { HU: "Észtország", EN: "Estonia", DE: "Estland" },
+
+  // VIN card
+  vin_cardTitle: { HU: "VIN azonosítás", EN: "VIN Identification", DE: "VIN-Identifikation" },
+  vin_cardSubtitle: { HU: "Add meg a VIN számot az automatikus kitöltéshez", EN: "Enter the VIN number for automatic identification", DE: "Geben Sie die Fahrgestellnummer zur automatischen Identifikation ein" },
+  vin_inputLabel: { HU: "VIN", EN: "VIN", DE: "FIN / VIN" },
+  vin_inputPlaceholder: { HU: "PL. WVWZZZ3CZWE123456", EN: "E.G. WVWZZZ3CZWE123456", DE: "Z.B. WVWZZZ3CZWE123456" },
+  vin_decodeButton: { HU: "AI Dekódolás", EN: "AI Decode", DE: "KI-Dekodierung" },
+  vin_decodeLoading: { HU: "5 AI ügynök elemzi...", EN: "5 AI agents analyzing...", DE: "5 KI-Agenten analysieren..." },
+  vin_manualButton: { HU: "Manuális értékelés indítása", EN: "Start manual valuation", DE: "Manuelle Bewertung starten" },
+  vin_errorInvalid: { HU: "Érvénytelen VIN – ellenőrizd a 17 karaktert", EN: "Invalid VIN – check the 17 characters", DE: "Ungültige VIN – überprüfen Sie die 17 Zeichen" },
+  vin_errorApi: { HU: "API nem elérhető", EN: "API unavailable", DE: "API nicht verfügbar" },
 };

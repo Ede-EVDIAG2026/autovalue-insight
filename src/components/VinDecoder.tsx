@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { MARKET_API } from '@/lib/marketApi';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 // ── Types ──
 interface VinDecoderProps {
@@ -23,6 +24,7 @@ function mapPowertrain(electrification: string | undefined): string {
 }
 
 export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
+  const { tr } = useLanguage();
   const [vin, setVin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -53,7 +55,7 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
       });
 
       if (res.status === 400) {
-        setError('❌ Érvénytelen VIN – ellenőrizd a 17 karaktert');
+        setError(`❌ ${tr('vin_errorInvalid')}`);
         return;
       }
       if (!res.ok) throw new Error(`API ${res.status}`);
@@ -62,7 +64,7 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
 
       const hasIdentity = Boolean(data.vehicle_identity?.make);
       if (!hasIdentity) {
-        setError('🔌 API nem elérhető');
+        setError(`🔌 ${tr('vin_errorApi')}`);
         return;
       }
 
@@ -78,11 +80,11 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
       }
     } catch (e: unknown) {
       if (e instanceof Error && e.name === 'AbortError') return;
-      setError('🔌 API nem elérhető');
+      setError(`🔌 ${tr('vin_errorApi')}`);
     } finally {
       setLoading(false);
     }
-  }, [vin, isValid, onVehicleDecoded]);
+  }, [vin, isValid, onVehicleDecoded, tr]);
 
   return (
     <div className="bg-card rounded-2xl shadow-md p-6 md:p-8 max-w-[680px] mx-auto mb-6">
@@ -90,8 +92,8 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
       <div className="flex items-center gap-3 mb-5">
         <span className="text-2xl text-blue-600">🔍</span>
         <div>
-          <div className="font-bold text-xl text-foreground">VIN azonosítás</div>
-          <div className="text-sm text-muted-foreground mt-1">Add meg a VIN számot az automatikus kitöltéshez</div>
+          <div className="font-bold text-xl text-foreground">{tr('vin_cardTitle')}</div>
+          <div className="text-sm text-muted-foreground mt-1">{tr('vin_cardSubtitle')}</div>
         </div>
       </div>
 
@@ -99,7 +101,7 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
       <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
         <div className="flex-1">
           <div className="flex justify-between mb-1.5">
-            <label className="text-sm font-medium text-foreground">VIN</label>
+            <label className="text-sm font-medium text-foreground">{tr('vin_inputLabel')}</label>
             <span className={`text-xs font-semibold ${isValid ? 'text-green-500' : 'text-muted-foreground'}`}>{vin.length}/17</span>
           </div>
           <input
@@ -107,7 +109,7 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
             value={vin}
             onChange={handleVinChange}
             maxLength={17}
-            placeholder="pl. WVWZZZ3CZWE123456"
+            placeholder={tr('vin_inputPlaceholder')}
           />
         </div>
         <button
@@ -118,9 +120,9 @@ export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              5 AI ügynök elemzi...
+              {tr('vin_decodeLoading')}
             </span>
-          ) : '🤖 AI Dekódolás'}
+          ) : `🤖 ${tr('vin_decodeButton')}`}
         </button>
       </div>
 
