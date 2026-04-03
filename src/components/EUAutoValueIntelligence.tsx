@@ -942,22 +942,11 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated, onVinIdent
     <div style={S.root}>
       <style>{CSS}</style>
 
-      <div style={S.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {screen === 'result' && (
-            <button onClick={reset} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans'" }}>{tr.new_valuation}</button>
-          )}
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#1a4a7a,#2880c4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📊</div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a2a' }}>EU AutoValue Intelligence™</div>
-            <div style={{ fontSize: 10, color: '#6b7280' }}>EUROPEAN EV RISK INFRASTRUCTURE</div>
-          </div>
+      {screen === 'result' && (
+        <div style={{ padding: '8px 16px' }}>
+          <button onClick={reset} style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans'" }}>{tr.new_valuation}</button>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <span style={S.badge}>🇪🇺 27 EU + 🇨🇭 CH</span>
-          <span style={S.badge}>{tr.free_badge}</span>
-        </div>
-      </div>
+      )}
 
       {screen === 'input' && (
         <div style={{ padding: '48px 20px', maxWidth: 800, margin: '0 auto' }}>
