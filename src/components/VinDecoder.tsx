@@ -22,7 +22,7 @@ function mapPowertrain(electrification: string | undefined): string {
   return '';
 }
 
-export default function VinDecoder({ onVehicleDecoded, styles }: VinDecoderProps) {
+export default function VinDecoder({ onVehicleDecoded }: VinDecoderProps) {
   const [vin, setVin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
