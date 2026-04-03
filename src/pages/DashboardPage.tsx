@@ -55,12 +55,12 @@ const DashboardPage = () => {
               onVehicleEvaluated={handleVehicleEvaluated}
               onVinIdentified={handleVinIdentified}
             />
-            <div className="text-center mt-3">
+            <div className="max-w-[680px] mx-auto mt-4">
               <button
                 onClick={handleManualStart}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-3 transition-colors"
               >
-                {t.noVin} <span className="font-medium text-primary">{t.manualStart}</span>
+                {t.noVin} {t.manualStart}
               </button>
             </div>
           </div>
