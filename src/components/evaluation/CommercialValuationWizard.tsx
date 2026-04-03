@@ -368,7 +368,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                       <SelectTrigger className={!isManual && formData.model ? 'pr-16' : ''}>
                         <SelectValue placeholder={!formData.make ? (t as any).selectMakeFirst ?? 'Először válassz gyártót' : t.selectPlaceholder} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                         {(MODELS_BY_MAKE[formData.make] || []).map(m => (
                           <SelectItem key={m} value={m}>{m}</SelectItem>
                         ))}
