@@ -514,7 +514,7 @@ export default function CommercialValuationWizard({ vinResult, onBack }: Commerc
                 <SelectTrigger>
                   <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-60 overflow-y-auto z-50">
                   <SelectItem value="sell">{t.purpose_sell}</SelectItem>
                   <SelectItem value="buy">{t.purpose_buy}</SelectItem>
                   <SelectItem value="trade">{t.purpose_trade}</SelectItem>
