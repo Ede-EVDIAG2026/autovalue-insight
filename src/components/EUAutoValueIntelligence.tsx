@@ -950,13 +950,31 @@ export default function EUAutoValueIntelligence({ onVehicleEvaluated, onVinIdent
 
       {screen === 'input' && (
         <div style={{ padding: '48px 20px', maxWidth: 800, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>✦ {tr.hero_sub1}</div>
-            <h1 style={{ fontSize: 'clamp(28px, 5vw, 46px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 16, ...S.gradientText }}>{tr.hero_title}</h1>
-            <p style={{ fontSize: 15, color: '#6b7280', maxWidth: 560, margin: '0 auto 20px' }}>{tr.hero_desc}</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+          <div className="text-center py-12 md:py-16 mb-8">
+            {/* Label row with side lines */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-amber-300" />
+              <span className="text-xs font-semibold tracking-widest uppercase text-amber-500">✦ {tr.hero_sub1}</span>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-amber-300" />
+            </div>
+            {/* Main heading - two lines with gradient */}
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-4">
+              <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 bg-clip-text text-transparent block">
+                {tr.hero_title.split(' ')[0]}
+              </span>
+              <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 bg-clip-text text-transparent block">
+                {tr.hero_title.split(' ').slice(1).join(' ')}
+              </span>
+            </h1>
+            {/* Subtitle */}
+            <p className="text-base md:text-lg text-muted-foreground font-normal mt-4 max-w-2xl mx-auto">{tr.hero_desc}</p>
+            {/* Feature pills */}
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
               {['Multi-country Price Aggregator','Probability Distribution Engine','Sales Velocity Predictor','Regional Risk Scoring','Bayesian Market Risk Layer'].map(c => (
-                <span key={c} style={{ display: 'inline-flex', padding: '4px 12px', borderRadius: 20, background: 'rgba(40,128,196,0.08)', border: '1px solid rgba(40,128,196,0.15)', color: '#3b82f6', fontSize: 11 }}>⬡ {c}</span>
+                <span key={c} className="inline-flex items-center gap-1.5 border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  {c}
+                </span>
               ))}
             </div>
           </div>
