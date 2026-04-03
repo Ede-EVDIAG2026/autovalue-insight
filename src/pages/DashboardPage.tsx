@@ -4,7 +4,7 @@ import AppHeader from '@/components/AppHeader';
 import MarketIntelligenceSection from '@/components/market/MarketIntelligenceSection';
 import EvaluationHub from '@/components/evaluation/EvaluationHub';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { evaluationHubI18n, type HubLang } from '@/i18n/evaluationHub.i18n';
+
 
 import type { VehicleParams } from '@/hooks/useMarketIntelligence';
 
